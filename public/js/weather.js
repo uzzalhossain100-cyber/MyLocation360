@@ -31,24 +31,6 @@ const WeatherApp = {
       });
     }
 
-    // Manual scene switchers for testing
-    const scenePills = document.querySelectorAll('.scene-pill-btn');
-    scenePills.forEach(pill => {
-      pill.addEventListener('click', (e) => {
-        scenePills.forEach(p => p.classList.remove('active'));
-        e.target.classList.add('active');
-        const targetScene = e.target.getAttribute('data-scene');
-        if (window.WeatherScenes && window.WeatherScenes.currentLocationScene) {
-          window.WeatherScenes.currentLocationScene.setScene(targetScene);
-          const badge = document.getElementById('cwAnimBadge');
-          if (badge) {
-            const sceneNames = { sunny: 'রোদ্রোজ্জ্বল দৃশ্য', rain: 'বৃষ্টির দৃশ্য', cloudy: 'মেঘাচ্ছন্ন দৃশ্য', storm: 'বজ্রঝড়ের দৃশ্য' };
-            badge.innerText = sceneNames[targetScene] || targetScene;
-          }
-        }
-      });
-    });
-
     // Other location: View Weather Button
     const btnViewOther = document.getElementById('btnViewOtherWeather');
     const inputOther = document.getElementById('otherCityInput');

@@ -81,11 +81,11 @@
       <!-- ================= TAB 1: MY LOCATION & MAP ================= -->
       <section id="location-tab" class="tab-pane active">
         
-        <!-- Search Destination & History Bar -->
+        <!-- Search Destination & History Bar (Supports both Bangla & English) -->
         <div class="map-top-action-bar">
           <div class="place-search-container">
             <i class="fa-solid fa-magnifying-glass search-field-icon"></i>
-            <input type="text" id="placeSearchInput" placeholder="লোকেশন, স্থাপনা বা স্থান সার্চ করুন (যেমন: ধানমন্ডি লেক, গুলশান, বসুন্ধরা)..." autocomplete="off">
+            <input type="text" id="placeSearchInput" placeholder="স্থান বা স্থাপনা লিখুন (বাংলা/English)..." autocomplete="off">
             <button class="action-search-btn" id="btnSearchPlace" title="দূরত্ব ও রুট দেখুন">
               <i class="fa-solid fa-route"></i>
               <span>রুট ও দূরত্ব</span>
@@ -98,7 +98,7 @@
           </button>
         </div>
 
-        <!-- Route & Distance Info Float Banner (appears when destination searched) -->
+        <!-- Route & Distance Info Float Banner (appears when destination searched or clicked on map) -->
         <div class="route-summary-banner" id="routeSummaryBanner" style="display: none;">
           <div class="route-meta-col">
             <div class="route-dest-name"><i class="fa-solid fa-location-dot text-danger"></i> <span id="routeDestName">গন্তব্য</span></div>
@@ -112,33 +112,94 @@
           </button>
         </div>
 
-        <!-- Map Container & Overlays Wrapper -->
-        <div class="map-view-wrapper">
+        <!-- Clean, Beautiful & Uncluttered Map Viewport Wrapper -->
+        <div class="map-view-wrapper clean-map-view" id="mapViewWrapper">
           
-          <!-- Map Cardinal Direction Banners (চারদিকের দিক নির্দেশক) -->
-          <div class="cardinal-banner cardinal-north">
-            <span class="cardinal-icon">⬆️</span>
-            <span class="cardinal-text">উত্তর (North)</span>
-            <span class="bearing-deg" id="northBearingText">০°</span>
+          <!-- Minimal Cardinal Indicators (খুব ছোট ও মার্জিত সাংকেতিক দিক চিহ্ন) -->
+          <div class="cardinal-mini mini-north" title="উত্তর দিক">
+            <span class="mini-arrow">▲</span>
+            <span class="mini-label">উ (N)</span>
+            <span class="mini-deg" id="northBearingText">০°</span>
           </div>
-          <div class="cardinal-banner cardinal-south">
-            <span class="cardinal-icon">⬇️</span>
-            <span class="cardinal-text">দক্ষিণ (South)</span>
+          <div class="cardinal-mini mini-south" title="দক্ষিণ দিক">
+            <span class="mini-arrow">▼</span>
+            <span class="mini-label">দ (S)</span>
           </div>
-          <div class="cardinal-banner cardinal-west">
-            <span class="cardinal-icon">⬅️</span>
-            <span class="cardinal-text">পশ্চিম (West)</span>
+          <div class="cardinal-mini mini-west" title="পশ্চিম দিক">
+            <span class="mini-arrow">◀</span>
+            <span class="mini-label">প (W)</span>
           </div>
-          <div class="cardinal-banner cardinal-east">
-            <span class="cardinal-icon">➡️</span>
-            <span class="cardinal-text">পূর্ব (East)</span>
+          <div class="cardinal-mini mini-east" title="পূর্ব দিক">
+            <span class="mini-arrow">▶</span>
+            <span class="mini-label">পূ (E)</span>
           </div>
 
-          <!-- The Map canvas -->
+          <!-- The Map canvas (Clean View, Click to select location, Zoom for street view) -->
           <div id="map" class="map-canvas"></div>
 
-          <!-- Compass Dial Floating Widget (Interactive Rotation) -->
-          <div class="floating-compass-widget" id="compassDialWidget" title="ক্লিক করলে সোজা উত্তরমুখী হবে, অথবা ঘুরিয়ে দিক পরিবর্তন করুন">
+          <!-- Top-Right Essential Map View Tools (Full Map & Street View Toggle) -->
+          <div class="map-corner-tools">
+            <!-- Full Map Button -->
+            <button class="corner-tool-btn full-map-btn" id="btnToggleFullMap" title="ফুল ম্যাপ দেখুন">
+              <i class="fa-solid fa-expand" id="fullMapIcon"></i>
+              <span id="fullMapText">ফুল ম্যাপ</span>
+            </button>
+            
+            <!-- Street / Satellite View Toggle -->
+            <button class="corner-tool-btn layer-toggle-btn" id="btnToggleStreetView" title="স্ট্রিট ও স্যাটেলাইট ভিউ পরিবর্তন">
+              <i class="fa-solid fa-layer-group"></i>
+              <span id="mapLayerText">স্ট্রিট ভিউ</span>
+            </button>
+          </div>
+
+          <!-- Click on Map Hint Badge -->
+          <div class="map-click-hint-badge">
+            <i class="fa-solid fa-hand-pointer"></i> ম্যাপে যেকোনো স্থানে ক্লিক করে দূরত্ব ও রুট দেখুন
+          </div>
+
+          <!-- Floating Speedometer for Full Map Mode (Only speed shown in full map) -->
+          <div class="full-map-speed-overlay" id="fullMapSpeedOverlay">
+            <div class="fm-speed-glass">
+              <i class="fa-solid fa-gauge-high"></i>
+              <span class="fm-speed-num" id="fmSpeedNum">০</span>
+              <span class="fm-speed-unit">কিমি/ঘণ্টা</span>
+            </div>
+            <button class="fm-exit-btn" id="btnExitFullMap">
+              <i class="fa-solid fa-compress"></i> সাধারণ ভিউ
+            </button>
+          </div>
+
+        </div>
+
+        <!-- EXTERNAL MAP CONTROLS DASHBOARD (All options placed cleanly OUTSIDE the map) -->
+        <div class="external-map-controls-panel">
+          
+          <!-- Core Auto-align & Reset Direction Button -->
+          <button class="core-direction-btn" id="btnAutoAlignDirection" title="ক্লিক করলে ম্যাপ অটো ঘুরে সঠিক দিক চিহ্নিত করবে">
+            <div class="btn-icon-pulse">
+              <i class="fa-solid fa-compass"></i>
+            </div>
+            <div class="btn-text-content">
+              <span class="primary-text">দিক চিহ্নিত করুন</span>
+              <span class="sub-text">অটো সঠিক দিকে ঘুরবে</span>
+            </div>
+          </button>
+
+          <!-- Free-rotation Tools -->
+          <div class="rotation-tools-pill">
+            <button class="tool-btn" id="btnRotateLeft" title="বামে ঘোরান">
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+            <div class="rotation-slider-wrap">
+              <input type="range" id="mapRotationSlider" min="0" max="360" value="0" title="ম্যাপ ঘোরান (0-360°)">
+            </div>
+            <button class="tool-btn" id="btnRotateRight" title="ডানে ঘোরান">
+              <i class="fa-solid fa-rotate-right"></i>
+            </button>
+          </div>
+
+          <!-- Compass Dial Widget -->
+          <div class="external-compass-pill" id="compassDialWidget" title="ক্লিক করলে সোজা উত্তরমুখী হবে">
             <div class="compass-ring" id="compassRing">
               <span class="compass-point north">উ</span>
               <span class="compass-point east">পূ</span>
@@ -150,53 +211,36 @@
                 <div class="needle-center"></div>
               </div>
             </div>
-            <div class="compass-bearing-label" id="compassBearingLabel">০° উ</div>
+            <span class="compass-bearing-label" id="compassBearingLabel">০° উ</span>
           </div>
 
-          <!-- Floating Map Controls Group -->
-          <div class="floating-map-controls">
-            
-            <!-- THE CORE BUTTON REQUESTED: Auto Align / Reset Direction -->
-            <button class="core-direction-btn" id="btnAutoAlignDirection" title="ক্লিক করলে ম্যাপ অটো ঘুরে সঠিক দিক (উত্তর) চিহ্নিত করবে">
-              <div class="btn-icon-pulse">
-                <i class="fa-solid fa-compass"></i>
-              </div>
-              <div class="btn-text-content">
-                <span class="primary-text">দিক চিহ্নিত করুন</span>
-                <span class="sub-text">অটো সঠিক দিকে ঘুরবে</span>
-              </div>
-            </button>
+          <!-- Recenter to My Location -->
+          <button class="recenter-btn" id="btnRecenterLocation" title="আমার বর্তমান অবস্থানে যান">
+            <i class="fa-solid fa-crosshairs"></i>
+            <span>আমার লোকেশন</span>
+          </button>
 
-            <!-- Manual Rotation Controls -->
-            <div class="rotation-tools-pill">
-              <button class="tool-btn" id="btnRotateLeft" title="বামে ঘোরান (Rotate Left 15°)">
-                <i class="fa-solid fa-rotate-left"></i>
-              </button>
-              <div class="rotation-slider-wrap">
-                <input type="range" id="mapRotationSlider" min="0" max="360" value="0" title="ইচ্ছামতো ম্যাপ ঘুরান (0-360°)">
-              </div>
-              <button class="tool-btn" id="btnRotateRight" title="ডানে ঘোরান (Rotate Right 15°)">
-                <i class="fa-solid fa-rotate-right"></i>
-              </button>
-            </div>
+          <!-- 3D / Pitch Toggle -->
+          <button class="tilt-btn" id="btnToggle3D" title="3D টিল্ট / ভিউ পরিবর্তন">
+            <i class="fa-solid fa-cube"></i>
+            <span id="tiltLabel">2D</span>
+          </button>
 
-            <!-- Recenter to My Location Button -->
-            <button class="recenter-btn" id="btnRecenterLocation" title="আমার বর্তমান লোকেশনে ফোকাস করুন">
-              <i class="fa-solid fa-crosshairs"></i>
-              <span>আমার লোকেশন</span>
-            </button>
+        </div>
 
-            <!-- Pitch/3D Toggle -->
-            <button class="tilt-btn" id="btnToggle3D" title="3D টিল্ট / ভিউ পরিবর্তন">
-              <i class="fa-solid fa-cube"></i>
-              <span id="tiltLabel">2D</span>
-            </button>
-          </div>
-
-          <!-- POI Category Filter Pills on Map -->
-          <div class="poi-filter-scroll">
-            <button class="poi-chip active" data-type="all"><i class="fa-solid fa-layer-group"></i> সব স্থাপনা</button>
+        <!-- External POI Category Filter Bar (Placed outside the map) -->
+        <div class="external-poi-bar">
+          <span class="poi-bar-title"><i class="fa-solid fa-filter"></i> স্থাপনা:</span>
+          <div class="poi-chips-row">
+            <button class="poi-chip active" data-type="all"><i class="fa-solid fa-layer-group"></i> সব</button>
             <button class="poi-chip" data-type="hospital"><i class="fa-solid fa-hospital"></i> হাসপাতাল</button>
+            <button class="poi-chip" data-type="mosque"><i class="fa-solid fa-mosque"></i> মসজিদ</button>
+            <button class="poi-chip" data-type="restaurant"><i class="fa-solid fa-utensils"></i> রেস্তোরাঁ</button>
+            <button class="poi-chip" data-type="school"><i class="fa-solid fa-graduation-cap"></i> স্কুল-কলেজ</button>
+            <button class="poi-chip" data-type="atm"><i class="fa-solid fa-money-check-dollar"></i> এটিএম/ব্যাংক</button>
+            <button class="poi-chip" data-type="fuel"><i class="fa-solid fa-gas-pump"></i> জ্বালানি পাম্প</button>
+          </div>
+        </div>
             <button class="poi-chip" data-type="mosque"><i class="fa-solid fa-mosque"></i> মসজিদ</button>
             <button class="poi-chip" data-type="restaurant"><i class="fa-solid fa-utensils"></i> রেস্তোরাঁ</button>
             <button class="poi-chip" data-type="school"><i class="fa-solid fa-graduation-cap"></i> স্কুল-কলেজ</button>
@@ -364,15 +408,6 @@
                     <div class="cloud-layer layer-2" id="cwCloudLayer2"></div>
                     <div class="rain-layer" id="cwRainLayer"></div>
                     <div class="lightning-flash" id="cwLightning"></div>
-                  </div>
-
-                  <!-- Quick scene tester pills -->
-                  <div class="scene-manual-switcher" title="যেকোনো দৃশ্য চালিয়ে দেখুন">
-                    <span class="switcher-hint">টেস্ট দৃশ্য:</span>
-                    <button class="scene-pill-btn active" data-scene="sunny">☀️ রোদ</button>
-                    <button class="scene-pill-btn" data-scene="rain">🌧️ বৃষ্টি</button>
-                    <button class="scene-pill-btn" data-scene="cloudy">☁️ মেঘ</button>
-                    <button class="scene-pill-btn" data-scene="storm">⛈️ ঝড়</button>
                   </div>
                 </div>
               </div>

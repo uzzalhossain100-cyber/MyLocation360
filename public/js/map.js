@@ -1,9 +1,14 @@
 /**
  * DIKDIGANTA / MYLOCATION360 - MAP & NAVIGATION MODULE
  * Powered by MapLibre GL JS
- * Full 360-degree interactive rotation, auto-alignment button,
- * Destination Search & Live Routing with Distance,
- * LocationHistory Trip Visualizer, and POI management.
+ * Features:
+ * 1. Clean Uncluttered Map View (all controls external)
+ * 2. Minimal Direction Markers (উ, দ, পূ, প)
+ * 3. Full Map Toggle (only speedometer visible in full map)
+ * 4. Click on Map to Select Destination & Calculate Route/Distance
+ * 5. High Zoom Street View & Satellite Layer Toggle
+ * 6. Bengali & English Place Search with OSRM Routing
+ * 7. LocationHistory Trips visualizer
  */
 
 const MapModule = {
@@ -24,17 +29,21 @@ const MapModule = {
   watchId: null,
   deviceOrientationActive: false,
   deviceHeading: 0,
+  isSatelliteMode: false,
+  isFullMapMode: false,
 
   init() {
     this.initMap();
     this.setupEventListeners();
     this.setupSearchAndRouting();
+    this.setupMapClickToSelect();
+    this.setupFullMapAndLayerToggles();
     this.initDeviceOrientation();
     this.initLocationHistoryStore();
   },
 
   initMap() {
-    // OpenStreetMap Raster Layer in MapLibre
+    // OpenStreetMap Raster Layer in MapLibre with maxZoom 19 for Street View
     this.map = new maplibregl.Map({
       container: 'map',
       style: {
@@ -46,7 +55,17 @@ const MapModule = {
               'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
             ],
             tileSize: 256,
-            attribution: '&copy; OpenStreetMap contributors'
+            attribution: '&copy; OpenStreetMap contributors',
+            maxzoom: 19
+          },
+          'satellite-tiles': {
+            type: 'raster',
+            tiles: [
+              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+            ],
+            tileSize: 256,
+            attribution: '&copy; Esri, Maxar, Earthstar Geographics',
+            maxzoom: 19
           }
         },
         layers: [
@@ -55,7 +74,16 @@ const MapModule = {
             type: 'raster',
             source: 'osm-tiles',
             minzoom: 0,
-            maxzoom: 19
+            maxzoom: 19,
+            layout: { visibility: 'visible' }
+          },
+          {
+            id: 'satellite-tiles-layer',
+            type: 'raster',
+            source: 'satellite-tiles',
+            minzoom: 0,
+            maxzoom: 19,
+            layout: { visibility: 'none' }
           }
         ]
       },
@@ -64,14 +92,16 @@ const MapModule = {
       pitch: 0,
       bearing: 0,
       dragRotate: true,
-      touchZoomRotate: true
+      touchZoomRotate: true,
+      maxZoom: 19
     });
 
+    // Navigation control for zoom in/out
     this.map.addControl(new maplibregl.NavigationControl({
       showCompass: false,
       showZoom: true,
       visualizePitch: true
-    }), 'top-right');
+    }), 'top-left');
 
     this.map.on('load', () => {
       this.createUserMarker();
@@ -95,7 +125,7 @@ const MapModule = {
   createUserMarker() {
     const el = document.createElement('div');
     el.className = 'my-location-marker';
-    el.title = 'আপনার অবস্থান';
+    el.title = 'আপনার বর্তমান অবস্থান';
 
     this.userMarker = new maplibregl.Marker({ element: el })
       .setLngLat([this.currentLon, this.currentLat])
@@ -134,10 +164,13 @@ const MapModule = {
   updateSpeedometer(speed) {
     this.currentSpeed = speed;
     const speedEl = document.getElementById('currentSpeed');
+    const fmSpeedEl = document.getElementById('fmSpeedNum');
     const statusEl = document.getElementById('speedStatus');
     const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
 
     if (speedEl) speedEl.innerText = toBengaliDigits(speed);
+    if (fmSpeedEl) fmSpeedEl.innerText = toBengaliDigits(speed);
+
     if (statusEl) {
       if (speed === 0) {
         statusEl.innerText = 'স্থির অবস্থায় আছেন';
@@ -262,6 +295,84 @@ const MapModule = {
     }
   },
 
+  // ==========================================================
+  // FULL MAP MODE & STREET/SATELLITE VIEW TOGGLE
+  // ==========================================================
+  setupFullMapAndLayerToggles() {
+    const wrapper = document.getElementById('mapViewWrapper');
+    const btnFullMap = document.getElementById('btnToggleFullMap');
+    const btnExitFullMap = document.getElementById('btnExitFullMap');
+    const btnStreetView = document.getElementById('btnToggleStreetView');
+    const mapLayerText = document.getElementById('mapLayerText');
+
+    const toggleFullMap = (enable) => {
+      this.isFullMapMode = enable !== undefined ? enable : !this.isFullMapMode;
+      if (this.isFullMapMode) {
+        wrapper.classList.add('fullscreen-map-mode');
+        document.body.style.overflow = 'hidden';
+        if (window.showToast) window.showToast('ফুল ম্যাপ সক্রিয় (নিচে চলার গতি প্রদর্শিত হচ্ছে)');
+      } else {
+        wrapper.classList.remove('fullscreen-map-mode');
+        document.body.style.overflow = '';
+      }
+      setTimeout(() => this.map.resize(), 150);
+    };
+
+    if (btnFullMap) {
+      btnFullMap.addEventListener('click', () => toggleFullMap(true));
+    }
+    if (btnExitFullMap) {
+      btnExitFullMap.addEventListener('click', () => toggleFullMap(false));
+    }
+
+    // Toggle Satellite & Street View
+    if (btnStreetView) {
+      btnStreetView.addEventListener('click', () => {
+        this.isSatelliteMode = !this.isSatelliteMode;
+        if (this.isSatelliteMode) {
+          this.map.setLayoutProperty('osm-tiles-layer', 'visibility', 'none');
+          this.map.setLayoutProperty('satellite-tiles-layer', 'visibility', 'visible');
+          if (mapLayerText) mapLayerText.innerText = 'স্যাটেলাইট ভিউ';
+          if (window.showToast) window.showToast('🛰️ স্যাটেলাইট ইমেজারি চালু হয়েছে');
+        } else {
+          this.map.setLayoutProperty('satellite-tiles-layer', 'visibility', 'none');
+          this.map.setLayoutProperty('osm-tiles-layer', 'visibility', 'visible');
+          if (mapLayerText) mapLayerText.innerText = 'স্ট্রিট ভিউ';
+          if (window.showToast) window.showToast('🗺️ স্ট্যান্ডার্ড স্ট্রিট ভিউ চালু হয়েছে');
+        }
+      });
+    }
+  },
+
+  // ==========================================================
+  // CLICK ON MAP TO SELECT LOCATION & ROUTE
+  // ==========================================================
+  setupMapClickToSelect() {
+    this.map.on('click', async (e) => {
+      const clickLat = e.lngLat.lat;
+      const clickLon = e.lngLat.lng;
+
+      // Don't trigger if clicked on markers
+      if (e.originalEvent.target.closest('.my-location-marker') || e.originalEvent.target.closest('.poi-marker-badge')) {
+        return;
+      }
+
+      if (window.showToast) window.showToast('ম্যাপের স্থান নির্বাচন করা হয়েছে, রুট তৈরি হচ্ছে...');
+
+      let placeName = 'ম্যাপে চিহ্নিত স্থান';
+      try {
+        const res = await fetch(`/api/geocode/reverse?lat=${clickLat}&lon=${clickLon}`);
+        const data = await res.json();
+        const addr = data.address || {};
+        placeName = addr.road || addr.suburb || addr.city_district || addr.city || 'চিহ্নিত স্থান';
+      } catch (err) {
+        console.warn('Reverse geocode failed:', err);
+      }
+
+      await this.calculateAndDrawRoute(this.currentLat, this.currentLon, clickLat, clickLon, placeName);
+    });
+  },
+
   resetToNorth() {
     this.map.easeTo({
       bearing: 0,
@@ -326,7 +437,7 @@ const MapModule = {
   },
 
   // ==========================================================
-  // SEARCH PLACE, DISTANCE CALCULATION & LIVE ROUTING
+  // SEARCH PLACE (BANGLA & ENGLISH) & DRAW ROUTE
   // ==========================================================
   setupSearchAndRouting() {
     const input = document.getElementById('placeSearchInput');
@@ -336,7 +447,7 @@ const MapModule = {
     const handleSearch = () => {
       const query = input ? input.value.trim() : '';
       if (!query) {
-        if (window.showToast) window.showToast('অনুসন্ধানের জন্য স্থানের নাম লিখুন');
+        if (window.showToast) window.showToast('স্থান বা স্থাপনার নাম লিখুন (বাংলা বা English)');
         return;
       }
       this.searchPlaceAndRoute(query);
@@ -366,11 +477,11 @@ const MapModule = {
         const list = await res.json();
         if (list && list.length > 0) place = list[0];
       } catch (e) {
-        console.warn('Backend search error, falling back to direct search');
+        console.warn('Backend search error');
       }
 
       if (!place) {
-        const directRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+        const directRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=bn,en`);
         const directList = await directRes.json();
         if (directList && directList.length > 0) place = directList[0];
       }
@@ -392,12 +503,11 @@ const MapModule = {
     }
   },
 
-  // Calculate distance & draw routing polyline
   async calculateAndDrawRoute(fromLat, fromLon, toLat, toLon, destName) {
     const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
     
-    // Straight line distance (Haversine formula in km)
-    const R = 6371; // km
+    // Haversine formula
+    const R = 6371;
     const dLat = (toLat - fromLat) * Math.PI / 180;
     const dLon = (toLon - fromLon) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -406,9 +516,8 @@ const MapModule = {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     let distanceKm = (R * c);
 
-    // Try fetching driving route from OSRM
     let routeGeoJSON = null;
-    let durationMins = Math.round(distanceKm * 2.8 + 4); // realistic driving estimate
+    let durationMins = Math.round(distanceKm * 2.8 + 4);
 
     try {
       const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
@@ -421,7 +530,7 @@ const MapModule = {
         routeGeoJSON = route.geometry;
       }
     } catch (err) {
-      console.warn('OSRM route fetch failed, using straight polyline fallback:', err);
+      console.warn('OSRM route fallback');
     }
 
     if (!routeGeoJSON) {
@@ -435,7 +544,6 @@ const MapModule = {
       };
     }
 
-    // Display Route Banner
     const banner = document.getElementById('routeSummaryBanner');
     const destNameEl = document.getElementById('routeDestName');
     const distEl = document.getElementById('routeDistanceKm');
@@ -446,10 +554,8 @@ const MapModule = {
     if (durEl) durEl.innerText = `${toBengaliDigits(durationMins)} মিনিট`;
     if (banner) banner.style.display = 'flex';
 
-    // Remove existing destination marker if any
     if (this.destMarker) this.destMarker.remove();
 
-    // Create Destination Marker
     const destEl = document.createElement('div');
     destEl.className = 'poi-marker-badge';
     destEl.style.background = '#ef4444';
@@ -460,7 +566,6 @@ const MapModule = {
       .setLngLat([toLon, toLat])
       .addTo(this.map);
 
-    // Draw Route on Map
     if (this.map.getLayer(this.routeLayerId)) {
       this.map.removeLayer(this.routeLayerId);
     }
@@ -492,7 +597,6 @@ const MapModule = {
       }
     });
 
-    // Fit Map Bounds to fit both points comfortably
     const bounds = new maplibregl.LngLatBounds();
     bounds.extend([fromLon, fromLat]);
     bounds.extend([toLon, toLat]);
@@ -518,7 +622,6 @@ const MapModule = {
   // LOCATION HISTORY ENGINE
   // ==========================================================
   initLocationHistoryStore() {
-    // Check if demo history exists, else populate with rich realistic travel logs
     const existing = localStorage.getItem('mylocation_history_store');
     if (!existing) {
       const today = new Date().toISOString().split('T')[0];
@@ -616,11 +719,8 @@ const MapModule = {
     }
   },
 
-  // Draw History Trips on Map
   drawHistoryRouteOnMap(trips) {
     if (!trips || trips.length === 0) return;
-
-    // Clear previous history layers & markers
     this.clearHistoryLayers();
 
     const allCoords = [];
@@ -630,7 +730,6 @@ const MapModule = {
 
     if (allCoords.length === 0) return;
 
-    // Add GeoJSON line source
     this.map.addSource(this.historyRouteSourceId, {
       type: 'geojson',
       data: {
@@ -658,7 +757,6 @@ const MapModule = {
       }
     });
 
-    // Start marker (Green)
     const startCoord = allCoords[0];
     const elStart = document.createElement('div');
     elStart.className = 'poi-marker-badge';
@@ -670,7 +768,6 @@ const MapModule = {
       .addTo(this.map);
     this.historyMarkers.push(mStart);
 
-    // End marker (Red)
     const endCoord = allCoords[allCoords.length - 1];
     const elEnd = document.createElement('div');
     elEnd.className = 'poi-marker-badge';
@@ -682,7 +779,6 @@ const MapModule = {
       .addTo(this.map);
     this.historyMarkers.push(mEnd);
 
-    // Fit map bounds
     const bounds = new maplibregl.LngLatBounds();
     allCoords.forEach(c => bounds.extend(c));
     this.map.fitBounds(bounds, { padding: 70, maxZoom: 15 });
@@ -695,7 +791,6 @@ const MapModule = {
     this.historyMarkers = [];
   },
 
-  // Nearby POI (Establishments)
   async fetchNearbyPlaces(type = 'all') {
     const listEl = document.getElementById('nearbyPlacesList');
     if (listEl) {

@@ -16,10 +16,11 @@ app.get('/api/geocode/reverse', async (req, res) => {
     return res.status(400).json({ error: 'lat and lon are required' });
   }
   try {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=bn,en`;
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'MyLocation360App/1.0 (contact@arena.ai)'
+        'User-Agent': 'MyLocation360App/1.0 (contact@arena.ai)',
+        'Accept-Language': 'bn,en;q=0.9'
       }
     });
     const data = await response.json();
@@ -30,17 +31,18 @@ app.get('/api/geocode/reverse', async (req, res) => {
   }
 });
 
-// Search location geocoding
+// Search location geocoding (supports both Bengali & English)
 app.get('/api/geocode/search', async (req, res) => {
   const { q } = req.query;
   if (!q) {
     return res.status(400).json({ error: 'Query q is required' });
   }
   try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=8&addressdetails=1`;
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=8&addressdetails=1&accept-language=bn,en`;
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'MyLocation360App/1.0 (contact@arena.ai)'
+        'User-Agent': 'MyLocation360App/1.0 (contact@arena.ai)',
+        'Accept-Language': 'bn,en;q=0.9'
       }
     });
     const data = await response.json();

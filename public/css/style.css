@@ -2124,3 +2124,288 @@ body {
   color: var(--text-muted);
   line-height: 1.4;
 }
+/* ==========================================================
+   CLEAN MAP VIEW, FULL MAP MODE, MINIMAL CARDINALS,
+   AND EXTERNAL CONTROLS STYLING
+   ========================================================== */
+
+/* Clean Uncluttered Map Viewport */
+.clean-map-view {
+  position: relative;
+  width: 100%;
+  height: 58vh;
+  min-height: 420px;
+  max-height: 600px;
+  background: #0f172a;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: inset 0 0 1px 1px rgba(255, 255, 255, 0.1), var(--shadow-card);
+  transition: all 0.3s ease;
+}
+
+/* MINIMAL CARDINAL DIRECTION INDICATORS (খুব ছোট সাংকেতিক চিহ্ন) */
+.cardinal-mini {
+  position: absolute;
+  z-index: 20;
+  background: rgba(13, 20, 34, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 0.68rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.mini-north {
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(239, 68, 68, 0.85);
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #ffffff;
+}
+
+.mini-north .mini-deg {
+  font-size: 0.65rem;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.mini-south {
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.mini-west {
+  top: 50%;
+  left: 8px;
+  transform: translateY(-50%);
+}
+
+.mini-east {
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+}
+
+.mini-arrow {
+  font-size: 0.6rem;
+  line-height: 1;
+}
+
+/* Top Right Essential Map Tools */
+.map-corner-tools {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.corner-tool-btn {
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 7px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease;
+}
+
+.corner-tool-btn:hover {
+  background: rgba(37, 99, 235, 0.85);
+  border-color: #38bdf8;
+  transform: scale(1.04);
+}
+
+.full-map-btn {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(2, 132, 199, 0.9));
+  border-color: #38bdf8;
+}
+
+.layer-toggle-btn i {
+  color: #f59e0b;
+}
+
+/* Map Click Hint Badge */
+.map-click-hint-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  z-index: 20;
+  background: rgba(13, 20, 34, 0.7);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  font-size: 0.7rem;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  pointer-events: none;
+}
+
+/* EXTERNAL MAP CONTROLS DASHBOARD (Cleanly Placed Outside Map) */
+.external-map-controls-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid var(--bg-card-border);
+  flex-wrap: wrap;
+}
+
+.external-compass-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.external-compass-pill:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.external-compass-pill .compass-ring {
+  width: 34px;
+  height: 34px;
+}
+
+/* External POI Bar */
+.external-poi-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: rgba(13, 20, 34, 0.85);
+  border-bottom: 1px solid var(--bg-card-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.external-poi-bar::-webkit-scrollbar { display: none; }
+
+.poi-bar-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.poi-chips-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+/* FULL MAP OVERLAY MODE (যখন ফুল ম্যাপে ক্লিক করা হবে) */
+.map-view-wrapper.fullscreen-map-mode {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  z-index: 99999 !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+}
+
+/* Full Map Speed Bar Overlay (ONLY SPEED SHOWN IN FULL MAP) */
+.full-map-speed-overlay {
+  display: none;
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  align-items: center;
+  gap: 12px;
+}
+
+.map-view-wrapper.fullscreen-map-mode .full-map-speed-overlay {
+  display: flex;
+}
+
+.fm-speed-glass {
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  padding: 8px 22px;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  color: #10b981;
+}
+
+.fm-speed-glass i {
+  font-size: 1.2rem;
+  color: #10b981;
+}
+
+.fm-speed-num {
+  font-family: var(--font-num);
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.fm-speed-unit {
+  font-size: 0.85rem;
+  color: #a7f3d0;
+  font-weight: 600;
+}
+
+.fm-exit-btn {
+  background: rgba(239, 68, 68, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 10px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+  transition: all 0.2s ease;
+}
+
+.fm-exit-btn:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+.map-view-wrapper.fullscreen-map-mode .map-corner-tools {
+  display: none; /* Corner tools hidden in full map mode */
+}
+
+.map-view-wrapper.fullscreen-map-mode .map-click-hint-badge {
+  display: none;
+}
