@@ -101,20 +101,52 @@
         <!-- Route & Distance Info Float Banner (appears when destination searched or clicked on map) -->
         <div class="route-summary-banner" id="routeSummaryBanner" style="display: none;">
           <div class="route-meta-col">
-            <div class="route-dest-name"><i class="fa-solid fa-location-dot text-danger"></i> <span id="routeDestName">গন্তব্য</span></div>
+            <div class="route-dest-header-row">
+              <div class="route-dest-name"><i class="fa-solid fa-location-dot text-danger"></i> <span id="routeDestName">গন্তব্য</span></div>
+              <button class="close-route-btn" id="btnCloseRoute" title="রুট ক্লিয়ার করুন">
+                <i class="fa-solid fa-xmark"></i> ক্লিয়ার
+              </button>
+            </div>
+            
+            <!-- Travel Mode Selection (কার, বাইক, বাস, ট্রেন, হাঁটা) -->
+            <div class="travel-mode-bar">
+              <span class="mode-label">যাতায়াত মাধ্যম:</span>
+              <div class="mode-pills-group">
+                <button class="travel-mode-chip active" data-mode="car" title="কার / ড্রাইভিং">
+                  <i class="fa-solid fa-car"></i> কার
+                </button>
+                <button class="travel-mode-chip" data-mode="bike" title="মোটর সাইকেল">
+                  <i class="fa-solid fa-motorcycle"></i> বাইক
+                </button>
+                <button class="travel-mode-chip" data-mode="bus" title="বাস">
+                  <i class="fa-solid fa-bus"></i> বাস
+                </button>
+                <button class="travel-mode-chip" data-mode="train" title="ট্রেন / মেট্রো">
+                  <i class="fa-solid fa-train"></i> ট্রেন
+                </button>
+                <button class="travel-mode-chip" data-mode="walk" title="পায়ে হাঁটা">
+                  <i class="fa-solid fa-person-walking"></i> হাঁটা
+                </button>
+              </div>
+            </div>
+
             <div class="route-metrics-row">
               <span class="route-metric-chip distance-chip"><i class="fa-solid fa-arrows-left-right"></i> দূরত্ব: <strong id="routeDistanceKm">০ কিমি</strong></span>
-              <span class="route-metric-chip duration-chip"><i class="fa-solid fa-car"></i> সময়: <strong id="routeDurationEst">০ মিনিট</strong></span>
+              <span class="route-metric-chip duration-chip"><i class="fa-solid fa-clock"></i> আনুমানিক সময়: <strong id="routeDurationEst">০ মিনিট</strong></span>
+              <span class="route-metric-chip speed-mode-chip" id="routeModeDesc"><i class="fa-solid fa-car"></i> প্রাইভেট কার রুট</span>
             </div>
           </div>
-          <button class="close-route-btn" id="btnCloseRoute" title="রুট ক্লিয়ার করুন">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
         </div>
 
         <!-- Clean, Beautiful & Uncluttered Map Viewport Wrapper -->
         <div class="map-view-wrapper clean-map-view" id="mapViewWrapper">
           
+          <!-- Top Floating Close Button for Full Map Mode -->
+          <button class="fm-top-close-btn" id="btnTopExitFullMap" title="ম্যাপ ছোট করুন / সাধারণ ভিউতে ফিরুন">
+            <i class="fa-solid fa-compress"></i>
+            <span>ম্যাপ ছোট করুন (✕)</span>
+          </button>
+
           <!-- Minimal Cardinal Indicators (খুব ছোট ও মার্জিত সাংকেতিক দিক চিহ্ন) -->
           <div class="cardinal-mini mini-north" title="উত্তর দিক">
             <span class="mini-arrow">▲</span>
@@ -157,14 +189,23 @@
             <i class="fa-solid fa-hand-pointer"></i> ম্যাপে যেকোনো স্থানে ক্লিক করে দূরত্ব ও রুট দেখুন
           </div>
 
-          <!-- Floating Speedometer for Full Map Mode (Only speed shown in full map) -->
+          <!-- Floating Speedometer & MyLocation Bar for Full Map Mode -->
           <div class="full-map-speed-overlay" id="fullMapSpeedOverlay">
-            <div class="fm-speed-glass">
+            <!-- Live Speedometer -->
+            <div class="fm-speed-glass" title="বর্তমান চলার গতি">
               <i class="fa-solid fa-gauge-high"></i>
               <span class="fm-speed-num" id="fmSpeedNum">০</span>
               <span class="fm-speed-unit">কিমি/ঘণ্টা</span>
             </div>
-            <button class="fm-exit-btn" id="btnExitFullMap">
+
+            <!-- Core My Location Recenter Button (visible in full map) -->
+            <button class="fm-recenter-btn" id="btnFmRecenter" title="আমার বর্তমান লোকেশনে যান">
+              <i class="fa-solid fa-crosshairs"></i>
+              <span>আমার লোকেশন</span>
+            </button>
+
+            <!-- Exit Full Map Button -->
+            <button class="fm-exit-btn" id="btnExitFullMap" title="ম্যাপ ছোট করুন">
               <i class="fa-solid fa-compress"></i> সাধারণ ভিউ
             </button>
           </div>
@@ -620,6 +661,15 @@
           <i class="fa-solid fa-map-location-dot"></i>
           <span>ভিউ হিস্টরি ও রুট ম্যাপ</span>
         </button>
+
+        <!-- Total Distance Traveled Badge (কত কিলোমিটার চলাচল হয়েছে) -->
+        <div class="history-total-travel-badge" id="historyTotalTravelBadge">
+          <div class="htt-icon"><i class="fa-solid fa-gauge-simple-high"></i></div>
+          <div class="htt-info">
+            <span class="htt-label">নির্বাচিত তারিখে মোট চলাচল:</span>
+            <span class="htt-value" id="historyTotalKm">০.০ কিমি</span>
+          </div>
+        </div>
 
         <!-- History Results List Container -->
         <div class="history-routes-summary" id="historyRoutesSummary">

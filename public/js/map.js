@@ -1,14 +1,14 @@
 /**
  * DIKDIGANTA / MYLOCATION360 - MAP & NAVIGATION MODULE
- * Powered by MapLibre GL JS
  * Features:
  * 1. Clean Uncluttered Map View (all controls external)
  * 2. Minimal Direction Markers (উ, দ, পূ, প)
- * 3. Full Map Toggle (only speedometer visible in full map)
- * 4. Click on Map to Select Destination & Calculate Route/Distance
- * 5. High Zoom Street View & Satellite Layer Toggle
- * 6. Bengali & English Place Search with OSRM Routing
- * 7. LocationHistory Trips visualizer
+ * 3. Full Map Toggle & Close buttons (Top & Bottom)
+ * 4. Full Map My Location Recenter Button
+ * 5. Travel Modes: Car, Bike, Bus, Train, Walking with dynamic routing
+ * 6. LocationHistory with accurate routes and total km calculated
+ * 7. Click on Map to Select Destination
+ * 8. High Zoom Street View & Satellite Layer Toggle
  */
 
 const MapModule = {
@@ -31,11 +31,14 @@ const MapModule = {
   deviceHeading: 0,
   isSatelliteMode: false,
   isFullMapMode: false,
+  currentTravelMode: 'car', // 'car', 'bike', 'bus', 'train', 'walk'
+  lastDestination: null, // holds { lat, lon, name }
 
   init() {
     this.initMap();
     this.setupEventListeners();
     this.setupSearchAndRouting();
+    this.setupTravelModes();
     this.setupMapClickToSelect();
     this.setupFullMapAndLayerToggles();
     this.initDeviceOrientation();
@@ -43,7 +46,6 @@ const MapModule = {
   },
 
   initMap() {
-    // OpenStreetMap Raster Layer in MapLibre with maxZoom 19 for Street View
     this.map = new maplibregl.Map({
       container: 'map',
       style: {
@@ -96,7 +98,6 @@ const MapModule = {
       maxZoom: 19
     });
 
-    // Navigation control for zoom in/out
     this.map.addControl(new maplibregl.NavigationControl({
       showCompass: false,
       showZoom: true,
@@ -296,12 +297,14 @@ const MapModule = {
   },
 
   // ==========================================================
-  // FULL MAP MODE & STREET/SATELLITE VIEW TOGGLE
+  // FULL MAP MODE, CLOSE BUTTONS & RECENTER
   // ==========================================================
   setupFullMapAndLayerToggles() {
     const wrapper = document.getElementById('mapViewWrapper');
     const btnFullMap = document.getElementById('btnToggleFullMap');
     const btnExitFullMap = document.getElementById('btnExitFullMap');
+    const btnTopExitFullMap = document.getElementById('btnTopExitFullMap');
+    const btnFmRecenter = document.getElementById('btnFmRecenter');
     const btnStreetView = document.getElementById('btnToggleStreetView');
     const mapLayerText = document.getElementById('mapLayerText');
 
@@ -310,7 +313,7 @@ const MapModule = {
       if (this.isFullMapMode) {
         wrapper.classList.add('fullscreen-map-mode');
         document.body.style.overflow = 'hidden';
-        if (window.showToast) window.showToast('ফুল ম্যাপ সক্রিয় (নিচে চলার গতি প্রদর্শিত হচ্ছে)');
+        if (window.showToast) window.showToast('ফুল ম্যাপ সক্রিয় (নিচে চলার গতি ও লোকেশন বাটন আছে)');
       } else {
         wrapper.classList.remove('fullscreen-map-mode');
         document.body.style.overflow = '';
@@ -323,6 +326,16 @@ const MapModule = {
     }
     if (btnExitFullMap) {
       btnExitFullMap.addEventListener('click', () => toggleFullMap(false));
+    }
+    if (btnTopExitFullMap) {
+      btnTopExitFullMap.addEventListener('click', () => toggleFullMap(false));
+    }
+
+    // Inside Full Map: Recenter to My Location
+    if (btnFmRecenter) {
+      btnFmRecenter.addEventListener('click', () => {
+        this.recenter();
+      });
     }
 
     // Toggle Satellite & Street View
@@ -345,6 +358,31 @@ const MapModule = {
   },
 
   // ==========================================================
+  // TRAVEL MODES: CAR, BIKE, BUS, TRAIN, WALKING
+  // ==========================================================
+  setupTravelModes() {
+    const chips = document.querySelectorAll('.travel-mode-chip');
+    chips.forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        chips.forEach(c => c.classList.remove('active'));
+        const target = e.currentTarget;
+        target.classList.add('active');
+        this.currentTravelMode = target.getAttribute('data-mode');
+
+        if (this.lastDestination) {
+          this.calculateAndDrawRoute(
+            this.currentLat,
+            this.currentLon,
+            this.lastDestination.lat,
+            this.lastDestination.lon,
+            this.lastDestination.name
+          );
+        }
+      });
+    });
+  },
+
+  // ==========================================================
   // CLICK ON MAP TO SELECT LOCATION & ROUTE
   // ==========================================================
   setupMapClickToSelect() {
@@ -352,7 +390,6 @@ const MapModule = {
       const clickLat = e.lngLat.lat;
       const clickLon = e.lngLat.lng;
 
-      // Don't trigger if clicked on markers
       if (e.originalEvent.target.closest('.my-location-marker') || e.originalEvent.target.closest('.poi-marker-badge')) {
         return;
       }
@@ -389,7 +426,7 @@ const MapModule = {
       zoom: 16,
       essential: true
     });
-    if (window.showToast) window.showToast('বর্তমান অবস্থানে ফোকাস করা হয়েছে');
+    if (window.showToast) window.showToast('📍 আপনার বর্তমান অবস্থানে ফোকাস করা হয়েছে');
   },
 
   initDeviceOrientation() {
@@ -504,9 +541,10 @@ const MapModule = {
   },
 
   async calculateAndDrawRoute(fromLat, fromLon, toLat, toLon, destName) {
+    this.lastDestination = { lat: toLat, lon: toLon, name: destName };
     const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
     
-    // Haversine formula
+    // Haversine base distance
     const R = 6371;
     const dLat = (toLat - fromLat) * Math.PI / 180;
     const dLon = (toLon - fromLon) * Math.PI / 180;
@@ -516,17 +554,28 @@ const MapModule = {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     let distanceKm = (R * c);
 
+    // Speed & duration profiles based on travel mode
+    let modeInfo = {
+      car: { name: 'প্রাইভেট কার রুট', color: '#0284c7', speedKm: 32, icon: 'fa-car', dash: [] },
+      bike: { name: 'মোটর সাইকেল রুট', color: '#f59e0b', speedKm: 38, icon: 'fa-motorcycle', dash: [] },
+      bus: { name: 'বাস / গণপরিবহন রুট', color: '#10b981', speedKm: 18, icon: 'fa-bus', dash: [3, 1] },
+      train: { name: 'ট্রেন / মেট্রো রুট', color: '#ec4899', speedKm: 48, icon: 'fa-train', dash: [2, 2] },
+      walk: { name: 'পায়ে হাঁটা রুট', color: '#a855f7', speedKm: 4.8, icon: 'fa-person-walking', dash: [1, 1] }
+    };
+
+    const currentProfile = modeInfo[this.currentTravelMode] || modeInfo.car;
+
+    // Fetch realistic route from OSRM
     let routeGeoJSON = null;
-    let durationMins = Math.round(distanceKm * 2.8 + 4);
+    let osrmProfile = (this.currentTravelMode === 'walk') ? 'foot' : 'driving';
 
     try {
-      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
+      const osrmUrl = `https://router.project-osrm.org/route/v1/${osrmProfile}/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
       const osrmRes = await fetch(osrmUrl);
       const osrmData = await osrmRes.json();
       if (osrmData && osrmData.routes && osrmData.routes.length > 0) {
         const route = osrmData.routes[0];
         distanceKm = route.distance / 1000;
-        durationMins = Math.round(route.duration / 60);
         routeGeoJSON = route.geometry;
       }
     } catch (err) {
@@ -544,23 +593,32 @@ const MapModule = {
       };
     }
 
+    // Dynamic duration based on selected mode
+    let durationMins = Math.max(1, Math.round((distanceKm / currentProfile.speedKm) * 60));
+
     const banner = document.getElementById('routeSummaryBanner');
     const destNameEl = document.getElementById('routeDestName');
     const distEl = document.getElementById('routeDistanceKm');
     const durEl = document.getElementById('routeDurationEst');
+    const modeDescEl = document.getElementById('routeModeDesc');
 
     if (destNameEl) destNameEl.innerText = destName;
     if (distEl) distEl.innerText = `${toBengaliDigits(distanceKm.toFixed(1))} কিমি`;
     if (durEl) durEl.innerText = `${toBengaliDigits(durationMins)} মিনিট`;
-    if (banner) banner.style.display = 'flex';
+    if (modeDescEl) {
+      modeDescEl.innerHTML = `<i class="fa-solid ${currentProfile.icon}"></i> ${currentProfile.name}`;
+      modeDescEl.style.color = currentProfile.color;
+      modeDescEl.style.borderColor = currentProfile.color;
+    }
+    if (banner) banner.style.display = 'block';
 
     if (this.destMarker) this.destMarker.remove();
 
     const destEl = document.createElement('div');
     destEl.className = 'poi-marker-badge';
-    destEl.style.background = '#ef4444';
+    destEl.style.background = currentProfile.color;
     destEl.style.color = '#ffffff';
-    destEl.innerHTML = `<i class="fa-solid fa-flag-checkered"></i> ${destName}`;
+    destEl.innerHTML = `<i class="fa-solid ${currentProfile.icon}"></i> ${destName}`;
 
     this.destMarker = new maplibregl.Marker({ element: destEl })
       .setLngLat([toLon, toLat])
@@ -591,9 +649,10 @@ const MapModule = {
         'line-cap': 'round'
       },
       paint: {
-        'line-color': '#0284c7',
+        'line-color': currentProfile.color,
         'line-width': 6,
-        'line-opacity': 0.85
+        'line-opacity': 0.88,
+        'line-dasharray': currentProfile.dash.length ? currentProfile.dash : [1]
       }
     });
 
@@ -603,7 +662,7 @@ const MapModule = {
     this.map.fitBounds(bounds, { padding: 80, maxZoom: 16 });
 
     if (window.showToast) {
-      window.showToast(`রুট তৈরি হয়েছে! দূরত্ব: ${distanceKm.toFixed(1)} কিমি`);
+      window.showToast(`${currentProfile.name} তৈরি হয়েছে! (${distanceKm.toFixed(1)} কিমি)`);
     }
   },
 
@@ -614,12 +673,13 @@ const MapModule = {
       this.destMarker.remove();
       this.destMarker = null;
     }
+    this.lastDestination = null;
     const banner = document.getElementById('routeSummaryBanner');
     if (banner) banner.style.display = 'none';
   },
 
   // ==========================================================
-  // LOCATION HISTORY ENGINE
+  // LOCATION HISTORY ENGINE (Accurate Routes & Total KM)
   // ==========================================================
   initLocationHistoryStore() {
     const existing = localStorage.getItem('mylocation_history_store');
@@ -639,7 +699,8 @@ const MapModule = {
             duration: '২৫ মিনিট',
             coords: [
               [90.3750, 23.7465],
-              [90.3800, 23.7510],
+              [90.3780, 23.7490],
+              [90.3820, 23.7530],
               [90.3880, 23.7570],
               [90.3925, 23.7595]
             ]
@@ -653,7 +714,7 @@ const MapModule = {
             duration: '১৫ মিনিট',
             coords: [
               [90.3925, 23.7595],
-              [90.3900, 23.7540],
+              [90.3915, 23.7560],
               [90.3912, 23.7505]
             ]
           },
@@ -666,7 +727,8 @@ const MapModule = {
             duration: '৩০ মিনিট',
             coords: [
               [90.3912, 23.7505],
-              [90.3840, 23.7470],
+              [90.3860, 23.7485],
+              [90.3810, 23.7460],
               [90.3770, 23.7440]
             ]
           }
@@ -681,7 +743,9 @@ const MapModule = {
             duration: '৪৫ মিনিট',
             coords: [
               [90.3700, 23.7520],
-              [90.3900, 23.7650],
+              [90.3780, 23.7580],
+              [90.3920, 23.7660],
+              [90.4050, 23.7720],
               [90.4150, 23.7780]
             ]
           },
@@ -694,7 +758,9 @@ const MapModule = {
             duration: '৫০ মিনিট',
             coords: [
               [90.4150, 23.7780],
-              [90.3900, 23.7650],
+              [90.4050, 23.7720],
+              [90.3920, 23.7660],
+              [90.3780, 23.7580],
               [90.3700, 23.7520]
             ]
           }
@@ -709,7 +775,9 @@ const MapModule = {
             duration: '৫৫ মিনিট',
             coords: [
               [90.3680, 23.8070],
+              [90.3720, 23.7890],
               [90.3790, 23.7720],
+              [90.3890, 23.7550],
               [90.3960, 23.7380]
             ]
           }
@@ -752,7 +820,7 @@ const MapModule = {
       },
       paint: {
         'line-color': '#8b5cf6',
-        'line-width': 5,
+        'line-width': 6,
         'line-dasharray': [2, 1]
       }
     });

@@ -1,11 +1,10 @@
 /**
  * DIKDIGANTA / MYLOCATION360 - CORE APPLICATION CONTROLLER
- * Tab Navigation, Geolocation Permission Management,
- * LocationHistory Date Navigator & Trips Viewer,
+ * Tab Navigation (Smooth & Reliable), Geolocation,
+ * LocationHistory Date Navigator & Accurate Total KM calculation,
  * Mobile App PWA Install Prompt & Toast Notifications
  */
 
-// Global Toast Function
 window.showToast = function(message, duration = 3000) {
   const toast = document.getElementById('appToast');
   const msgEl = document.getElementById('toastMessage');
@@ -20,7 +19,6 @@ window.showToast = function(message, duration = 3000) {
   }, duration);
 };
 
-// Global PWA deferred prompt
 let deferredInstallPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
@@ -47,20 +45,41 @@ function setupTabNavigation() {
   const topTabBtns = document.querySelectorAll('.nav-tab-btn');
   const bottomNavItems = document.querySelectorAll('.mobile-nav-item');
   const tabPanes = document.querySelectorAll('.tab-pane');
+  const mapWrapper = document.getElementById('mapViewWrapper');
 
   function switchTab(targetTabId) {
+    // 1. If currently in full map mode, ALWAYS exit full map first
+    if (mapWrapper && mapWrapper.classList.contains('fullscreen-map-mode')) {
+      mapWrapper.classList.remove('fullscreen-map-mode');
+      document.body.style.overflow = '';
+      if (window.MapModule) window.MapModule.isFullMapMode = false;
+    }
+
+    // 2. Update Top Tabs
     topTabBtns.forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-tab') === targetTabId);
     });
 
+    // 3. Update Mobile Bottom Nav
     bottomNavItems.forEach(item => {
       item.classList.toggle('active', item.getAttribute('data-tab') === targetTabId);
     });
 
+    // 4. Update Tab Panes
     tabPanes.forEach(pane => {
-      pane.classList.toggle('active', pane.id === targetTabId);
+      if (pane.id === targetTabId) {
+        pane.classList.add('active');
+        pane.style.display = 'block';
+      } else {
+        pane.classList.remove('active');
+        pane.style.display = 'none';
+      }
     });
 
+    // 5. Scroll to top so user sees the page cleanly
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // 6. Refresh respective engines
     if (targetTabId === 'location-tab') {
       setTimeout(() => {
         if (window.MapModule && window.MapModule.map) {
@@ -82,11 +101,17 @@ function setupTabNavigation() {
   }
 
   topTabBtns.forEach(btn => {
-    btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
+    btn.addEventListener('click', (e) => {
+      const tabId = btn.getAttribute('data-tab');
+      switchTab(tabId);
+    });
   });
 
   bottomNavItems.forEach(item => {
-    item.addEventListener('click', () => switchTab(item.getAttribute('data-tab')));
+    item.addEventListener('click', (e) => {
+      const tabId = item.getAttribute('data-tab');
+      switchTab(tabId);
+    });
   });
 }
 
@@ -102,8 +127,8 @@ function setupLocationHistoryWorkflow() {
   const btnViewHistory = document.getElementById('btnViewHistoryForDate');
   const btnShowOnMap = document.getElementById('btnShowRouteOnMap');
   const tripsList = document.getElementById('historyTripsList');
+  const totalKmEl = document.getElementById('historyTotalKm');
 
-  // Currently selected date state (Defaults to today)
   let selectedDate = new Date();
   let currentLoadedTrips = [];
 
@@ -143,6 +168,19 @@ function setupLocationHistoryWorkflow() {
     const trips = store[iso] || [];
     currentLoadedTrips = trips;
 
+    // Calculate Total Kilometers traveled on this date
+    let totalKm = 0;
+    trips.forEach(t => {
+      const match = t.distance.match(/([0-9.]+)/);
+      if (match) {
+        totalKm += parseFloat(match[1]);
+      }
+    });
+
+    if (totalKmEl) {
+      totalKmEl.innerText = `${toBengaliDigits(totalKm.toFixed(1))} কিমি`;
+    }
+
     if (!tripsList) return;
     tripsList.innerHTML = '';
 
@@ -165,14 +203,14 @@ function setupLocationHistoryWorkflow() {
       card.className = 'trip-card';
       card.innerHTML = `
         <div class="trip-header-row">
-          <span><i class="fa-solid fa-map-pin text-primary"></i> ট্রিপ #${index + 1}: ${t.fromName}</span>
+          <span><i class="fa-solid fa-map-pin text-primary"></i> ট্রিপ #${toBengaliDigits(index + 1)}: ${t.fromName}</span>
           <span class="trip-time-tag"><i class="fa-regular fa-clock"></i> ${t.time}</span>
         </div>
         <div class="trip-route-desc">
           <i class="fa-solid fa-arrow-right-long text-success"></i> গন্তব্য: <strong>${t.toName}</strong>
         </div>
         <div class="trip-metric-row">
-          <span><i class="fa-solid fa-road"></i> দূরত্ব: ${t.distance}</span>
+          <span><i class="fa-solid fa-road"></i> দূরত্ব: <strong>${t.distance}</strong></span>
           <span><i class="fa-solid fa-stopwatch"></i> সময়: ${t.duration}</span>
         </div>
       `;
@@ -194,7 +232,6 @@ function setupLocationHistoryWorkflow() {
     });
   }
 
-  // Previous date step (<)
   if (btnPrevDate) {
     btnPrevDate.addEventListener('click', () => {
       selectedDate = new Date(selectedDate.getTime() - 86400000);
@@ -203,7 +240,6 @@ function setupLocationHistoryWorkflow() {
     });
   }
 
-  // Next date step (>)
   if (btnNextDate) {
     btnNextDate.addEventListener('click', () => {
       selectedDate = new Date(selectedDate.getTime() + 86400000);
@@ -212,7 +248,6 @@ function setupLocationHistoryWorkflow() {
     });
   }
 
-  // Native date picker change
   if (datePicker) {
     datePicker.addEventListener('change', (e) => {
       if (e.target.value) {
@@ -223,7 +258,6 @@ function setupLocationHistoryWorkflow() {
     });
   }
 
-  // View button
   if (btnViewHistory) {
     btnViewHistory.addEventListener('click', () => {
       loadTripsForDate();
@@ -233,13 +267,11 @@ function setupLocationHistoryWorkflow() {
     });
   }
 
-  // Show route on map
   if (btnShowOnMap) {
     btnShowOnMap.addEventListener('click', () => {
       if (currentLoadedTrips.length === 0) return;
       if (modalHistory) modalHistory.style.display = 'none';
 
-      // Switch to location tab if not active
       const locTabBtn = document.getElementById('tabBtnLocation');
       if (locTabBtn) locTabBtn.click();
 
@@ -273,7 +305,6 @@ function setupAppDownloadWorkflow() {
   if (btnDownloadApp) {
     btnDownloadApp.addEventListener('click', () => {
       if (deferredInstallPrompt) {
-        // Trigger native Chrome/Android install dialog directly
         deferredInstallPrompt.prompt();
         deferredInstallPrompt.userChoice.then((choiceResult) => {
           if (choiceResult.outcome === 'accepted') {
@@ -282,7 +313,6 @@ function setupAppDownloadWorkflow() {
           deferredInstallPrompt = null;
         });
       } else {
-        // Open rich instructions modal
         openModal();
       }
     });
