@@ -157,43 +157,43 @@
             <i class="fa-solid fa-hand-pointer"></i> ম্যাপে ক্লিক করে যেকোনো স্থান নির্বাচন ও রুট দেখুন
           </div>
 
-        </div>
+          <!-- DOCK BAR (ALWAYS AT THE EXACT BOTTOM OF MAP VIEW - NORMAL & FULLSCREEN) -->
+          <div class="map-bottom-dock-bar" id="mapBottomDockBar">
+            
+            <!-- ১. আমার লোকেশন আইকন -->
+            <button class="dock-btn-item" id="btnRecenterLocation" title="আমার বর্তমান লোকেশন">
+              <i class="fa-solid fa-location-crosshairs text-primary"></i>
+              <span class="dock-label">আমার লোকেশন</span>
+            </button>
 
-        <!-- ম্যাপের নিচে অপশনগুলো সুন্দরভাবে পাশে পাশে ফিট করা (আমার লোকেশন, দিক চিহ্নিত, চলার গতি, 2D/3D, ফুল ম্যাপ) -->
-        <div class="map-bottom-dock-bar" id="mapBottomDockBar">
-          
-          <!-- ১. আমার লোকেশন আইকন -->
-          <button class="dock-btn-item" id="btnRecenterLocation" title="আমার বর্তমান লোকেশন">
-            <i class="fa-solid fa-location-crosshairs text-primary"></i>
-            <span class="dock-label">আমার লোকেশন</span>
-          </button>
+            <!-- ২. দিক চিহ্নিত করার আইকন -->
+            <button class="dock-btn-item" id="btnAutoAlignDirection" title="দিক চিহ্নিত করুন (অটো সঠিক দিকে ঘুরবে)">
+              <i class="fa-solid fa-compass text-danger"></i>
+              <span class="dock-label">দিক চিহ্নিত</span>
+            </button>
 
-          <!-- ২. দিক চিহ্নিত করার আইকন -->
-          <button class="dock-btn-item" id="btnAutoAlignDirection" title="দিক চিহ্নিত করুন (অটো সঠিক দিকে ঘুরবে)">
-            <i class="fa-solid fa-compass text-danger"></i>
-            <span class="dock-label">দিক চিহ্নিত</span>
-          </button>
-
-          <!-- ৩. চলার গতি (Speedometer) -->
-          <div class="dock-btn-item dock-speed-item" title="চলার গতি (কিমি/ঘণ্টা)">
-            <i class="fa-solid fa-gauge-high text-success"></i>
-            <div class="dock-speed-content">
-              <span class="dock-speed-val" id="currentSpeed">০</span>
-              <span class="dock-speed-unit">কিমি/ঘণ্টা</span>
+            <!-- ৩. চলার গতি (Speedometer) -->
+            <div class="dock-btn-item dock-speed-item" title="চলার গতি (কিমি/ঘণ্টা)">
+              <i class="fa-solid fa-gauge-high text-success"></i>
+              <div class="dock-speed-content">
+                <span class="dock-speed-val" id="currentSpeed">০</span>
+                <span class="dock-speed-unit">কিমি/ঘণ্টা</span>
+              </div>
             </div>
+
+            <!-- ৪. ২ডি / ৩ডি অপশন -->
+            <button class="dock-btn-item" id="btnToggle3D" title="2D / 3D ভিউ পরিবর্তন">
+              <i class="fa-solid fa-cube text-warning"></i>
+              <span class="dock-label" id="tiltLabel">2D/3D</span>
+            </button>
+
+            <!-- ৫. ফুল ম্যাপ / ম্যাপ ছোট বাটন -->
+            <button class="dock-btn-item dock-fullmap-toggle" id="btnToggleFullMap" title="ফুল ম্যাপ দেখুন বা ছোট করুন">
+              <i class="fa-solid fa-expand text-info" id="fullMapIcon"></i>
+              <span class="dock-label" id="fullMapText">ফুল ম্যাপ</span>
+            </button>
+
           </div>
-
-          <!-- ৪. ২ডি / ৩ডি অপশন -->
-          <button class="dock-btn-item" id="btnToggle3D" title="2D / 3D ভিউ পরিবর্তন">
-            <i class="fa-solid fa-cube text-warning"></i>
-            <span class="dock-label" id="tiltLabel">2D/3D</span>
-          </button>
-
-          <!-- ৫. ফুল ম্যাপ / ম্যাপ ছোট বাটন -->
-          <button class="dock-btn-item dock-fullmap-toggle" id="btnToggleFullMap" title="ফুল ম্যাপ দেখুন বা ছোট করুন">
-            <i class="fa-solid fa-expand text-info" id="fullMapIcon"></i>
-            <span class="dock-label" id="fullMapText">ফুল ম্যাপ</span>
-          </button>
 
         </div>
 

@@ -328,9 +328,10 @@ const MapModule = {
         if (fullMapText) fullMapText.innerText = 'ফুল ম্যাপ';
       }
       
-      // Dual resize to guarantee zero cut-off in Web & Mobile
+      // Triple resize to guarantee zero cut-off in Web & Mobile
       this.map.resize();
-      setTimeout(() => this.map.resize(), 120);
+      setTimeout(() => this.map.resize(), 60);
+      setTimeout(() => this.map.resize(), 180);
     };
 
     if (btnFullMap) {
