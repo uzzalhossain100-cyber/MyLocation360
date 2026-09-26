@@ -75,6 +75,22 @@ const MapModule = {
             tileSize: 256,
             attribution: '&copy; Esri, Maxar, Earthstar Geographics',
             maxzoom: 22
+          },
+          'satellite-roads-tiles': {
+            type: 'raster',
+            tiles: [
+              'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}'
+            ],
+            tileSize: 256,
+            maxzoom: 22
+          },
+          'satellite-places-tiles': {
+            type: 'raster',
+            tiles: [
+              'https://cartodb-basemaps-a.global.ssl.fastly.net/rastertiles/voyager_only_labels/{z}/{x}/{y}.png'
+            ],
+            tileSize: 256,
+            maxzoom: 22
           }
         },
         layers: [
@@ -90,6 +106,22 @@ const MapModule = {
             id: 'satellite-tiles-layer',
             type: 'raster',
             source: 'satellite-tiles',
+            minzoom: 0,
+            maxzoom: 22,
+            layout: { visibility: 'none' }
+          },
+          {
+            id: 'satellite-roads-layer',
+            type: 'raster',
+            source: 'satellite-roads-tiles',
+            minzoom: 0,
+            maxzoom: 22,
+            layout: { visibility: 'none' }
+          },
+          {
+            id: 'satellite-places-layer',
+            type: 'raster',
+            source: 'satellite-places-tiles',
             minzoom: 0,
             maxzoom: 22,
             layout: { visibility: 'none' }
@@ -115,6 +147,14 @@ const MapModule = {
       this.createUserMarker();
       this.updateLocationInfo(this.currentLat, this.currentLon);
       this.fetchNearbyPlaces('all');
+    });
+
+    // Auto-update nearby POIs and place names on zoom & pan
+    this.map.on('moveend', () => {
+      if (this.map.getZoom() >= 14.5) {
+        const center = this.map.getCenter();
+        this.fetchNearbyPlacesForCenter(center.lat, center.lng);
+      }
     });
 
     this.map.on('rotate', () => {
@@ -332,12 +372,16 @@ const MapModule = {
         if (this.isSatelliteMode) {
           this.map.setLayoutProperty('osm-tiles-layer', 'visibility', 'none');
           this.map.setLayoutProperty('satellite-tiles-layer', 'visibility', 'visible');
-          if (mapLayerText) mapLayerText.innerText = 'স্ট্রিট';
-          if (window.showToast) window.showToast('🛰️ স্যাটেলাইট ইমেজারি চালু হয়েছে');
+          this.map.setLayoutProperty('satellite-roads-layer', 'visibility', 'visible');
+          this.map.setLayoutProperty('satellite-places-layer', 'visibility', 'visible');
+          if (mapLayerText) mapLayerText.innerText = 'স্যাটেলাইট হাইব্রিড';
+          if (window.showToast) window.showToast('🛰️ স্যাটেলাইট হাইব্রিড মোড (রাস্তা ও জায়গার নামসহ) চালু হয়েছে');
         } else {
           this.map.setLayoutProperty('satellite-tiles-layer', 'visibility', 'none');
+          this.map.setLayoutProperty('satellite-roads-layer', 'visibility', 'none');
+          this.map.setLayoutProperty('satellite-places-layer', 'visibility', 'none');
           this.map.setLayoutProperty('osm-tiles-layer', 'visibility', 'visible');
-          if (mapLayerText) mapLayerText.innerText = 'স্যাটেলাইট';
+          if (mapLayerText) mapLayerText.innerText = 'স্ট্রিট ম্যাপ';
           if (window.showToast) window.showToast('🗺️ স্ট্যান্ডার্ড স্ট্রিট ভিউ চালু হয়েছে');
         }
       });
@@ -1014,6 +1058,16 @@ const MapModule = {
     if (this.map.getSource(this.historyRouteSourceId)) this.map.removeSource(this.historyRouteSourceId);
     this.historyMarkers.forEach(m => m.remove());
     this.historyMarkers = [];
+  },
+
+  fetchNearbyPlacesForCenter(lat, lon) {
+    // Only refresh if distance changed significantly
+    if (this._lastPoiLat && Math.hypot(lat - this._lastPoiLat, lon - this._lastPoiLon) < 0.005) {
+      return;
+    }
+    this._lastPoiLat = lat;
+    this._lastPoiLon = lon;
+    this.fetchNearbyPlaces('all');
   },
 
   async fetchNearbyPlaces(type = 'all') {

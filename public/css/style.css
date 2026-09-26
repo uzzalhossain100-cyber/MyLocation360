@@ -3128,3 +3128,19 @@ body.in-fullmap-mode .map-bottom-dock-bar {
   align-items: center;
   gap: 6px;
 }
+
+/* ==========================================================
+   HIGH-VISIBILITY SATELLITE HYBRID POI & LABELS
+   ========================================================== */
+
+.poi-marker-badge {
+  background: rgba(13, 20, 34, 0.94) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
+  padding: 4px 10px !important;
+  border-radius: 9999px !important;
+  border: 1.5px solid #38bdf8 !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8), 0 0 10px rgba(56, 189, 248, 0.4) !important;
+  letter-spacing: -0.01em !important;
+}
