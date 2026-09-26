@@ -3201,3 +3201,50 @@ body.in-fullmap-mode .map-bottom-dock-bar {
   margin-top: 2px;
   line-height: 1.25;
 }
+
+/* Weather Scene Switcher Pills */
+.scene-switcher-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px 12px;
+  background: rgba(15, 23, 42, 0.75);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+  scrollbar-width: none;
+}
+.scene-switcher-pills::-webkit-scrollbar {
+  display: none;
+}
+.scene-pills-label {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.scene-pill-btn {
+  background: rgba(30, 41, 59, 0.85);
+  color: #e2e8f0;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 9999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.scene-pill-btn:hover, .scene-pill-btn:active {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+}

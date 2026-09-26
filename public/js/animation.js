@@ -3,13 +3,17 @@
  * Dynamic Canvas & Overlay System for Atmospheric Weather Scenes
  * Supports: 
  *   - clear-day (দিনের রোদ্রোজ্জ্বল রোদ)
- *   - clear-night (তারায় ভরা রাতের মুক্ত আকাশ ও চাঁদ)
+ *   - clear-night (তারায় ভরা রাতের মুক্ত আকাশ ও উজ্জ্বল চাঁদ)
  *   - partly-cloudy-day (দিনের আংশিক মেঘলা দৃশ্য)
- *   - partly-cloudy-night (রাতের আংশিক মেঘলা দৃশ্য)
- *   - cloudy (ঘন মেঘলা আকাশ)
- *   - fog (শীতকালীন কুয়াশা ও মিস্ট দৃশ্য)
- *   - rain (বৃষ্টি ও পানির স্প্ল্যাশ)
- *   - storm (বজ্রঝড় ও মেঘের গর্জনসহ লাইটনিং)
+ *   - partly-cloudy-night (রাতের আংশিক মেঘলা দৃশ্য - চাঁদের পাশে মেঘ)
+ *   - cloudy (দিনের ঘন মেঘলা আকাশ)
+ *   - cloudy-night (রাতের মেঘাচ্ছন্ন আকাশ - অন্ধকারের মাঝেও দৃশ্যমান মেঘ)
+ *   - fog (দিনের কুয়াশা ও শীতকালীন দৃশ্য)
+ *   - fog-night (রাতের কুয়াশা ও শীতকালীন দৃশ্য)
+ *   - rain (দিনের বৃষ্টি ও পানির স্প্ল্যাশ)
+ *   - rain-night (রাতের বৃষ্টি - অন্ধকার রাতে চকচকে বৃষ্টির ধারা)
+ *   - storm (দিনের বজ্রঝড় ও মেঘের গর্জন)
+ *   - storm-night (রাতের বজ্রঝড় ও তীব্র বিদ্যুৎ ঝলকানি)
  *   - snow (শীতের তুষারপাত)
  */
 
@@ -17,10 +21,10 @@ class WeatherSceneRenderer {
   constructor(canvasId, overlayId, stageId) {
     this.canvas = document.getElementById(canvasId);
     this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
-    this.overlay = document.getElementById(overlayId);
-    this.stage = document.getElementById(stageId);
+    this.overlay = document.getElementById(overlayId) || document.getElementById('cwSceneOverlay') || document.getElementById('owSceneOverlay');
+    this.stage = document.getElementById(stageId) || document.getElementById('cwAnimationStage') || document.getElementById('owAnimationStage');
     
-    this.currentScene = 'clear-day';
+    this.currentScene = 'clear-night';
     this.animationFrameId = null;
     this.particles = [];
     this.stars = [];
@@ -55,13 +59,15 @@ class WeatherSceneRenderer {
 
     const w = this.width || 400;
     const h = this.height || 220;
+    const isNight = this.currentScene.includes('night');
 
-    // 1. Stars for Night Skies (Clear Night & Partly Cloudy Night)
-    if (this.currentScene.includes('night')) {
-      for (let i = 0; i < 65; i++) {
+    // 1. Stars for Night Skies (Clear Night, Partly Cloudy Night, and faint stars in cloudy/rainy night)
+    if (isNight) {
+      const starCount = this.currentScene === 'clear-night' ? 70 : (this.currentScene === 'partly-cloudy-night' ? 45 : 18);
+      for (let i = 0; i < starCount; i++) {
         this.stars.push({
           x: Math.random() * w,
-          y: Math.random() * (h * 0.75),
+          y: Math.random() * (h * 0.72),
           radius: Math.random() * 1.5 + 0.4,
           baseAlpha: Math.random() * 0.7 + 0.3,
           twinkleSpeed: Math.random() * 0.05 + 0.02,
@@ -70,23 +76,23 @@ class WeatherSceneRenderer {
       }
     }
 
-    // 2. Rain Particles
-    if (this.currentScene === 'rain' || this.currentScene === 'storm') {
-      const dropCount = this.currentScene === 'storm' ? 140 : 85;
+    // 2. Rain Particles (Day & Night Rain, Storm)
+    if (this.currentScene.includes('rain') || this.currentScene.includes('storm')) {
+      const dropCount = this.currentScene.includes('storm') ? 140 : 85;
       for (let i = 0; i < dropCount; i++) {
         this.particles.push({
           x: Math.random() * w,
           y: Math.random() * h,
           length: Math.random() * 18 + 12,
           speed: Math.random() * 12 + 14,
-          thickness: Math.random() * 1.5 + 0.8,
-          opacity: Math.random() * 0.45 + 0.35,
-          slant: this.currentScene === 'storm' ? -3.5 : -1.5
+          thickness: isNight ? (Math.random() * 1.6 + 0.9) : (Math.random() * 1.4 + 0.8),
+          opacity: isNight ? (Math.random() * 0.55 + 0.4) : (Math.random() * 0.45 + 0.3),
+          slant: this.currentScene.includes('storm') ? -3.5 : -1.5
         });
       }
     }
 
-    // 3. Snow / Winter Particles
+    // 3. Snow Particles
     if (this.currentScene === 'snow') {
       for (let i = 0; i < 60; i++) {
         this.particles.push({
@@ -101,8 +107,8 @@ class WeatherSceneRenderer {
       }
     }
 
-    // 4. Fog / Mist Horizontal Layers (শীত ও কুয়াশা)
-    if (this.currentScene === 'fog') {
+    // 4. Fog / Mist Layers (কুয়াশা ও শীত)
+    if (this.currentScene.includes('fog')) {
       for (let i = 0; i < 5; i++) {
         this.fogLayers.push({
           x: -100 - i * 60,
@@ -113,7 +119,6 @@ class WeatherSceneRenderer {
           opacity: 0.25 + (i * 0.08)
         });
       }
-      // Dew / cool moisture floating particles
       for (let i = 0; i < 25; i++) {
         this.particles.push({
           x: Math.random() * w,
@@ -126,7 +131,7 @@ class WeatherSceneRenderer {
       }
     }
 
-    // 5. Sunny Day Particles (Solar golden motes)
+    // 5. Sunny Day Particles (Solar golden sparks)
     if (this.currentScene === 'clear-day' || this.currentScene === 'partly-cloudy-day') {
       for (let i = 0; i < 30; i++) {
         this.particles.push({
@@ -141,16 +146,17 @@ class WeatherSceneRenderer {
       }
     }
 
-    // 6. Dynamic Moving Clouds (Cloudy, Partly Cloudy Day & Night)
-    if (['cloudy', 'partly-cloudy-day', 'partly-cloudy-night', 'storm'].includes(this.currentScene)) {
-      const count = this.currentScene === 'cloudy' ? 7 : (this.currentScene === 'storm' ? 8 : 4);
+    // 6. Dynamic Moving Clouds (Cloudy Day, Cloudy Night, Partly Cloudy)
+    if (['cloudy', 'cloudy-night', 'partly-cloudy-day', 'partly-cloudy-night', 'storm', 'storm-night', 'rain-night'].includes(this.currentScene)) {
+      const isHeavy = this.currentScene.includes('cloudy') || this.currentScene.includes('storm');
+      const count = isHeavy ? 8 : 4;
       for (let i = 0; i < count; i++) {
         this.clouds.push({
-          x: (i / count) * w * 1.3 - 40,
-          y: Math.random() * (h * 0.35) + 15,
-          scale: Math.random() * 0.5 + 0.7,
-          speed: Math.random() * 0.2 + 0.12,
-          opacity: this.currentScene === 'storm' ? 0.75 : (this.currentScene.includes('night') ? 0.4 : 0.55)
+          x: (i / count) * w * 1.4 - 50,
+          y: Math.random() * (h * 0.4) + 10,
+          scale: Math.random() * 0.55 + 0.75,
+          speed: Math.random() * 0.22 + 0.12,
+          opacity: isNight ? (isHeavy ? 0.78 : 0.48) : 0.65
         });
       }
     }
@@ -170,25 +176,35 @@ class WeatherSceneRenderer {
     const cloud1 = this.overlay.querySelector('.layer-1');
     const cloud2 = this.overlay.querySelector('.layer-2');
     
-    // Background gradient on stage based on realistic sky conditions
+    // Background gradient on stage based on realistic night/day conditions
     if (this.stage) {
       if (this.currentScene === 'clear-day') {
         this.stage.style.background = 'linear-gradient(180deg, #0284c7 0%, #38bdf8 65%, #bae6fd 100%)';
       } else if (this.currentScene === 'clear-night') {
-        this.stage.style.background = 'linear-gradient(180deg, #020617 0%, #0f172a 55%, #1e1b4b 100%)';
+        // Deep realistic starry night
+        this.stage.style.background = 'linear-gradient(180deg, #020617 0%, #090d16 55%, #172554 100%)';
       } else if (this.currentScene === 'partly-cloudy-day') {
         this.stage.style.background = 'linear-gradient(180deg, #0369a1 0%, #38bdf8 55%, #7dd3fc 100%)';
       } else if (this.currentScene === 'partly-cloudy-night') {
-        this.stage.style.background = 'linear-gradient(180deg, #020617 0%, #0f172a 50%, #1e293b 100%)';
+        this.stage.style.background = 'linear-gradient(180deg, #020617 0%, #0b0f19 50%, #1e293b 100%)';
       } else if (this.currentScene === 'cloudy') {
         this.stage.style.background = 'linear-gradient(180deg, #334155 0%, #475569 55%, #64748b 100%)';
+      } else if (this.currentScene === 'cloudy-night') {
+        // Night overcast: dark sky where clouds are distinctly visible against moon glow
+        this.stage.style.background = 'linear-gradient(180deg, #020617 0%, #0f172a 50%, #1e293b 100%)';
       } else if (this.currentScene === 'fog') {
-        // Winter fog / haze
         this.stage.style.background = 'linear-gradient(180deg, #334155 0%, #64748b 45%, #94a3b8 100%)';
+      } else if (this.currentScene === 'fog-night') {
+        this.stage.style.background = 'linear-gradient(180deg, #020617 0%, #0f172a 50%, #334155 100%)';
       } else if (this.currentScene === 'rain') {
         this.stage.style.background = 'linear-gradient(180deg, #0f172a 0%, #1e293b 55%, #334155 100%)';
+      } else if (this.currentScene === 'rain-night') {
+        // Distinctive Night Rain: unmistakable night darkness with glowing wet rain
+        this.stage.style.background = 'linear-gradient(180deg, #020617 0%, #090d16 50%, #0f172a 100%)';
       } else if (this.currentScene === 'storm') {
         this.stage.style.background = 'linear-gradient(180deg, #030712 0%, #0f172a 60%, #1e1b4b 100%)';
+      } else if (this.currentScene === 'storm-night') {
+        this.stage.style.background = 'linear-gradient(180deg, #000000 0%, #050510 50%, #0f172a 100%)';
       } else if (this.currentScene === 'snow') {
         this.stage.style.background = 'linear-gradient(180deg, #1e293b 0%, #334155 60%, #94a3b8 100%)';
       }
@@ -209,19 +225,29 @@ class WeatherSceneRenderer {
       if (this.currentScene === 'clear-day') {
         this.renderSunnyScene(false);
       } else if (this.currentScene === 'clear-night') {
-        this.renderNightScene(false);
+        this.renderNightScene('clear');
       } else if (this.currentScene === 'partly-cloudy-day') {
         this.renderSunnyScene(true);
       } else if (this.currentScene === 'partly-cloudy-night') {
-        this.renderNightScene(true);
+        this.renderNightScene('partly-cloudy');
       } else if (this.currentScene === 'cloudy') {
-        this.renderCloudyScene();
+        this.renderCloudyScene(false);
+      } else if (this.currentScene === 'cloudy-night') {
+        // "মেঘাচ্ছন্ন হয় তবে অন্ধকারের মাঝেও কিছু মেঘ দেখা যাবে"
+        this.renderNightScene('cloudy');
       } else if (this.currentScene === 'fog') {
-        this.renderFogScene();
+        this.renderFogScene(false);
+      } else if (this.currentScene === 'fog-night') {
+        this.renderFogScene(true);
       } else if (this.currentScene === 'rain') {
-        this.renderRainScene();
+        this.renderRainScene(false);
+      } else if (this.currentScene === 'rain-night') {
+        // "বৃষ্টি হলে বৃষ্টি দেখা যাবে তবে রাত সেটাও বোঝা যাবে"
+        this.renderNightRainScene();
       } else if (this.currentScene === 'storm') {
-        this.renderStormScene();
+        this.renderStormScene(false);
+      } else if (this.currentScene === 'storm-night') {
+        this.renderStormScene(true);
       } else if (this.currentScene === 'snow') {
         this.renderSnowScene();
       }
@@ -294,27 +320,27 @@ class WeatherSceneRenderer {
       }
     });
 
-    // If partly cloudy, draw drifting soft clouds
     if (isPartlyCloudy) {
-      this.drawPuffClouds('#ffffff', 0.5);
+      this.drawPuffClouds('#ffffff', 0.52);
     }
   }
 
-  /* 🌙 Night / Partly Cloudy Night */
-  renderNightScene(isPartlyCloudy) {
+  /* 🌙 Night Scenes: Clear Night, Partly Cloudy, and Cloudy Night with visible clouds */
+  renderNightScene(mode) {
     const ctx = this.ctx;
     const w = this.width;
     const h = this.height;
 
-    // 1. Twinkling Stars
+    // 1. Twinkling Stars (visible in clear and partly cloudy, faint in cloudy)
     const time = performance.now() * 0.002;
     this.stars.forEach(s => {
-      const alpha = s.baseAlpha + Math.sin(time * 2 + s.phase) * 0.25;
+      const alphaMultiplier = mode === 'cloudy' ? 0.4 : 1.0;
+      const alpha = (s.baseAlpha + Math.sin(time * 2 + s.phase) * 0.25) * alphaMultiplier;
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.1, Math.min(1, alpha))})`;
+      ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.08, Math.min(1, alpha))})`;
       ctx.shadowColor = '#38bdf8';
-      ctx.shadowBlur = s.radius > 1 ? 5 : 0;
+      ctx.shadowBlur = s.radius > 1 ? 4 : 0;
       ctx.fill();
       ctx.shadowBlur = 0;
     });
@@ -323,63 +349,183 @@ class WeatherSceneRenderer {
     const moonX = w - 85;
     const moonY = 55;
 
-    // Outer moon halo
-    const haloGrad = ctx.createRadialGradient(moonX, moonY, 15, moonX, moonY, 80);
-    haloGrad.addColorStop(0, 'rgba(224, 242, 254, 0.4)');
-    haloGrad.addColorStop(0.5, 'rgba(186, 230, 253, 0.15)');
+    // Moon halo
+    const haloGrad = ctx.createRadialGradient(moonX, moonY, 15, moonX, moonY, 85);
+    haloGrad.addColorStop(0, 'rgba(224, 242, 254, 0.45)');
+    haloGrad.addColorStop(0.5, 'rgba(186, 230, 253, 0.18)');
     haloGrad.addColorStop(1, 'rgba(186, 230, 253, 0)');
     ctx.beginPath();
-    ctx.arc(moonX, moonY, 80, 0, Math.PI * 2);
+    ctx.arc(moonX, moonY, 85, 0, Math.PI * 2);
     ctx.fillStyle = haloGrad;
     ctx.fill();
 
-    // Moon body
+    // In cloudy night, moon shines from behind clouds
+    const moonBodyAlpha = mode === 'cloudy' ? 0.72 : 1.0;
+    ctx.save();
+    ctx.globalAlpha = moonBodyAlpha;
     ctx.beginPath();
     ctx.arc(moonX, moonY, 26, 0, Math.PI * 2);
     ctx.fillStyle = '#f8fafc';
     ctx.shadowColor = '#bae6fd';
-    ctx.shadowBlur = 18;
+    ctx.shadowBlur = mode === 'cloudy' ? 26 : 18;
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Moon craters (subtle realism)
-    ctx.fillStyle = 'rgba(203, 213, 225, 0.4)';
+    // Subtle moon craters
+    ctx.fillStyle = 'rgba(203, 213, 225, 0.45)';
     ctx.beginPath();
     ctx.arc(moonX - 7, moonY - 6, 5, 0, Math.PI * 2);
     ctx.arc(moonX + 8, moonY + 6, 7, 0, Math.PI * 2);
     ctx.arc(moonX - 4, moonY + 11, 4, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
 
-    // If partly cloudy, draw night misty clouds drifting across moon
-    if (isPartlyCloudy) {
-      this.drawPuffClouds('rgba(203, 213, 225, 0.35)', 0.4);
+    // 3. Clouds in the night sky
+    if (mode === 'partly-cloudy') {
+      // Light drifting night clouds passing across the moon
+      this.drawPuffClouds('rgba(203, 213, 225, 0.42)', 0.55);
+    } else if (mode === 'cloudy') {
+      // "মেঘাচ্ছন্ন হয় তবে অন্ধকারের মাঝেও কিছু মেঘ দেখা যাবে"
+      // Visible volumetric night clouds with silver-blue rim highlighting
+      this.drawNightOvercastClouds();
     }
   }
 
-  /* 🌫️ Fog & Winter Haze (কুয়াশা ও শীতকালীন দৃশ্য) */
-  renderFogScene() {
+  /* 🌧️ Night Rain: "বৃষ্টি হলে বৃষ্টি দেখা যাবে তবে রাত সেটাও বোঝা যাবে" */
+  renderNightRainScene() {
     const ctx = this.ctx;
     const w = this.width;
     const h = this.height;
 
-    // Overcast pale horizon glow
+    // 1. Faint moon glow & stars behind the stormy rainy night
+    const moonX = w - 85;
+    const moonY = 55;
+    const moonGlow = ctx.createRadialGradient(moonX, moonY, 10, moonX, moonY, 70);
+    moonGlow.addColorStop(0, 'rgba(186, 230, 253, 0.25)');
+    moonGlow.addColorStop(1, 'rgba(15, 23, 42, 0)');
+    ctx.beginPath();
+    ctx.arc(moonX, moonY, 70, 0, Math.PI * 2);
+    ctx.fillStyle = moonGlow;
+    ctx.fill();
+
+    // Night stars barely visible through rain breaks
+    this.stars.slice(0, 15).forEach(s => {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.fill();
+    });
+
+    // 2. Dark night rain clouds overhead
+    this.drawNightOvercastClouds(0.5);
+
+    // 3. Luminous falling night rain droplets (shining in night ambient light)
+    ctx.strokeStyle = '#bfdbfe'; // Bright night water glint
+    ctx.lineCap = 'round';
+
+    this.particles.forEach(p => {
+      ctx.lineWidth = p.thickness;
+      ctx.globalAlpha = p.opacity;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x + p.slant * (p.length / 10), p.y + p.length);
+      ctx.stroke();
+
+      p.x += p.slant;
+      p.y += p.speed;
+
+      // Ground splash
+      if (p.y > h - 15) {
+        if (Math.random() > 0.35) {
+          this.splashes.push({
+            x: p.x,
+            y: h - Math.random() * 12,
+            radius: 1,
+            maxRadius: Math.random() * 12 + 6,
+            alpha: 0.65
+          });
+        }
+        p.y = -p.length;
+        p.x = Math.random() * (w + 100) - 50;
+      }
+    });
+    ctx.globalAlpha = 1.0;
+
+    // Splashes on dark ground reflecting night wetness
+    for (let i = this.splashes.length - 1; i >= 0; i--) {
+      const s = this.splashes[i];
+      ctx.beginPath();
+      ctx.ellipse(s.x, s.y, s.radius * 1.8, s.radius * 0.6, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(191, 219, 254, ${s.alpha})`;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      s.radius += 0.65;
+      s.alpha -= 0.045;
+      if (s.alpha <= 0) this.splashes.splice(i, 1);
+    }
+  }
+
+  /* ☁️ Night Overcast Clouds: Visible even in darkness with moon-silver rims */
+  drawNightOvercastClouds(extraAlpha = 1.0) {
+    const ctx = this.ctx;
+    const w = this.width;
+
+    this.clouds.forEach((c, idx) => {
+      ctx.save();
+      // Alternating deep slate and silver-blue rim so darkness has deep visible cloud texture
+      const cloudColor = (idx % 2 === 0) ? 'rgba(51, 65, 85, 0.72)' : 'rgba(71, 85, 105, 0.65)';
+      ctx.globalAlpha = c.opacity * extraAlpha;
+      ctx.fillStyle = cloudColor;
+
+      const cx = c.x;
+      const cy = c.y;
+      const s = c.scale;
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 32 * s, 0, Math.PI * 2);
+      ctx.arc(cx + 28 * s, cy - 16 * s, 40 * s, 0, Math.PI * 2);
+      ctx.arc(cx + 72 * s, cy - 8 * s, 32 * s, 0, Math.PI * 2);
+      ctx.arc(cx + 48 * s, cy + 12 * s, 30 * s, 0, Math.PI * 2);
+      ctx.arc(cx + 14 * s, cy + 12 * s, 28 * s, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.shadowColor = '#64748b';
+      ctx.shadowBlur = 10;
+      ctx.fill();
+      ctx.restore();
+
+      c.x += c.speed;
+      if (c.x > w + 140) {
+        c.x = -140;
+      }
+    });
+  }
+
+  /* 🌫️ Fog & Winter Haze (কুয়াশা ও শীতকালীন দৃশ্য - দিন/রাত) */
+  renderFogScene(isNight) {
+    const ctx = this.ctx;
+    const w = this.width;
+    const h = this.height;
+
+    // Glowing horizon or moon diffuse glow
     const glowGrad = ctx.createRadialGradient(w * 0.5, h * 0.3, 10, w * 0.5, h * 0.3, 120);
-    glowGrad.addColorStop(0, 'rgba(241, 245, 249, 0.25)');
+    glowGrad.addColorStop(0, isNight ? 'rgba(186, 230, 253, 0.2)' : 'rgba(241, 245, 249, 0.25)');
     glowGrad.addColorStop(1, 'rgba(148, 163, 184, 0)');
     ctx.beginPath();
     ctx.arc(w * 0.5, h * 0.3, 120, 0, Math.PI * 2);
     ctx.fillStyle = glowGrad;
     ctx.fill();
 
-    // Drifting horizontal mist fog waves
+    // Drifting mist fog waves
     this.fogLayers.forEach(f => {
       ctx.save();
       ctx.beginPath();
       ctx.rect(0, f.y - 15, w, f.height);
       const fogGrad = ctx.createLinearGradient(0, f.y - 15, 0, f.y + f.height);
-      fogGrad.addColorStop(0, `rgba(226, 232, 240, 0)`);
-      fogGrad.addColorStop(0.5, `rgba(226, 232, 240, ${f.opacity})`);
-      fogGrad.addColorStop(1, `rgba(226, 232, 240, 0)`);
+      const fogColor = isNight ? '148, 163, 184' : '226, 232, 240';
+      fogGrad.addColorStop(0, `rgba(${fogColor}, 0)`);
+      fogGrad.addColorStop(0.5, `rgba(${fogColor}, ${f.opacity})`);
+      fogGrad.addColorStop(1, `rgba(${fogColor}, 0)`);
       ctx.fillStyle = fogGrad;
       ctx.fill();
       ctx.restore();
@@ -388,7 +534,7 @@ class WeatherSceneRenderer {
       if (f.x > w) f.x = -w * 0.5;
     });
 
-    // Floating cool dew / moisture particles
+    // Floating dew particles
     this.particles.forEach(p => {
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
@@ -404,16 +550,14 @@ class WeatherSceneRenderer {
     });
   }
 
-  /* ☁️ Cloudy / Overcast Scene */
+  /* ☁️ Daytime Cloudy Scene */
   renderCloudyScene() {
     const ctx = this.ctx;
     const w = this.width;
     const h = this.height;
 
-    // Gloomy sky tint
     ctx.fillStyle = 'rgba(30, 41, 59, 0.25)';
     ctx.fillRect(0, 0, w, h);
-
     this.drawPuffClouds('#cbd5e1', 0.65);
   }
 
@@ -442,7 +586,7 @@ class WeatherSceneRenderer {
     });
   }
 
-  /* 🌧️ Rain Scene */
+  /* 🌧️ Daytime Rain Scene */
   renderRainScene() {
     const ctx = this.ctx;
     const w = this.width;
@@ -478,7 +622,6 @@ class WeatherSceneRenderer {
     });
     ctx.globalAlpha = 1.0;
 
-    // Splashes
     for (let i = this.splashes.length - 1; i >= 0; i--) {
       const s = this.splashes[i];
       ctx.beginPath();
@@ -493,8 +636,8 @@ class WeatherSceneRenderer {
     }
   }
 
-  /* ⛈️ Storm & Thunder */
-  renderStormScene() {
+  /* ⛈️ Storm Scene (Day & Night) */
+  renderStormScene(isNight) {
     const ctx = this.ctx;
     const w = this.width;
     const h = this.height;
@@ -513,12 +656,16 @@ class WeatherSceneRenderer {
     }
 
     if (this.isFlashing) {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+      ctx.fillStyle = isNight ? 'rgba(224, 242, 254, 0.9)' : 'rgba(255, 255, 255, 0.75)';
       ctx.fillRect(0, 0, w, h);
     }
 
-    this.renderRainScene();
-    this.drawPuffClouds('#475569', 0.85);
+    if (isNight) {
+      this.renderNightRainScene();
+    } else {
+      this.renderRainScene();
+      this.drawPuffClouds('#475569', 0.85);
+    }
   }
 
   /* Helper to draw organic puff clouds */
@@ -556,8 +703,8 @@ class WeatherSceneRenderer {
 // Global factory initializer
 window.initWeatherScenes = () => {
   window.WeatherScenes = {
-    currentLocationScene: new WeatherSceneRenderer('cwAnimCanvas', 'cwAnimOverlay', 'cwAnimStage'),
-    otherLocationScene: new WeatherSceneRenderer('owAnimCanvas', 'owAnimOverlay', 'owAnimStage')
+    currentLocationScene: new WeatherSceneRenderer('cwAnimCanvas', 'cwSceneOverlay', 'cwAnimationStage'),
+    otherLocationScene: new WeatherSceneRenderer('owAnimCanvas', 'owSceneOverlay', 'owAnimationStage')
   };
 };
 

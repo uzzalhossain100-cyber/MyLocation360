@@ -77,6 +77,27 @@ const WeatherApp = {
         this.fetchOtherLocationWeather(lat, lon, `${city}, বাংলাদেশ`);
       });
     });
+
+    // Interactive Atmospheric Scene Switcher Pills
+    const scenePillBtns = document.querySelectorAll('.scene-pill-btn');
+    scenePillBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        scenePillBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const scene = btn.getAttribute('data-scene');
+        const badge = btn.getAttribute('data-badge');
+
+        const badgeEl = document.getElementById('cwAnimBadge');
+        if (badgeEl && badge) badgeEl.innerText = badge;
+
+        if (window.WeatherScenes && window.WeatherScenes.currentLocationScene) {
+          window.WeatherScenes.currentLocationScene.setScene(scene);
+        }
+
+        if (window.showToast) window.showToast(`দৃশ্য পরিবর্তিত হয়েছে: ${btn.innerText}`);
+      });
+    });
   },
 
   // Bangla Digital Clock & Date
@@ -134,30 +155,48 @@ const WeatherApp = {
 
     if (code === 0) {
       if (isNight) {
-        return { text: 'পরিষ্কার রাতের আকাশ', icon: '🌙', scene: 'clear-night', badge: 'তারায় ভরা রাতের দৃশ্য' };
+        return { text: 'পরিষ্কার রাতের আকাশ (চাঁদ ও তারা)', icon: '🌙', scene: 'clear-night', badge: 'তারায় ভরা রাতের আকাশ (চাঁদ ও তারা)' };
       }
       return { text: 'রোদ্রোজ্জ্বল পরিষ্কার আকাশ', icon: '☀️', scene: 'clear-day', badge: 'রোদ্রোজ্জ্বল দিনের দৃশ্য' };
     } else if (code === 1 || code === 2) {
       if (isNight) {
-        return { text: 'আংশিক মেঘলা রাতের আকাশ', icon: '☁️', scene: 'partly-cloudy-night', badge: 'রাতের আংশিক মেঘলা দৃশ্য' };
+        return { text: 'রাতের আকাশে চাঁদের পাশে মেঘ', icon: '☁️', scene: 'partly-cloudy-night', badge: 'রাতের আংশিক মেঘলা দৃশ্য' };
       }
       return { text: 'আংশিক মেঘলা আকাশ', icon: '🌤️', scene: 'partly-cloudy-day', badge: 'আংশিক মেঘলা দিনের দৃশ্য' };
     } else if (code === 3) {
+      if (isNight) {
+        return { text: 'রাতের মেঘাচ্ছন্ন আকাশ (অন্ধকারে মেঘ)', icon: '☁️', scene: 'cloudy-night', badge: 'রাতের মেঘাচ্ছন্ন দৃশ্য (অন্ধকারে দৃশ্যমান মেঘ)' };
+      }
       return { text: 'মেঘাচ্ছন্ন (আকাশ মেঘলা)', icon: '☁️', scene: 'cloudy', badge: 'মেঘলা আকাশের দৃশ্য' };
     } else if (code === 45 || code === 48) {
+      if (isNight) {
+        return { text: 'রাতের শীতকালীন কুয়াশা', icon: '🌫️', scene: 'fog-night', badge: 'রাতের শীত ও কুয়াশার দৃশ্য' };
+      }
       return { text: 'কুয়াশাচ্ছন্ন ও শীতকালীন পরিবেশ', icon: '🌫️', scene: 'fog', badge: 'কুয়াশা ও শীতকালীন দৃশ্য' };
     } else if (code >= 51 && code <= 55) {
+      if (isNight) {
+        return { text: 'রাতে হালকা গুঁড়ি গুঁড়ি বৃষ্টি', icon: '🌦️', scene: 'rain-night', badge: 'রাতের বৃষ্টির দৃশ্য (অন্ধকারে বৃষ্টি)' };
+      }
       return { text: 'হালকা গুঁড়ি গুঁড়ি বৃষ্টি', icon: '🌦️', scene: 'rain', badge: 'গুঁড়ি গুঁড়ি বৃষ্টির দৃশ্য' };
     } else if (code >= 61 && code <= 65) {
+      if (isNight) {
+        return { text: 'রাতে রিমঝিম বৃষ্টি পড়ছে', icon: '🌧️', scene: 'rain-night', badge: 'রাতের বৃষ্টির দৃশ্য (অন্ধকারে বৃষ্টি)' };
+      }
       return { text: 'বৃষ্টি পড়ছে', icon: '🌧️', scene: 'rain', badge: 'বৃষ্টির জীবন্ত দৃশ্য' };
     } else if (code >= 71 && code <= 77) {
       return { text: 'তুষারপাত / শৈত্য', icon: '🌨️', scene: 'snow', badge: 'শীত ও তুষারপাতের দৃশ্য' };
     } else if (code >= 80 && code <= 82) {
+      if (isNight) {
+        return { text: 'রাতে বৃষ্টির ধারা পড়ছে', icon: '🌧️', scene: 'rain-night', badge: 'রাতের বৃষ্টির দৃশ্য (অন্ধকারে বৃষ্টি)' };
+      }
       return { text: 'বৃষ্টির ধারা পড়ছে', icon: '🌧️', scene: 'rain', badge: 'বৃষ্টির জীবন্ত দৃশ্য' };
     } else if (code >= 95 && code <= 99) {
+      if (isNight) {
+        return { text: 'রাতের বজ্রঝড় ও বিদ্যুৎ ঝলকানি', icon: '⛈️', scene: 'storm-night', badge: 'রাতের বজ্রঝড় ও বিদ্যুৎ ঝলকানি' };
+      }
       return { text: 'বজ্রঝড় ও ভারী বৃষ্টি', icon: '⛈️', scene: 'storm', badge: 'বজ্রঝড় ও মেঘের গর্জন' };
     } else {
-      if (isNight) return { text: 'রাতের শান্ত পরিবেশ', icon: '🌙', scene: 'clear-night', badge: 'রাতের শান্ত দৃশ্য' };
+      if (isNight) return { text: 'রাতের শান্ত পরিবেশ', icon: '🌙', scene: 'clear-night', badge: 'তারায় ভরা রাতের শান্ত দৃশ্য' };
       return { text: 'স্বাভাবিক আবহাওয়া', icon: '🌤️', scene: 'clear-day', badge: 'স্বাভাবিক পরিবেশ' };
     }
   },
