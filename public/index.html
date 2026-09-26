@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MyLocation360 - স্মার্ট ম্যাপ, দিকদর্শন ও লাইভ আবহাওয়া</title>
+  
+  <!-- Favicon & PWA -->
+  <link rel="icon" type="image/svg+xml" href="/assets/icon-192.svg">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1e3a8a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Google Fonts: Hind Siliguri (Bengali) + Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  
+  <!-- MapLibre GL JS CSS & JS for high performance smooth rotation map -->
+  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+
+  <!-- App Stylesheet -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="theme-dark">
+
+  <!-- Main App Shell -->
+  <div id="app" class="app-container">
+    
+    <!-- Top Header Bar -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="app-logo">
+          <img src="/assets/icon-192.svg" alt="MyLocation360 লোগো" class="logo-img">
+          <div class="logo-text">
+            <h1 class="logo-title">MyLocation360 <span class="logo-badge">PRO</span></h1>
+            <p class="logo-sub">স্মার্ট ম্যাপ, দিকদর্শন ও আবহাওয়া</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick status indicator -->
+      <div class="header-right">
+        <div class="status-indicator" id="gpsStatusBadge" title="জিপিএস সংযোগ স্থিতি">
+          <span class="pulse-dot"></span>
+          <span id="gpsStatusText">জিপিএস সক্রিয়</span>
+        </div>
+        <button class="icon-btn" id="btnHelp" title="ব্যবহার নির্দেশিকা">
+          <i class="fa-solid fa-circle-info"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Top Navigation Menu (Responsive Tabs) -->
+    <nav class="nav-tab-bar">
+      <button class="nav-tab-btn active" id="tabBtnLocation" data-tab="location-tab">
+        <i class="fa-solid fa-location-crosshairs tab-icon"></i>
+        <div class="tab-label-group">
+          <span class="tab-title">MyLocation</span>
+          <span class="tab-subtitle">মানচিত্র ও দিকদর্শন</span>
+        </div>
+      </button>
+
+      <button class="nav-tab-btn" id="tabBtnWeather" data-tab="weather-tab">
+        <i class="fa-solid fa-cloud-sun-rain tab-icon"></i>
+        <div class="tab-label-group">
+          <span class="tab-title">আবহাওয়া</span>
+          <span class="tab-subtitle">লাইভ ও অন্য লোকেশন</span>
+        </div>
+      </button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- ================= TAB 1: MY LOCATION & MAP ================= -->
+      <section id="location-tab" class="tab-pane active">
+        
+        <!-- Map Container & Overlays Wrapper -->
+        <div class="map-view-wrapper">
+          
+          <!-- Map Cardinal Direction Banners (চারদিকের দিক নির্দেশক) -->
+          <div class="cardinal-banner cardinal-north">
+            <span class="cardinal-icon">⬆️</span>
+            <span class="cardinal-text">উত্তর (North)</span>
+            <span class="bearing-deg" id="northBearingText">০°</span>
+          </div>
+          <div class="cardinal-banner cardinal-south">
+            <span class="cardinal-icon">⬇️</span>
+            <span class="cardinal-text">দক্ষিণ (South)</span>
+          </div>
+          <div class="cardinal-banner cardinal-west">
+            <span class="cardinal-icon">⬅️</span>
+            <span class="cardinal-text">পশ্চিম (West)</span>
+          </div>
+          <div class="cardinal-banner cardinal-east">
+            <span class="cardinal-icon">➡️</span>
+            <span class="cardinal-text">পূর্ব (East)</span>
+          </div>
+
+          <!-- The Map canvas -->
+          <div id="map" class="map-canvas"></div>
+
+          <!-- Compass Dial Floating Widget (Interactive Rotation) -->
+          <div class="floating-compass-widget" id="compassDialWidget" title="ক্লিক করলে সোজা উত্তরমুখী হবে, অথবা ঘুরিয়ে দিক পরিবর্তন করুন">
+            <div class="compass-ring" id="compassRing">
+              <span class="compass-point north">উ</span>
+              <span class="compass-point east">পূ</span>
+              <span class="compass-point south">দ</span>
+              <span class="compass-point west">প</span>
+              <div class="compass-needle" id="compassNeedle">
+                <div class="needle-north"></div>
+                <div class="needle-south"></div>
+                <div class="needle-center"></div>
+              </div>
+            </div>
+            <div class="compass-bearing-label" id="compassBearingLabel">০° উ</div>
+          </div>
+
+          <!-- Floating Map Controls Group -->
+          <div class="floating-map-controls">
+            
+            <!-- THE CORE BUTTON REQUESTED: Auto Align / Reset Direction -->
+            <button class="core-direction-btn" id="btnAutoAlignDirection" title="ক্লিক করলে ম্যাপ অটো ঘুরে সঠিক দিক (উত্তর) চিহ্নিত করবে">
+              <div class="btn-icon-pulse">
+                <i class="fa-solid fa-compass"></i>
+              </div>
+              <div class="btn-text-content">
+                <span class="primary-text">দিক চিহ্নিত করুন</span>
+                <span class="sub-text">অটো সঠিক দিকে ঘুরবে</span>
+              </div>
+            </button>
+
+            <!-- Manual Rotation Controls -->
+            <div class="rotation-tools-pill">
+              <button class="tool-btn" id="btnRotateLeft" title="বামে ঘোরান (Rotate Left 15°)">
+                <i class="fa-solid fa-rotate-left"></i>
+              </button>
+              <div class="rotation-slider-wrap">
+                <input type="range" id="mapRotationSlider" min="0" max="360" value="0" title="ইচ্ছামতো ম্যাপ ঘুরান (0-360°)">
+              </div>
+              <button class="tool-btn" id="btnRotateRight" title="ডানে ঘোরান (Rotate Right 15°)">
+                <i class="fa-solid fa-rotate-right"></i>
+              </button>
+            </div>
+
+            <!-- Recenter to My Location Button -->
+            <button class="recenter-btn" id="btnRecenterLocation" title="আমার বর্তমান লোকেশনে ফোকাস করুন">
+              <i class="fa-solid fa-crosshairs"></i>
+              <span>আমার লোকেশন</span>
+            </button>
+
+            <!-- Pitch/3D Toggle -->
+            <button class="tilt-btn" id="btnToggle3D" title="3D টিল্ট / ভিউ পরিবর্তন">
+              <i class="fa-solid fa-cube"></i>
+              <span id="tiltLabel">2D</span>
+            </button>
+          </div>
+
+          <!-- POI Category Filter Pills on Map -->
+          <div class="poi-filter-scroll">
+            <button class="poi-chip active" data-type="all"><i class="fa-solid fa-layer-group"></i> সব স্থাপনা</button>
+            <button class="poi-chip" data-type="hospital"><i class="fa-solid fa-hospital"></i> হাসপাতাল</button>
+            <button class="poi-chip" data-type="mosque"><i class="fa-solid fa-mosque"></i> মসজিদ</button>
+            <button class="poi-chip" data-type="restaurant"><i class="fa-solid fa-utensils"></i> রেস্তোরাঁ</button>
+            <button class="poi-chip" data-type="school"><i class="fa-solid fa-graduation-cap"></i> স্কুল-কলেজ</button>
+            <button class="poi-chip" data-type="atm"><i class="fa-solid fa-money-check-dollar"></i> ব্যাংক/এটিএম</button>
+            <button class="poi-chip" data-type="fuel"><i class="fa-solid fa-gas-pump"></i> জ্বালানি পাম্প</button>
+          </div>
+
+        </div>
+
+        <!-- Dashboard Bar under the map: Speed, Road, Coordinates & Nearby Places -->
+        <div class="location-dashboard-grid">
+          
+          <!-- Speedometer Card -->
+          <div class="dash-card speed-card">
+            <div class="dash-card-header">
+              <span class="card-icon"><i class="fa-solid fa-gauge-high"></i></span>
+              <span class="card-title">চলার গতি (Speed)</span>
+            </div>
+            <div class="speedometer-visual">
+              <div class="speed-value" id="currentSpeed">০</div>
+              <div class="speed-unit">কিমি/ঘণ্টা</div>
+            </div>
+            <div class="speed-status-badge" id="speedStatus">স্থির অবস্থায় আছেন</div>
+          </div>
+
+          <!-- Current Road & Location Info Card -->
+          <div class="dash-card road-card">
+            <div class="dash-card-header">
+              <span class="card-icon"><i class="fa-solid fa-road"></i></span>
+              <span class="card-title">বর্তমান রাস্তা ও এলাকা</span>
+            </div>
+            <div class="road-name-display" id="currentRoadName">লোকেশন লোড হচ্ছে...</div>
+            <div class="road-sub-display" id="currentAreaName">অপেক্ষা করুন, জিপিএস সিগন্যাল যাচাই হচ্ছে</div>
+            <div class="coord-tag-row">
+              <span class="coord-tag"><i class="fa-solid fa-location-dot"></i> <span id="currentCoords">23.8103° N, 90.4125° E</span></span>
+              <span class="coord-tag"><i class="fa-solid fa-mountain"></i> উচ্চতা: <span id="currentAltitude">১৫ মি.</span></span>
+            </div>
+          </div>
+
+          <!-- Nearby Places List Card -->
+          <div class="dash-card nearby-card">
+            <div class="dash-card-header">
+              <span class="card-icon"><i class="fa-solid fa-signs-post"></i></span>
+              <span class="card-title">আশেপাশের পরিচিত স্থাপনা (POI)</span>
+              <button class="refresh-poi-btn" id="btnRefreshPoi" title="রিফ্রেশ করুন"><i class="fa-solid fa-arrows-rotate"></i></button>
+            </div>
+            <div class="nearby-places-list" id="nearbyPlacesList">
+              <div class="poi-placeholder">আশেপাশের স্থাপনা খোঁজা হচ্ছে...</div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ================= TAB 2: WEATHER & ANIMATION ================= -->
+      <section id="weather-tab" class="tab-pane">
+        
+        <div class="weather-content-wrapper">
+          
+          <!-- SECTION 1: CURRENT LOCATION WEATHER -->
+          <div class="weather-section-block main-weather-block">
+            
+            <div class="section-badge-header">
+              <span class="badge-pill pulse"><i class="fa-solid fa-location-arrow"></i> বর্তমান লোকেশন</span>
+              <button class="refresh-weather-btn" id="btnRefreshCurrentWeather" title="আপডেট করুন">
+                <i class="fa-solid fa-rotate"></i> রিফ্রেশ
+              </button>
+            </div>
+
+            <!-- Current Location Header Display -->
+            <div class="weather-hero-card">
+              
+              <!-- Location Name Display -->
+              <div class="weather-location-title-wrap">
+                <i class="fa-solid fa-location-dot location-pin-icon"></i>
+                <h2 class="current-weather-city" id="cwCityName">ঢাকা, বাংলাদেশ</h2>
+              </div>
+              
+              <!-- Date, Day & Real-time Live Clock -->
+              <div class="weather-datetime-banner">
+                <div class="date-col">
+                  <i class="fa-regular fa-calendar-days"></i>
+                  <span class="day-name" id="cwDayName">শনিবার</span>,
+                  <span class="date-full" id="cwDateFull">২৬ সেপ্টেম্বর ২০২৬</span>
+                </div>
+                <div class="time-col">
+                  <i class="fa-regular fa-clock"></i>
+                  <span class="live-clock" id="cwLiveClock">--:--:--</span>
+                </div>
+              </div>
+
+              <!-- Main Temperature & Condition Display -->
+              <div class="weather-main-stat-row">
+                <div class="temp-big-display">
+                  <span class="temp-number" id="cwTemp">৩১</span>
+                  <span class="temp-deg">°C</span>
+                </div>
+                
+                <div class="condition-display-badge">
+                  <span class="condition-icon-big" id="cwConditionIcon">☀️</span>
+                  <div class="condition-text-wrap">
+                    <span class="condition-name" id="cwConditionName">রোদ্রোজ্জ্বল</span>
+                    <span class="feels-like-text">অনুভূত তাপমাত্রা: <span id="cwFeelsLike">৩৪</span>°C</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Weather Metrics Grid (Wind, Rain %, Humidity, Pressure) -->
+              <div class="weather-metrics-grid">
+                
+                <div class="metric-item rain-chance-item">
+                  <div class="metric-icon"><i class="fa-solid fa-cloud-showers-heavy"></i></div>
+                  <div class="metric-info">
+                    <span class="metric-label">বৃষ্টির সম্ভাবনা</span>
+                    <span class="metric-val" id="cwRainChance">২০%</span>
+                  </div>
+                </div>
+
+                <div class="metric-item wind-item">
+                  <div class="metric-icon"><i class="fa-solid fa-wind"></i></div>
+                  <div class="metric-info">
+                    <span class="metric-label">বাতাসের গতি</span>
+                    <span class="metric-val" id="cwWindSpeed">১২ কিমি/ঘণ্টা</span>
+                  </div>
+                </div>
+
+                <div class="metric-item humidity-item">
+                  <div class="metric-icon"><i class="fa-solid fa-droplet"></i></div>
+                  <div class="metric-info">
+                    <span class="metric-label">আর্দ্রতা</span>
+                    <span class="metric-val" id="cwHumidity">৬৫%</span>
+                  </div>
+                </div>
+
+                <div class="metric-item sun-item">
+                  <div class="metric-icon"><i class="fa-solid fa-sun"></i></div>
+                  <div class="metric-info">
+                    <span class="metric-label">UV সূচক / চাপ</span>
+                    <span class="metric-val" id="cwUvIndex">৫ (মাঝারি)</span>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- DYNAMIC LIVE WEATHER ANIMATION SCENE -->
+              <div class="weather-animation-card">
+                <div class="anim-card-header">
+                  <div class="anim-title">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>লাইভ আবহাওয়ার দৃশ্য (Dynamic Animation)</span>
+                  </div>
+                  <span class="anim-state-badge" id="cwAnimBadge">রোদ্রোজ্জ্বল দৃশ্য</span>
+                </div>
+
+                <!-- The Interactive Canvas Container -->
+                <div class="animation-stage-container" id="cwAnimationStage">
+                  <canvas id="cwAnimCanvas" class="weather-canvas"></canvas>
+                  
+                  <!-- Overlaid Scene Elements -->
+                  <div class="scene-overlay" id="cwSceneOverlay">
+                    <div class="sun-glow" id="cwSunGlow"></div>
+                    <div class="cloud-layer layer-1" id="cwCloudLayer1"></div>
+                    <div class="cloud-layer layer-2" id="cwCloudLayer2"></div>
+                    <div class="rain-layer" id="cwRainLayer"></div>
+                    <div class="lightning-flash" id="cwLightning"></div>
+                  </div>
+
+                  <!-- Quick scene tester pills -->
+                  <div class="scene-manual-switcher" title="যেকোনো দৃশ্য চালিয়ে দেখুন">
+                    <span class="switcher-hint">টেস্ট দৃশ্য:</span>
+                    <button class="scene-pill-btn active" data-scene="sunny">☀️ রোদ</button>
+                    <button class="scene-pill-btn" data-scene="rain">🌧️ বৃষ্টি</button>
+                    <button class="scene-pill-btn" data-scene="cloudy">☁️ মেঘ</button>
+                    <button class="scene-pill-btn" data-scene="storm">⛈️ ঝড়</button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- SECTION 2: OTHER LOCATION WEATHER (অন্য লোকেশনের আবহাওয়া) -->
+          <div class="weather-section-block other-weather-block">
+            
+            <div class="section-divider">
+              <span><i class="fa-solid fa-earth-asia"></i> অন্য লোকেশনের আবহাওয়া দেখুন</span>
+            </div>
+
+            <!-- Search & Quick Selection Bar -->
+            <div class="other-search-card">
+              <div class="search-form-row">
+                <div class="search-input-wrap">
+                  <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                  <input type="text" id="otherCityInput" placeholder="শহর বা এলাকার নাম লিখুন (যেমন: চট্টগ্রাম, কক্সবাজার, সিলেট...)" autocomplete="off">
+                  <button class="clear-btn" id="btnClearSearch" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <button class="view-weather-btn" id="btnViewOtherWeather">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <span>ভিউ আবহাওয়া</span>
+                </button>
+              </div>
+
+              <!-- Quick City Selection Chips -->
+              <div class="quick-city-chips">
+                <span class="chip-label">জনপ্রিয় শহর:</span>
+                <button class="city-chip" data-city="চট্টগ্রাম" data-lat="22.3569" data-lon="91.7832">চট্টগ্রাম</button>
+                <button class="city-chip" data-city="কক্সবাজার" data-lat="21.4272" data-lon="92.0058">কক্সবাজার</button>
+                <button class="city-chip" data-city="সিলেট" data-lat="24.8949" data-lon="91.8687">সিলেট</button>
+                <button class="city-chip" data-city="রাজশাহী" data-lat="24.3636" data-lon="88.6241">রাজশাহী</button>
+                <button class="city-chip" data-city="খুলনা" data-lat="22.8456" data-lon="89.5403">খুলনা</button>
+                <button class="city-chip" data-city="বরিশাল" data-lat="22.7010" data-lon="90.3535">বরিশাল</button>
+                <button class="city-chip" data-city="রংপুর" data-lat="25.7439" data-lon="89.2752">রংপুর</button>
+                <button class="city-chip" data-city="ময়মনসিংহ" data-lat="24.7471" data-lon="90.4203">ময়মনসিংহ</button>
+              </div>
+            </div>
+
+            <!-- Other Location Weather Display Card (Populated upon clicking 'View Weather') -->
+            <div class="weather-hero-card other-location-result-card" id="otherWeatherResultCard" style="display: none;">
+              
+              <!-- Location Title -->
+              <div class="weather-location-title-wrap">
+                <i class="fa-solid fa-map-pin location-pin-icon other-pin"></i>
+                <h2 class="current-weather-city" id="owCityName">চট্টগ্রাম, বাংলাদেশ</h2>
+              </div>
+
+              <!-- Date, Day & Local Time -->
+              <div class="weather-datetime-banner">
+                <div class="date-col">
+                  <i class="fa-regular fa-calendar-days"></i>
+                  <span class="day-name" id="owDayName">শনিবার</span>,
+                  <span class="date-full" id="owDateFull">২৬ সেপ্টেম্বর ২০২৬</span>
+                </div>
+                <div class="time-col">
+                  <i class="fa-regular fa-clock"></i>
+                  <span class="live-clock" id="owLiveClock">--:--:--</span>
+                </div>
+              </div>
+
+              <!-- Main Temperature & Condition Display -->
+              <div class="weather-main-stat-row">
+                <div class="temp-big-display">
+                  <span class="temp-number" id="owTemp">২৯</span>
+                  <span class="temp-deg">°C</span>
+                </div>
+                
+                <div class="condition-display-badge">
+                  <span class="condition-icon-big" id="owConditionIcon">🌧️</span>
+                  <div class="condition-text-wrap">
+                    <span class="condition-name" id="owConditionName">বৃষ্টি পড়ছে</span>
+                    <span class="feels-like-text">অনুভূত তাপমাত্রা: <span id="owFeelsLike">৩২</span>°C</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Metrics Grid -->
+              <div class="weather-metrics-grid">
+                
+                <div class="metric-item rain-chance-item">
+                  <div class="metric-icon"><i class="fa-solid fa-cloud-showers-heavy"></i></div>
+                  <div class="metric-info">
+                    <span class="metric-label">বৃষ্টির সম্ভাবনা</span>
+                    <span class="metric-val" id="owRainChance">৮৫%</span>
+                  </div>
+                </div>
+
+                <div class="metric-item wind-item">
+                  <div class="metric-icon"><i class="fa-solid fa-wind"></i></div>
+                  <div class="metric-info">
+                    <span class="metric-label">বাতাসের গতি</span>
+                    <span class="metric-val" id="owWindSpeed">১৮ কিমি/ঘণ্টা</span>
+                  </div>
+                </div>
+
+                <div class="metric-item humidity-item">
+                  <div class="metric-icon"><i class="fa-solid fa-droplet"></i></div>
+                  <div class="metric-info">
+                    <span class="metric-label">আর্দ্রতা</span>
+                    <span class="metric-val" id="owHumidity">৮৮%</span>
+                  </div>
+                </div>
+
+                <div class="metric-item sun-item">
+                  <div class="metric-icon"><i class="fa-solid fa-temperature-half"></i></div>
+                  <div class="metric-info">
+                    <span class="metric-label">সর্বনিম্ন / সর্বোচ্চ</span>
+                    <span class="metric-val" id="owMinMaxTemp">২৫° / ৩১° সে.</span>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- DYNAMIC LIVE WEATHER ANIMATION SCENE FOR OTHER LOCATION -->
+              <div class="weather-animation-card">
+                <div class="anim-card-header">
+                  <div class="anim-title">
+                    <i class="fa-solid fa-video"></i>
+                    <span id="owAnimTitle">নির্বাচিত এলাকার আবহাওয়ার দৃশ্য</span>
+                  </div>
+                  <span class="anim-state-badge" id="owAnimBadge">বৃষ্টির দৃশ্য</span>
+                </div>
+
+                <div class="animation-stage-container" id="owAnimationStage">
+                  <canvas id="owAnimCanvas" class="weather-canvas"></canvas>
+                  <div class="scene-overlay" id="owSceneOverlay">
+                    <div class="sun-glow" id="owSunGlow"></div>
+                    <div class="cloud-layer layer-1" id="owCloudLayer1"></div>
+                    <div class="cloud-layer layer-2" id="owCloudLayer2"></div>
+                    <div class="rain-layer" id="owRainLayer"></div>
+                    <div class="lightning-flash" id="owLightning"></div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar for Mobile Feel -->
+    <footer class="app-mobile-nav">
+      <button class="mobile-nav-item active" data-tab="location-tab">
+        <i class="fa-solid fa-map-location-dot"></i>
+        <span>MyLocation</span>
+      </button>
+      <button class="mobile-nav-item" data-tab="weather-tab">
+        <i class="fa-solid fa-cloud-sun"></i>
+        <span>আবহাওয়া</span>
+      </button>
+    </footer>
+
+    <!-- Welcome & Location Permission Modal (First Launch) -->
+    <div class="modal-backdrop" id="permissionModal" style="display:none;">
+      <div class="modal-card">
+        <div class="modal-icon-badge">
+          <i class="fa-solid fa-location-dot"></i>
+        </div>
+        <h3 class="modal-title">লোকেশন পারমিশন প্রয়োজন</h3>
+        <p class="modal-desc">
+          <strong>MyLocation360</strong> অ্যাপে আপনার সঠিক অবস্থান, চলার গতি, আশেপাশের স্থাপনা ও লাইভ আবহাওয়া প্রদর্শন করতে আপনার ডিভাইসের লোকেশন পারমিশন দিন।
+        </p>
+        <div class="modal-features">
+          <div class="mf-item"><i class="fa-solid fa-check text-success"></i> লাইভ মানচিত্র ও সঠিক দিকদর্শন</div>
+          <div class="mf-item"><i class="fa-solid fa-check text-success"></i> গাড়ির চলার গতি ও কম্পাস</div>
+          <div class="mf-item"><i class="fa-solid fa-check text-success"></i> স্থানীয় রিয়েলটাইম আবহাওয়া ও লাইভ দৃশ্য</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-primary-action" id="btnGrantPermission">
+            <i class="fa-solid fa-crosshairs"></i>
+            <span>লোকেশন সক্রিয় করুন</span>
+          </button>
+          <button class="btn-secondary-action" id="btnDismissPermission">
+            <span>ডিফল্ট লোকেশন দিয়ে শুরু করুন</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help & Features Guide Modal -->
+    <div class="modal-backdrop" id="helpModal" style="display:none;">
+      <div class="modal-card help-card">
+        <div class="modal-header-row">
+          <h3 class="modal-title"><i class="fa-solid fa-circle-question"></i> MyLocation360 ব্যবহার নির্দেশিকা</h3>
+          <button class="modal-close-btn" id="btnCloseHelp"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="help-content-list">
+          <div class="help-box">
+            <h4><i class="fa-solid fa-compass text-primary"></i> দিক চিহ্নিতকরণ ও রোটেশন</h4>
+            <p><strong>"দিক চিহ্নিত করুন"</strong> বাটনে ক্লিক করলে ম্যাপটি স্বয়ংক্রিয়ভাবে ঘুরে সঠিক দিক (True North = উত্তর) এ সামঞ্জস্য করবে। এছাড়া নিচে থাকা রোটেশন বাটন দিয়ে ইচ্ছামতো ম্যাপ ঘুরিয়ে দেখতে পারবেন।</p>
+          </div>
+          <div class="help-box">
+            <h4><i class="fa-solid fa-gauge text-warning"></i> চলার গতি ও স্থাপনা</h4>
+            <p>ম্যাপে চলাচলের সময় আপনার গতি (km/h) স্বয়ংক্রিয়ভাবে আপডেট হবে। আশেপাশের হাসপাতাল, মসজিদ, স্কুল, রেস্তোরাঁ দেখতে ফিল্টার বোতাম চাপুন।</p>
+          </div>
+          <div class="help-box">
+            <h4><i class="fa-solid fa-cloud-sun text-info"></i> লাইভ আবহাওয়া ও দৃশ্য</h4>
+            <p>বর্তমান লোকেশনের পাশাপাশি যেকোনো শহরের আবহাওয়া ও লাইভ অ্যানিমেশন (বৃষ্টি, সূর্যোদয়, রোদ, মেঘমালা) দেখতে পারবেন।</p>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-primary-action" id="btnGotItHelp">ঠিক আছে, বুঝেছি</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Global Toast Notification -->
+    <div class="app-toast" id="appToast">
+      <i class="fa-solid fa-circle-info toast-icon"></i>
+      <span class="toast-message" id="toastMessage">স্বাগতম</span>
+    </div>
+
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="/js/animation.js"></script>
+  <script src="/js/weather.js"></script>
+  <script src="/js/map.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
