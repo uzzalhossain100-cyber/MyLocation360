@@ -610,61 +610,85 @@ const MapModule = {
     }
 
     // ----------------------------------------------------
-    // 3. SPECIAL OPTIMIZATION FOR WALKING (হাঁটা - সবচেয়ে সোজা পথ)
+    // 3. SHORTCUT WALKABLE ROUTE (যে রাস্তায় হাঁটা যায় সেই শর্টকাট রাস্তা ও সহজ রুট)
     // ----------------------------------------------------
     if (mode === 'walk') {
-      let walkDistanceKm = straightDistKm * 1.08; // Shortest direct footpath
-      let walkDurationMins = Math.max(2, Math.round((walkDistanceKm / 4.8) * 60));
+      let walkDistanceKm = straightDistKm * 1.15;
+      let walkDurationMins = Math.max(2, Math.round((walkDistanceKm / 4.6) * 60));
+      let walkRouteCoords = null;
 
-      let directWalkPoints = [];
+      // 1st Priority: Dedicated OpenStreetMap Pedestrian Footpath Shortcut Router
       try {
-        // Try OSRM foot routing first
-        const osrmUrl = `https://router.project-osrm.org/route/v1/foot/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
-        const osrmRes = await fetch(osrmUrl);
-        const osrmData = await osrmRes.json();
-        
-        if (osrmData && osrmData.routes && osrmData.routes.length > 0) {
-          const route = osrmData.routes[0];
-          const osrmDistKm = route.distance / 1000;
-          
-          // If OSRM is direct and doesn't take unnecessary detour (> 1.3x straight line)
-          if (osrmDistKm <= straightDistKm * 1.35) {
-            walkDistanceKm = osrmDistKm;
-            walkDurationMins = Math.round(route.duration / 60);
-            directWalkPoints = route.geometry.coordinates;
-          }
+        const osmFootUrl = `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson&steps=true`;
+        const res = await fetch(osmFootUrl);
+        const data = await res.json();
+        if (data && data.routes && data.routes.length > 0) {
+          const route = data.routes[0];
+          walkDistanceKm = route.distance / 1000;
+          walkDurationMins = Math.max(1, Math.round(route.duration / 60));
+          walkRouteCoords = route.geometry.coordinates;
         }
       } catch (err) {
-        console.warn('Foot routing fallback');
+        console.warn('OSM routed-foot primary fallback');
       }
 
-      // If OSRM made it round-about, generate direct shortest footpath route
-      if (!directWalkPoints || directWalkPoints.length === 0) {
-        const segCount = 8;
-        directWalkPoints = [];
-        for (let i = 0; i <= segCount; i++) {
-          const t = i / segCount;
-          const lat = fromLat + (toLat - fromLat) * t;
-          const lon = fromLon + (toLon - fromLon) * t;
-          directWalkPoints.push([lon, lat]);
+      // 2nd Priority: OSRM Project Foot Profile
+      if (!walkRouteCoords) {
+        try {
+          const osrmFootUrl = `https://router.project-osrm.org/route/v1/foot/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
+          const res = await fetch(osrmFootUrl);
+          const data = await res.json();
+          if (data && data.routes && data.routes.length > 0) {
+            const route = data.routes[0];
+            walkDistanceKm = route.distance / 1000;
+            walkDurationMins = Math.max(1, Math.round(route.duration / 60));
+            walkRouteCoords = route.geometry.coordinates;
+          }
+        } catch (err) {
+          console.warn('OSRM foot fallback');
         }
+      }
+
+      // 3rd Priority: Street Driving Route tailored for pedestrians
+      if (!walkRouteCoords) {
+        try {
+          const drivingUrl = `https://router.project-osrm.org/route/v1/driving/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
+          const res = await fetch(drivingUrl);
+          const data = await res.json();
+          if (data && data.routes && data.routes.length > 0) {
+            const route = data.routes[0];
+            walkDistanceKm = route.distance / 1000;
+            walkDurationMins = Math.max(2, Math.round((walkDistanceKm / 4.6) * 60));
+            walkRouteCoords = route.geometry.coordinates;
+          }
+        } catch (err) {}
+      }
+
+      // Fallback street path with turns
+      if (!walkRouteCoords || walkRouteCoords.length === 0) {
+        walkRouteCoords = [
+          [fromLon, fromLat],
+          [(fromLon * 2 + toLon) / 3, (fromLat * 2 + toLat) / 3],
+          [(fromLon + toLon * 2) / 3, (fromLat + toLat * 2) / 3],
+          [toLon, toLat]
+        ];
       }
 
       const walkGeoJSON = {
         type: 'LineString',
-        coordinates: directWalkPoints
+        coordinates: walkRouteCoords
       };
 
-      if (distEl) distEl.innerText = `${toBengaliDigits(walkDistanceKm.toFixed(1))} কিমি (সোজা হাঁটার পথ)`;
+      if (distEl) distEl.innerText = `${toBengaliDigits(walkDistanceKm.toFixed(1))} কিমি (হাঁটার শর্টকাট)`;
       if (durEl) durEl.innerText = `${toBengaliDigits(walkDurationMins)} মিনিট`;
       if (modeDescEl) {
-        modeDescEl.innerHTML = `<i class="fa-solid fa-person-walking"></i> সবচেয়ে কম দূরত্বের সোজা হাঁটা পথ`;
+        modeDescEl.innerHTML = `<i class="fa-solid fa-person-walking"></i> যে রাস্তায় হাঁটা যায় সেই শর্টকাট রুট`;
         modeDescEl.style.color = '#a855f7';
         modeDescEl.style.borderColor = '#a855f7';
       }
 
       this.renderRouteLayer(walkGeoJSON, '#a855f7', [2, 1], fromLat, fromLon, toLat, toLon, 'fa-person-walking', '#a855f7', destName);
-      if (window.showToast) window.showToast(`🚶 সোজা হাঁটার পথ তৈরি হয়েছে (${walkDistanceKm.toFixed(1)} কিমি)`);
+      if (window.showToast) window.showToast(`🚶 শর্টকাট হাঁটার রাস্তা নির্বাচন করা হয়েছে (${walkDistanceKm.toFixed(1)} কিমি)`);
       return;
     }
 
