@@ -3003,3 +3003,57 @@ body.in-fullmap-mode {
   font-size: 0.62rem;
   color: #a7f3d0;
 }
+
+/* ==========================================================
+   MOBILE FULLSCREEN GUARANTEE: HIDE COMPETING MENUS,
+   TOP ROUTE BANNER & SEAMLESS DOCK BAR ON TOP OF EVERYTHING
+   ========================================================== */
+
+body.in-fullmap-mode .app-compact-header,
+body.in-fullmap-mode .app-mobile-nav,
+body.in-fullmap-mode .app-download-footer-bar,
+body.in-fullmap-mode .location-dashboard-grid,
+body.in-fullmap-mode .external-poi-bar {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* TOP ROUTE BANNER IN FULL MAP MODE */
+body.in-fullmap-mode #routeSummaryBanner {
+  position: fixed !important;
+  top: max(10px, env(safe-area-inset-top, 10px)) !important;
+  left: 10px !important;
+  right: 10px !important;
+  max-width: 620px !important;
+  margin: 0 auto !important;
+  z-index: 9999999 !important;
+  display: block !important;
+  background: rgba(13, 20, 34, 0.96) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border-radius: var(--radius-md) !important;
+  border: 1px solid rgba(56, 189, 248, 0.5) !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* BOTTOM CONTROLS DOCK BAR IN FULL MAP MODE */
+body.in-fullmap-mode .map-bottom-dock-bar {
+  position: fixed !important;
+  bottom: max(12px, env(safe-area-inset-bottom, 12px)) !important;
+  left: 10px !important;
+  right: 10px !important;
+  max-width: 620px !important;
+  margin: 0 auto !important;
+  z-index: 9999999 !important;
+  display: flex !important;
+  background: rgba(13, 20, 34, 0.96) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border-radius: var(--radius-md) !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8) !important;
+}

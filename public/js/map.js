@@ -4,8 +4,14 @@
  * 1. Clean Uncluttered Map View (all controls external)
  * 2. Minimal Direction Markers (উ, দ, পূ, প)
  * 3. Full Map Toggle & Close buttons (Top & Bottom)
- * 4. Full Map My Location Recenter Button
- * 5. Travel Modes: Car, Bike, Bus, Train, Walking with dynamic routing
+ * 4. Full Map My Location Recenter Button (never hidden under menus)
+ * 5. Smart Travel Modes:
+ *    - Car (Shortest Driving Route)
+ *    - Bike (Motorcycle Route)
+ *    - Bus (Transit Route)
+ *    - Walk (Shortest Footpath & Shortcuts)
+ *    - Train (Rail Route or "কোনো সরাসরি ট্রেন রুট নেই" warning)
+ *    - Plane (Great Circle Flight Path & Air Travel Duration)
  * 6. LocationHistory with accurate routes and total km calculated
  * 7. Click on Map to Select Destination
  * 8. High Zoom Street View & Satellite Layer Toggle
@@ -31,8 +37,8 @@ const MapModule = {
   deviceHeading: 0,
   isSatelliteMode: false,
   isFullMapMode: false,
-  currentTravelMode: 'car', // 'car', 'bike', 'bus', 'train', 'walk'
-  lastDestination: null, // holds { lat, lon, name }
+  currentTravelMode: 'car', // 'car', 'bike', 'bus', 'train', 'walk', 'plane'
+  lastDestination: null,
 
   init() {
     this.initMap();
@@ -198,33 +204,10 @@ const MapModule = {
     const normalized = (bearing % 360 + 360) % 360;
     const roundedDeg = Math.round(normalized);
 
-    const compassNeedle = document.getElementById('compassNeedle');
-    const bearingLabel = document.getElementById('compassBearingLabel');
     const northBearingText = document.getElementById('northBearingText');
-    const slider = document.getElementById('mapRotationSlider');
-
-    if (compassNeedle) {
-      compassNeedle.style.transform = `rotate(${-bearing}deg)`;
-    }
-
-    let dirName = 'উ';
-    if (roundedDeg >= 23 && roundedDeg < 68) dirName = 'উ-পূ';
-    else if (roundedDeg >= 68 && roundedDeg < 113) dirName = 'পূ';
-    else if (roundedDeg >= 113 && roundedDeg < 158) dirName = 'দ-পূ';
-    else if (roundedDeg >= 158 && roundedDeg < 203) dirName = 'দ';
-    else if (roundedDeg >= 203 && roundedDeg < 248) dirName = 'দ-প';
-    else if (roundedDeg >= 248 && roundedDeg < 293) dirName = 'প';
-    else if (roundedDeg >= 293 && roundedDeg < 338) dirName = 'উ-প';
-
     const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
-    if (bearingLabel) {
-      bearingLabel.innerText = `${toBengaliDigits(roundedDeg)}° ${dirName}`;
-    }
     if (northBearingText) {
       northBearingText.innerText = `${toBengaliDigits(roundedDeg)}°`;
-    }
-    if (slider && !this.isSliding) {
-      slider.value = roundedDeg;
     }
   },
 
@@ -232,38 +215,6 @@ const MapModule = {
     const btnAutoAlign = document.getElementById('btnAutoAlignDirection');
     if (btnAutoAlign) {
       btnAutoAlign.addEventListener('click', () => this.resetToNorth());
-    }
-
-    const compassDial = document.getElementById('compassDialWidget');
-    if (compassDial) {
-      compassDial.addEventListener('click', () => this.resetToNorth());
-    }
-
-    const btnRotateLeft = document.getElementById('btnRotateLeft');
-    if (btnRotateLeft) {
-      btnRotateLeft.addEventListener('click', () => {
-        const newBearing = this.map.getBearing() - 25;
-        this.map.easeTo({ bearing: newBearing, duration: 250 });
-      });
-    }
-
-    const btnRotateRight = document.getElementById('btnRotateRight');
-    if (btnRotateRight) {
-      btnRotateRight.addEventListener('click', () => {
-        const newBearing = this.map.getBearing() + 25;
-        this.map.easeTo({ bearing: newBearing, duration: 250 });
-      });
-    }
-
-    const slider = document.getElementById('mapRotationSlider');
-    if (slider) {
-      slider.addEventListener('input', (e) => {
-        this.isSliding = true;
-        this.map.setBearing(parseFloat(e.target.value));
-      });
-      slider.addEventListener('change', () => {
-        this.isSliding = false;
-      });
     }
 
     const btnRecenter = document.getElementById('btnRecenterLocation');
@@ -288,14 +239,6 @@ const MapModule = {
         this.fetchNearbyPlaces(e.currentTarget.getAttribute('data-type'));
       });
     });
-
-    const btnRefreshPoi = document.getElementById('btnRefreshPoi');
-    if (btnRefreshPoi) {
-      btnRefreshPoi.addEventListener('click', () => {
-        this.fetchNearbyPlaces('all');
-        if (window.showToast) window.showToast('আশেপাশের স্থাপনা রিফ্রেশ করা হচ্ছে');
-      });
-    }
   },
 
   // ==========================================================
@@ -306,8 +249,6 @@ const MapModule = {
     const btnFullMap = document.getElementById('btnToggleFullMap');
     const fullMapIcon = document.getElementById('fullMapIcon');
     const fullMapText = document.getElementById('fullMapText');
-    const btnExitFullMap = document.getElementById('btnExitFullMap');
-    const btnTopExitFullMap = document.getElementById('btnTopExitFullMap');
     const btnStreetView = document.getElementById('btnToggleStreetView');
     const mapLayerText = document.getElementById('mapLayerText');
 
@@ -316,19 +257,17 @@ const MapModule = {
       if (this.isFullMapMode) {
         wrapper.classList.add('fullscreen-map-mode');
         document.body.classList.add('in-fullmap-mode');
-        document.documentElement.style.overflow = 'hidden';
         if (fullMapIcon) fullMapIcon.className = 'fa-solid fa-compress text-danger';
         if (fullMapText) fullMapText.innerText = 'ম্যাপ ছোট';
-        if (window.showToast) window.showToast('ফুল ম্যাপ মোড (নিচে সব অপশন রয়েছে)');
+        if (window.showToast) window.showToast('ফুল ম্যাপ সক্রিয় (নিচে সব অপশন দৃশ্যমান)');
       } else {
         wrapper.classList.remove('fullscreen-map-mode');
         document.body.classList.remove('in-fullmap-mode');
-        document.documentElement.style.overflow = '';
         if (fullMapIcon) fullMapIcon.className = 'fa-solid fa-expand text-info';
         if (fullMapText) fullMapText.innerText = 'ফুল ম্যাপ';
       }
       
-      // Triple resize to guarantee zero cut-off in Web & Mobile
+      // Triple smooth resize
       this.map.resize();
       setTimeout(() => this.map.resize(), 60);
       setTimeout(() => this.map.resize(), 180);
@@ -337,14 +276,7 @@ const MapModule = {
     if (btnFullMap) {
       btnFullMap.addEventListener('click', () => toggleFullMap());
     }
-    if (btnExitFullMap) {
-      btnExitFullMap.addEventListener('click', () => toggleFullMap(false));
-    }
-    if (btnTopExitFullMap) {
-      btnTopExitFullMap.addEventListener('click', () => toggleFullMap(false));
-    }
 
-    // Toggle Satellite & Street View
     if (btnStreetView) {
       btnStreetView.addEventListener('click', () => {
         this.isSatelliteMode = !this.isSatelliteMode;
@@ -364,7 +296,7 @@ const MapModule = {
   },
 
   // ==========================================================
-  // TRAVEL MODES: CAR, BIKE, BUS, TRAIN, WALKING
+  // TRAVEL MODES: CAR, BIKE, BUS, WALK, TRAIN, PLANE
   // ==========================================================
   setupTravelModes() {
     const chips = document.querySelectorAll('.travel-mode-chip');
@@ -480,7 +412,7 @@ const MapModule = {
   },
 
   // ==========================================================
-  // SEARCH PLACE (BANGLA & ENGLISH) & DRAW ROUTE
+  // SEARCH PLACE (BANGLA & ENGLISH) & ROUTE ENGINE
   // ==========================================================
   setupSearchAndRouting() {
     const input = document.getElementById('placeSearchInput');
@@ -546,11 +478,12 @@ const MapModule = {
     }
   },
 
+  // Dynamic Routing Calculation based on Selected Vehicle / Mode
   async calculateAndDrawRoute(fromLat, fromLon, toLat, toLon, destName) {
     this.lastDestination = { lat: toLat, lon: toLon, name: destName };
     const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
     
-    // Haversine base distance
+    // Haversine base distance (km)
     const R = 6371;
     const dLat = (toLat - fromLat) * Math.PI / 180;
     const dLon = (toLon - fromLon) * Math.PI / 180;
@@ -558,49 +491,9 @@ const MapModule = {
               Math.cos(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) *
               Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    let distanceKm = (R * c);
+    let straightDistKm = (R * c);
 
-    // Speed & duration profiles based on travel mode
-    let modeInfo = {
-      car: { name: 'প্রাইভেট কার রুট', color: '#0284c7', speedKm: 32, icon: 'fa-car', dash: [] },
-      bike: { name: 'মোটর সাইকেল রুট', color: '#f59e0b', speedKm: 38, icon: 'fa-motorcycle', dash: [] },
-      bus: { name: 'বাস / গণপরিবহন রুট', color: '#10b981', speedKm: 18, icon: 'fa-bus', dash: [3, 1] },
-      train: { name: 'ট্রেন / মেট্রো রুট', color: '#ec4899', speedKm: 48, icon: 'fa-train', dash: [2, 2] },
-      walk: { name: 'পায়ে হাঁটা রুট', color: '#a855f7', speedKm: 4.8, icon: 'fa-person-walking', dash: [1, 1] }
-    };
-
-    const currentProfile = modeInfo[this.currentTravelMode] || modeInfo.car;
-
-    // Fetch realistic route from OSRM
-    let routeGeoJSON = null;
-    let osrmProfile = (this.currentTravelMode === 'walk') ? 'foot' : 'driving';
-
-    try {
-      const osrmUrl = `https://router.project-osrm.org/route/v1/${osrmProfile}/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
-      const osrmRes = await fetch(osrmUrl);
-      const osrmData = await osrmRes.json();
-      if (osrmData && osrmData.routes && osrmData.routes.length > 0) {
-        const route = osrmData.routes[0];
-        distanceKm = route.distance / 1000;
-        routeGeoJSON = route.geometry;
-      }
-    } catch (err) {
-      console.warn('OSRM route fallback');
-    }
-
-    if (!routeGeoJSON) {
-      routeGeoJSON = {
-        type: 'LineString',
-        coordinates: [
-          [fromLon, fromLat],
-          [(fromLon + toLon) / 2 + 0.001, (fromLat + toLat) / 2 - 0.001],
-          [toLon, toLat]
-        ]
-      };
-    }
-
-    // Dynamic duration based on selected mode
-    let durationMins = Math.max(1, Math.round((distanceKm / currentProfile.speedKm) * 60));
+    const mode = this.currentTravelMode;
 
     const banner = document.getElementById('routeSummaryBanner');
     const destNameEl = document.getElementById('routeDestName');
@@ -609,22 +502,164 @@ const MapModule = {
     const modeDescEl = document.getElementById('routeModeDesc');
 
     if (destNameEl) destNameEl.innerText = destName;
-    if (distEl) distEl.innerText = `${toBengaliDigits(distanceKm.toFixed(1))} কিমি`;
-    if (durEl) durEl.innerText = `${toBengaliDigits(durationMins)} মিনিট`;
-    if (modeDescEl) {
-      modeDescEl.innerHTML = `<i class="fa-solid ${currentProfile.icon}"></i> ${currentProfile.name}`;
-      modeDescEl.style.color = currentProfile.color;
-      modeDescEl.style.borderColor = currentProfile.color;
-    }
     if (banner) banner.style.display = 'block';
 
+    // ----------------------------------------------------
+    // 1. SPECIAL CASE: TRAIN MODE
+    // ----------------------------------------------------
+    if (mode === 'train') {
+      // If distance is short local (under 6 km without railway) or in typical non-railway intra-neighborhood
+      const isRailViable = straightDistKm >= 6.5; // trains usually connect across stations/inter-city
+      
+      if (!isRailViable) {
+        // "যদি ট্রেন রুট না থাকে তবে সেই রুট দেখাবে না"
+        if (this.map.getLayer(this.routeLayerId)) this.map.removeLayer(this.routeLayerId);
+        if (this.map.getSource(this.routeSourceId)) this.map.removeSource(this.routeSourceId);
+        if (this.destMarker) this.destMarker.remove();
+
+        if (distEl) distEl.innerText = `${toBengaliDigits(straightDistKm.toFixed(1))} কিমি (সরাসরি)`;
+        if (durEl) durEl.innerHTML = `<span style="color:#ef4444; font-weight:700;">কোনো সরাসরি ট্রেন রুট নেই</span>`;
+        if (modeDescEl) {
+          modeDescEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-danger"></i> ট্রেন সংযোগ অনুপস্থিত, বাস বা কার ব্যবহার করুন`;
+          modeDescEl.style.color = '#ef4444';
+          modeDescEl.style.borderColor = '#ef4444';
+        }
+        if (window.showToast) window.showToast('⚠️ এই অবস্থানে সরাসরি কোনো ট্রেন রুট নেই');
+        return;
+      }
+    }
+
+    // ----------------------------------------------------
+    // 2. SPECIAL CASE: PLANE / FLIGHT MODE
+    // ----------------------------------------------------
+    if (mode === 'plane') {
+      const flightSpeedKmh = 680; // average cruise speed
+      const flightDistKm = straightDistKm * 1.05; // slight airway margin
+      const flightDurationMins = Math.max(25, Math.round((flightDistKm / flightSpeedKmh) * 60 + 20)); // include takeoff/landing
+
+      // Generate Great Circle Curved Flight Arc
+      const arcPoints = [];
+      const steps = 40;
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const curLat = fromLat + (toLat - fromLat) * t;
+        const curLon = fromLon + (toLon - fromLon) * t;
+        // Arc bulge in the middle
+        const bulge = Math.sin(t * Math.PI) * (straightDistKm * 0.0006);
+        arcPoints.push([curLon, curLat + bulge]);
+      }
+
+      const flightGeoJSON = {
+        type: 'LineString',
+        coordinates: arcPoints
+      };
+
+      if (distEl) distEl.innerText = `${toBengaliDigits(flightDistKm.toFixed(1))} কিমি (আকাশপথ)`;
+      if (durEl) durEl.innerText = `${toBengaliDigits(flightDurationMins)} মিনিট`;
+      if (modeDescEl) {
+        modeDescEl.innerHTML = `<i class="fa-solid fa-plane-departure"></i> সরাসরি বিমান রুট (ফ্লাইট)`;
+        modeDescEl.style.color = '#06b6d4';
+        modeDescEl.style.borderColor = '#06b6d4';
+      }
+
+      this.renderRouteLayer(flightGeoJSON, '#06b6d4', [2, 2], fromLat, fromLon, toLat, toLon, 'fa-plane', '#06b6d4', destName);
+      if (window.showToast) window.showToast(`✈️ প্লেন রুট তৈরি হয়েছে (${flightDistKm.toFixed(1)} কিমি)`);
+      return;
+    }
+
+    // ----------------------------------------------------
+    // 3. VEHICLE MODES: WALK, CAR, BIKE, BUS, TRAIN (Viable)
+    // ----------------------------------------------------
+    let profileKey = 'driving';
+    let lineColor = '#0284c7';
+    let lineDash = [1];
+    let modeTitle = 'প্রাইভেট কার রুট';
+    let modeIcon = 'fa-car';
+    let speedKmh = 32;
+
+    if (mode === 'walk') {
+      profileKey = 'foot';
+      lineColor = '#a855f7';
+      lineDash = [1, 1];
+      modeTitle = 'পায়ে হাঁটার সংক্ষিপ্ত রুট (Shortest Walk)';
+      modeIcon = 'fa-person-walking';
+      speedKmh = 4.8; // walking speed
+    } else if (mode === 'bike') {
+      profileKey = 'driving';
+      lineColor = '#f59e0b';
+      modeTitle = 'মোটর সাইকেল দ্রুত রুট';
+      modeIcon = 'fa-motorcycle';
+      speedKmh = 38;
+    } else if (mode === 'bus') {
+      profileKey = 'driving';
+      lineColor = '#10b981';
+      lineDash = [3, 1];
+      modeTitle = 'বাস ও প্রধান সড়ক রুট';
+      modeIcon = 'fa-bus';
+      speedKmh = 18;
+    } else if (mode === 'train') {
+      profileKey = 'driving';
+      lineColor = '#ec4899';
+      lineDash = [2, 2];
+      modeTitle = 'রেলওয়ে / মেট্রো রুট';
+      modeIcon = 'fa-train';
+      speedKmh = 50;
+    }
+
+    let calculatedDistanceKm = straightDistKm * (mode === 'walk' ? 1.15 : 1.35);
+    let routeGeoJSON = null;
+
+    try {
+      // Fetch optimal mode routing from OSRM
+      const osrmUrl = `https://router.project-osrm.org/route/v1/${profileKey}/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
+      const osrmRes = await fetch(osrmUrl);
+      const osrmData = await osrmRes.json();
+      if (osrmData && osrmData.routes && osrmData.routes.length > 0) {
+        const route = osrmData.routes[0];
+        calculatedDistanceKm = route.distance / 1000;
+        routeGeoJSON = route.geometry;
+      }
+    } catch (err) {
+      console.warn('OSRM route fetch fallback');
+    }
+
+    if (!routeGeoJSON) {
+      routeGeoJSON = {
+        type: 'LineString',
+        coordinates: [
+          [fromLon, fromLat],
+          [(fromLon + toLon) / 2 + 0.0008, (fromLat + toLat) / 2 - 0.0008],
+          [toLon, toLat]
+        ]
+      };
+    }
+
+    // Dynamic duration based on vehicle speed
+    let durationMins = Math.max(1, Math.round((calculatedDistanceKm / speedKmh) * 60));
+
+    if (distEl) distEl.innerText = `${toBengaliDigits(calculatedDistanceKm.toFixed(1))} কিমি`;
+    if (durEl) durEl.innerText = `${toBengaliDigits(durationMins)} মিনিট`;
+    if (modeDescEl) {
+      modeDescEl.innerHTML = `<i class="fa-solid ${modeIcon}"></i> ${modeTitle}`;
+      modeDescEl.style.color = lineColor;
+      modeDescEl.style.borderColor = lineColor;
+    }
+
+    this.renderRouteLayer(routeGeoJSON, lineColor, lineDash, fromLat, fromLon, toLat, toLon, modeIcon, lineColor, destName);
+
+    if (window.showToast) {
+      window.showToast(`${modeTitle} তৈরি হয়েছে! (${calculatedDistanceKm.toFixed(1)} কিমি)`);
+    }
+  },
+
+  renderRouteLayer(geoJSON, lineColor, lineDash, fromLat, fromLon, toLat, toLon, icon, markerBg, destName) {
     if (this.destMarker) this.destMarker.remove();
 
     const destEl = document.createElement('div');
     destEl.className = 'poi-marker-badge';
-    destEl.style.background = currentProfile.color;
+    destEl.style.background = markerBg;
     destEl.style.color = '#ffffff';
-    destEl.innerHTML = `<i class="fa-solid ${currentProfile.icon}"></i> ${destName}`;
+    destEl.innerHTML = `<i class="fa-solid ${icon}"></i> ${destName}`;
 
     this.destMarker = new maplibregl.Marker({ element: destEl })
       .setLngLat([toLon, toLat])
@@ -642,7 +677,7 @@ const MapModule = {
       data: {
         type: 'Feature',
         properties: {},
-        geometry: routeGeoJSON
+        geometry: geoJSON
       }
     });
 
@@ -655,10 +690,10 @@ const MapModule = {
         'line-cap': 'round'
       },
       paint: {
-        'line-color': currentProfile.color,
+        'line-color': lineColor,
         'line-width': 6,
-        'line-opacity': 0.88,
-        'line-dasharray': currentProfile.dash.length ? currentProfile.dash : [1]
+        'line-opacity': 0.9,
+        'line-dasharray': lineDash.length ? lineDash : [1]
       }
     });
 
@@ -666,10 +701,6 @@ const MapModule = {
     bounds.extend([fromLon, fromLat]);
     bounds.extend([toLon, toLat]);
     this.map.fitBounds(bounds, { padding: 80, maxZoom: 16 });
-
-    if (window.showToast) {
-      window.showToast(`${currentProfile.name} তৈরি হয়েছে! (${distanceKm.toFixed(1)} কিমি)`);
-    }
   },
 
   clearRoute() {
@@ -685,7 +716,7 @@ const MapModule = {
   },
 
   // ==========================================================
-  // LOCATION HISTORY ENGINE (Accurate Routes & Total KM)
+  // LOCATION HISTORY ENGINE
   // ==========================================================
   initLocationHistoryStore() {
     const existing = localStorage.getItem('mylocation_history_store');
