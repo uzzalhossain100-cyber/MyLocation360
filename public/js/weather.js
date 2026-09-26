@@ -10,9 +10,11 @@ const WeatherApp = {
   currentLon: 90.4125,
   currentCityName: 'ঢাকা, বাংলাদেশ',
 
-  // Other location coordinates
+  // Other location coordinates and target timezone
   otherLat: null,
   otherLon: null,
+  otherCityName: '',
+  otherTimezone: 'auto',
 
   init() {
     this.startLiveClock();
@@ -100,7 +102,7 @@ const WeatherApp = {
     });
   },
 
-  // Bangla Digital Clock & Date
+  // Bangla Digital Clock & Date for Local & Remote City
   startLiveClock() {
     const banglaDays = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
     const banglaMonths = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
@@ -108,41 +110,54 @@ const WeatherApp = {
       return num.toString().replace(/[0-9]/g, (d) => "০১২৩৪৫৬৭৮৯"[d]);
     };
 
-    const updateTimes = () => {
+    const getFormattedTimeAndDate = (tz) => {
       const now = new Date();
-      const dayName = banglaDays[now.getDay()];
-      const dateNum = toBengaliDigits(now.getDate());
-      const monthName = banglaMonths[now.getMonth()];
-      const yearNum = toBengaliDigits(now.getFullYear());
-      
+      let target = now;
+      if (tz && tz !== 'auto') {
+        try {
+          const invdate = new Date(now.toLocaleString('en-US', { timeZone: tz }));
+          if (!isNaN(invdate.getTime())) {
+            target = invdate;
+          }
+        } catch (e) {}
+      }
+
+      const dayName = banglaDays[target.getDay()];
+      const dateNum = toBengaliDigits(target.getDate());
+      const monthName = banglaMonths[target.getMonth()];
+      const yearNum = toBengaliDigits(target.getFullYear());
       const fullDateStr = `${dateNum} ${monthName} ${yearNum}`;
-      
-      // Formatting Time
-      let hours = now.getHours();
-      let minutes = now.getMinutes();
-      let seconds = now.getSeconds();
+
+      let hours = target.getHours();
+      let minutes = target.getMinutes();
+      let seconds = target.getSeconds();
       const ampm = hours >= 12 ? 'PM' : 'AM';
       hours = hours % 12;
-      hours = hours ? hours : 12; // 0 becomes 12
-      
+      hours = hours ? hours : 12;
       const padZero = (n) => (n < 10 ? '0' + n : n);
-      const timeStr = `${padZero(hours)}:${padZero(minutes)}:${padZero(seconds)} ${ampm}`;
+      const timeStr = `${toBengaliDigits(padZero(hours))}:${toBengaliDigits(padZero(minutes))}:${toBengaliDigits(padZero(seconds))} ${ampm}`;
 
-      // Update Current Location DateTime
+      return { dayName, fullDateStr, timeStr };
+    };
+
+    const updateTimes = () => {
+      // 1. Current Location Time
+      const currentLoc = getFormattedTimeAndDate();
       const cwDay = document.getElementById('cwDayName');
       const cwDate = document.getElementById('cwDateFull');
       const cwClock = document.getElementById('cwLiveClock');
-      if (cwDay) cwDay.innerText = dayName;
-      if (cwDate) cwDate.innerText = fullDateStr;
-      if (cwClock) cwClock.innerText = timeStr;
+      if (cwDay) cwDay.innerText = currentLoc.dayName;
+      if (cwDate) cwDate.innerText = currentLoc.fullDateStr;
+      if (cwClock) cwClock.innerText = currentLoc.timeStr;
 
-      // Update Other Location DateTime (if displayed)
+      // 2. Other Searched Location Time (Respecting searched city's actual timezone)
+      const otherLoc = getFormattedTimeAndDate(this.otherTimezone);
       const owDay = document.getElementById('owDayName');
       const owDate = document.getElementById('owDateFull');
       const owClock = document.getElementById('owLiveClock');
-      if (owDay) owDay.innerText = dayName;
-      if (owDate) owDate.innerText = fullDateStr;
-      if (owClock) owClock.innerText = timeStr;
+      if (owDay) owDay.innerText = otherLoc.dayName;
+      if (owDate) owDate.innerText = otherLoc.fullDateStr;
+      if (owClock) owClock.innerText = otherLoc.timeStr;
     };
 
     updateTimes();
@@ -306,6 +321,7 @@ const WeatherApp = {
   async fetchOtherLocationWeather(lat, lon, cityName) {
     this.otherLat = lat;
     this.otherLon = lon;
+    this.otherCityName = cityName;
 
     const resultCard = document.getElementById('otherWeatherResultCard');
     if (resultCard) {
@@ -320,6 +336,11 @@ const WeatherApp = {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,precipitation_probability,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
       const response = await fetch(url);
       const data = await response.json();
+
+      // Save target timezone for live remote clock and date
+      if (data && data.timezone) {
+        this.otherTimezone = data.timezone;
+      }
 
       const current = data.current || {};
       const daily = data.daily || {};

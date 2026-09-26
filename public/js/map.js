@@ -31,6 +31,7 @@ const MapModule = {
   currentBearing: 0,
   currentPitch: 0,
   currentSpeed: 0, // km/h
+  isAutoFollow: true, // Follow user as they move
   poiMarkers: [],
   watchId: null,
   deviceOrientationActive: false,
@@ -149,6 +150,11 @@ const MapModule = {
       this.fetchNearbyPlaces('all');
     });
 
+    // Pause auto-follow when user drags manually
+    this.map.on('dragstart', () => {
+      this.isAutoFollow = false;
+    });
+
     // Auto-update nearby POIs and place names on zoom & pan
     this.map.on('moveend', () => {
       if (this.map.getZoom() >= 14.5) {
@@ -193,6 +199,20 @@ const MapModule = {
       speedKmh = Math.round(speedMps * 3.6);
     }
     this.updateSpeedometer(speedKmh);
+
+    // LIVE NAVIGATION AUTO-FOLLOW: Map smoothly moves and tracks user as they walk or drive!
+    if (this.isAutoFollow && this.map) {
+      const easeOptions = {
+        center: [lon, lat],
+        duration: 900,
+        essential: true
+      };
+      // Rotate map along user heading if moving (> 2.5 km/h)
+      if (heading !== null && !isNaN(heading) && speedKmh >= 2.5) {
+        easeOptions.bearing = heading;
+      }
+      this.map.easeTo(easeOptions);
+    }
 
     const coordEl = document.getElementById('currentCoords');
     if (coordEl) {
@@ -452,12 +472,13 @@ const MapModule = {
   },
 
   recenter() {
+    this.isAutoFollow = true;
     this.map.flyTo({
       center: [this.currentLon, this.currentLat],
-      zoom: 16,
+      zoom: 16.5,
       essential: true
     });
-    if (window.showToast) window.showToast('📍 আপনার বর্তমান অবস্থানে ফোকাস করা হয়েছে');
+    if (window.showToast) window.showToast('📍 আপনার চলমান অবস্থানের সাথে ম্যাপ লক করা হয়েছে');
   },
 
   initDeviceOrientation() {

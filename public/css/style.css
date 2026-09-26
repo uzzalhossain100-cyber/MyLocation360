@@ -3248,3 +3248,127 @@ body.in-fullmap-mode .map-bottom-dock-bar {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
 }
+
+/* ==========================================================
+   ULTRA-SLIM FULLSCREEN TOP BARS & CONTROLS SPECIFICATION
+   - Super-slim Route Destination Banner
+   - Super-slim Search Bar directly beneath
+   - Uncut visible Satellite & Street View 360 buttons
+   ========================================================== */
+
+/* Fullscreen Top Route Destination Banner */
+body.in-fullmap-mode #routeSummaryBanner {
+  position: fixed !important;
+  top: max(8px, env(safe-area-inset-top, 8px)) !important;
+  left: 8px !important;
+  right: 8px !important;
+  max-width: 560px !important;
+  margin: 0 auto !important;
+  z-index: 9999999 !important;
+  display: block !important;
+  background: rgba(13, 20, 34, 0.95) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75) !important;
+  padding: 5px 10px !important; /* ultra slim */
+}
+
+body.in-fullmap-mode .route-banner-grid {
+  gap: 6px !important;
+  align-items: center !important;
+}
+
+body.in-fullmap-mode .route-dest-tag {
+  font-size: 0.74rem !important;
+  line-height: 1.15 !important;
+}
+
+body.in-fullmap-mode .route-dest-name {
+  font-size: 0.8rem !important;
+}
+
+body.in-fullmap-mode .route-stats-row {
+  font-size: 0.72rem !important;
+  gap: 8px !important;
+}
+
+body.in-fullmap-mode .route-close-icon {
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 0.75rem !important;
+}
+
+/* Fullscreen Ultra-Slim Location Search Bar */
+body.in-fullmap-mode #topSlimSearchBar {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  position: fixed !important;
+  top: 56px !important; /* right beneath the ultra-slim route banner */
+  left: 8px !important;
+  right: 8px !important;
+  max-width: 560px !important;
+  margin: 0 auto !important;
+  z-index: 9999998 !important;
+  padding: 0 !important;
+}
+
+/* When no active route is present, bring search bar higher */
+body.in-fullmap-mode:not(:has(#routeSummaryBanner[style*="display: block"])) #topSlimSearchBar {
+  top: max(10px, env(safe-area-inset-top, 10px)) !important;
+}
+
+body.in-fullmap-mode .search-field-pill {
+  height: 32px !important; /* very slim search pill */
+  padding: 2px 10px !important;
+  background: rgba(13, 20, 34, 0.94) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
+  border-radius: 9999px !important;
+}
+
+body.in-fullmap-mode .search-field-pill input {
+  font-size: 0.76rem !important;
+}
+
+body.in-fullmap-mode .search-field-pill .search-ico {
+  font-size: 0.78rem !important;
+}
+
+body.in-fullmap-mode .search-go-btn {
+  padding: 2px 8px !important;
+  font-size: 0.72rem !important;
+  height: 24px !important;
+  border-radius: 9999px !important;
+}
+
+/* Fullscreen Satellite & Street View 360 Buttons on Top-Right */
+body.in-fullmap-mode .map-corner-tools {
+  position: fixed !important;
+  top: 98px !important; /* positioned clearly beneath top bars */
+  right: 10px !important;
+  z-index: 9999999 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+body.in-fullmap-mode .corner-tool-btn {
+  background: rgba(13, 20, 34, 0.94) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1.2px solid rgba(56, 189, 248, 0.45) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65) !important;
+  padding: 5px 11px !important;
+  font-size: 0.75rem !important;
+  color: #ffffff !important;
+  border-radius: 9999px !important;
+}
