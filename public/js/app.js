@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ================= TAB NAVIGATION ================= */
 function setupTabNavigation() {
-  const topTabBtns = document.querySelectorAll('.nav-tab-btn');
+  const topTabBtns = document.querySelectorAll('.nav-tab-btn, .compact-tab-btn');
   const bottomNavItems = document.querySelectorAll('.mobile-nav-item');
   const tabPanes = document.querySelectorAll('.tab-pane');
   const mapWrapper = document.getElementById('mapViewWrapper');
@@ -84,7 +84,7 @@ function setupTabNavigation() {
     }
 
     // 6. Scroll to top so user sees the page cleanly
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'instant' });
 
     // 7. Refresh respective engines
     if (targetTabId === 'location-tab') {
@@ -92,7 +92,7 @@ function setupTabNavigation() {
         if (window.MapModule && window.MapModule.map) {
           window.MapModule.map.resize();
         }
-      }, 100);
+      }, 50);
     } else if (targetTabId === 'weather-tab') {
       setTimeout(() => {
         if (window.WeatherScenes) {
@@ -103,21 +103,31 @@ function setupTabNavigation() {
             window.WeatherScenes.otherLocationScene.resize();
           }
         }
-      }, 100);
+        // Guarantee current weather is rendered
+        if (window.WeatherApp) {
+          window.WeatherApp.startLiveClock();
+        }
+      }, 50);
     }
   }
 
+  // Direct explicit listeners for top buttons
+  const btnLoc = document.getElementById('tabBtnLocation');
+  const btnWea = document.getElementById('tabBtnWeather');
+  if (btnLoc) btnLoc.addEventListener('click', () => switchTab('location-tab'));
+  if (btnWea) btnWea.addEventListener('click', () => switchTab('weather-tab'));
+
   topTabBtns.forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', () => {
       const tabId = btn.getAttribute('data-tab');
-      switchTab(tabId);
+      if (tabId) switchTab(tabId);
     });
   });
 
   bottomNavItems.forEach(item => {
-    item.addEventListener('click', (e) => {
+    item.addEventListener('click', () => {
       const tabId = item.getAttribute('data-tab');
-      switchTab(tabId);
+      if (tabId) switchTab(tabId);
     });
   });
 }

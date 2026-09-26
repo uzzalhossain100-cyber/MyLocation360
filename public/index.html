@@ -147,11 +147,15 @@
           <!-- The Map canvas (Clean View, Click to select location, Zoom for street view) -->
           <div id="map" class="map-canvas"></div>
 
-          <!-- Top-Right Essential Map View Tools (Satellite & Hint) -->
+          <!-- Top-Right Essential Map View Tools (Satellite & Real Street View 360) -->
           <div class="map-corner-tools">
             <button class="corner-tool-btn layer-toggle-btn" id="btnToggleStreetView" title="স্ট্রিট ও স্যাটেলাইট ভিউ পরিবর্তন">
               <i class="fa-solid fa-layer-group"></i>
-              <span id="mapLayerText">স্ট্রিট</span>
+              <span id="mapLayerText">স্যাটেলাইট</span>
+            </button>
+            <button class="corner-tool-btn panorama-toggle-btn" id="btnOpenStreetPanorama" title="রাস্তার ৩৬০° আসল স্ট্রিট ভিউ দেখুন">
+              <i class="fa-solid fa-street-view text-warning"></i>
+              <span>রাস্তার ভিউ</span>
             </button>
           </div>
 
@@ -672,6 +676,26 @@
           <button class="btn-secondary-action" id="btnDismissPermission">
             <span>ডিফল্ট লোকেশন দিয়ে শুরু করুন</span>
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Real Street View 360 Panorama Modal -->
+    <div class="modal-backdrop" id="streetViewPanoramaModal" style="display:none;">
+      <div class="modal-card streetview-modal-card">
+        <div class="modal-header-row">
+          <h3 class="modal-title"><i class="fa-solid fa-street-view text-primary"></i> <span id="svModalTitle">রাস্তার ৩৬০° স্ট্রিট ভিউ</span></h3>
+          <button class="modal-close-btn" id="btnCloseStreetViewModal"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="streetview-frame-wrapper">
+          <iframe id="streetViewIframe" class="streetview-iframe" src="" allowfullscreen loading="lazy"></iframe>
+          <div class="streetview-loading-overlay" id="svLoading">
+            <i class="fa-solid fa-spinner fa-spin"></i> রাস্তার ভিউ লোড হচ্ছে...
+          </div>
+        </div>
+        <div class="sv-modal-footer">
+          <span class="sv-hint"><i class="fa-solid fa-arrows-up-down-left-right"></i> স্ক্রিনে ড্র্যাগ করে চারপাশের ৩৬০° দৃশ্য দেখুন</span>
+          <button class="btn-secondary-action" id="btnCloseStreetViewModal2">বন্ধ করুন</button>
         </div>
       </div>
     </div>
