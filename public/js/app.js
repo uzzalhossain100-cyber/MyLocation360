@@ -51,7 +51,8 @@ function setupTabNavigation() {
     // 1. If currently in full map mode, ALWAYS exit full map first
     if (mapWrapper && mapWrapper.classList.contains('fullscreen-map-mode')) {
       mapWrapper.classList.remove('fullscreen-map-mode');
-      document.body.style.overflow = '';
+      document.body.classList.remove('in-fullmap-mode');
+      document.documentElement.style.overflow = '';
       if (window.MapModule) window.MapModule.isFullMapMode = false;
     }
 
@@ -76,10 +77,16 @@ function setupTabNavigation() {
       }
     });
 
-    // 5. Scroll to top so user sees the page cleanly
+    // 5. Hide/Show Search Bar depending on tab
+    const topSearch = document.getElementById('topSlimSearchBar');
+    if (topSearch) {
+      topSearch.style.display = (targetTabId === 'location-tab') ? 'block' : 'none';
+    }
+
+    // 6. Scroll to top so user sees the page cleanly
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // 6. Refresh respective engines
+    // 7. Refresh respective engines
     if (targetTabId === 'location-tab') {
       setTimeout(() => {
         if (window.MapModule && window.MapModule.map) {

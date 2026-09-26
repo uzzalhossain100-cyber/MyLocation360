@@ -165,11 +165,13 @@ const MapModule = {
   updateSpeedometer(speed) {
     this.currentSpeed = speed;
     const speedEl = document.getElementById('currentSpeed');
+    const dashSpeedEl = document.getElementById('dashSpeedValue');
     const fmSpeedEl = document.getElementById('fmSpeedNum');
     const statusEl = document.getElementById('speedStatus');
     const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
 
     if (speedEl) speedEl.innerText = toBengaliDigits(speed);
+    if (dashSpeedEl) dashSpeedEl.innerText = toBengaliDigits(speed);
     if (fmSpeedEl) fmSpeedEl.innerText = toBengaliDigits(speed);
 
     if (statusEl) {
@@ -302,9 +304,10 @@ const MapModule = {
   setupFullMapAndLayerToggles() {
     const wrapper = document.getElementById('mapViewWrapper');
     const btnFullMap = document.getElementById('btnToggleFullMap');
+    const fullMapIcon = document.getElementById('fullMapIcon');
+    const fullMapText = document.getElementById('fullMapText');
     const btnExitFullMap = document.getElementById('btnExitFullMap');
     const btnTopExitFullMap = document.getElementById('btnTopExitFullMap');
-    const btnFmRecenter = document.getElementById('btnFmRecenter');
     const btnStreetView = document.getElementById('btnToggleStreetView');
     const mapLayerText = document.getElementById('mapLayerText');
 
@@ -312,30 +315,32 @@ const MapModule = {
       this.isFullMapMode = enable !== undefined ? enable : !this.isFullMapMode;
       if (this.isFullMapMode) {
         wrapper.classList.add('fullscreen-map-mode');
-        document.body.style.overflow = 'hidden';
-        if (window.showToast) window.showToast('ফুল ম্যাপ সক্রিয় (নিচে চলার গতি ও লোকেশন বাটন আছে)');
+        document.body.classList.add('in-fullmap-mode');
+        document.documentElement.style.overflow = 'hidden';
+        if (fullMapIcon) fullMapIcon.className = 'fa-solid fa-compress text-danger';
+        if (fullMapText) fullMapText.innerText = 'ম্যাপ ছোট';
+        if (window.showToast) window.showToast('ফুল ম্যাপ মোড (নিচে সব অপশন রয়েছে)');
       } else {
         wrapper.classList.remove('fullscreen-map-mode');
-        document.body.style.overflow = '';
+        document.body.classList.remove('in-fullmap-mode');
+        document.documentElement.style.overflow = '';
+        if (fullMapIcon) fullMapIcon.className = 'fa-solid fa-expand text-info';
+        if (fullMapText) fullMapText.innerText = 'ফুল ম্যাপ';
       }
-      setTimeout(() => this.map.resize(), 150);
+      
+      // Dual resize to guarantee zero cut-off in Web & Mobile
+      this.map.resize();
+      setTimeout(() => this.map.resize(), 120);
     };
 
     if (btnFullMap) {
-      btnFullMap.addEventListener('click', () => toggleFullMap(true));
+      btnFullMap.addEventListener('click', () => toggleFullMap());
     }
     if (btnExitFullMap) {
       btnExitFullMap.addEventListener('click', () => toggleFullMap(false));
     }
     if (btnTopExitFullMap) {
       btnTopExitFullMap.addEventListener('click', () => toggleFullMap(false));
-    }
-
-    // Inside Full Map: Recenter to My Location
-    if (btnFmRecenter) {
-      btnFmRecenter.addEventListener('click', () => {
-        this.recenter();
-      });
     }
 
     // Toggle Satellite & Street View
@@ -345,12 +350,12 @@ const MapModule = {
         if (this.isSatelliteMode) {
           this.map.setLayoutProperty('osm-tiles-layer', 'visibility', 'none');
           this.map.setLayoutProperty('satellite-tiles-layer', 'visibility', 'visible');
-          if (mapLayerText) mapLayerText.innerText = 'স্যাটেলাইট ভিউ';
+          if (mapLayerText) mapLayerText.innerText = 'স্যাটেলাইট';
           if (window.showToast) window.showToast('🛰️ স্যাটেলাইট ইমেজারি চালু হয়েছে');
         } else {
           this.map.setLayoutProperty('satellite-tiles-layer', 'visibility', 'none');
           this.map.setLayoutProperty('osm-tiles-layer', 'visibility', 'visible');
-          if (mapLayerText) mapLayerText.innerText = 'স্ট্রিট ভিউ';
+          if (mapLayerText) mapLayerText.innerText = 'স্ট্রিট';
           if (window.showToast) window.showToast('🗺️ স্ট্যান্ডার্ড স্ট্রিট ভিউ চালু হয়েছে');
         }
       });
