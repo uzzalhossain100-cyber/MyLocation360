@@ -70,16 +70,16 @@ const MapModule = {
           'satellite-tiles': {
             type: 'raster',
             tiles: [
-              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+              'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'
             ],
             tileSize: 256,
-            attribution: '&copy; Esri, Maxar, Earthstar Geographics',
+            attribution: '&copy; Google Satellite Imagery & Names',
             maxzoom: 22
           },
           'satellite-roads-tiles': {
             type: 'raster',
             tiles: [
-              'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}'
+              'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}'
             ],
             tileSize: 256,
             maxzoom: 22
@@ -508,22 +508,109 @@ const MapModule = {
     const input = document.getElementById('placeSearchInput');
     const btnSearch = document.getElementById('btnSearchPlace');
     const btnCloseRoute = document.getElementById('btnCloseRoute');
+    const suggestionsBox = document.getElementById('searchSuggestionsBox');
+
+    let debounceTimer = null;
+
+    const hideSuggestions = () => {
+      if (suggestionsBox) {
+        suggestionsBox.style.display = 'none';
+        suggestionsBox.innerHTML = '';
+      }
+    };
+
+    const renderSuggestions = (list) => {
+      if (!suggestionsBox) return;
+      if (!list || list.length === 0) {
+        suggestionsBox.style.display = 'none';
+        return;
+      }
+
+      suggestionsBox.innerHTML = '';
+      list.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'suggestion-item';
+
+        const iconClass = item.type === 'station' ? 'fa-train-subway' :
+                          item.type === 'hospital' ? 'fa-hospital' :
+                          item.type === 'school' ? 'fa-school' :
+                          item.type === 'city' || item.type === 'administrative' ? 'fa-city' : 'fa-location-dot';
+
+        const subTitle = [item.subdistrict, item.district, item.country].filter(Boolean).join(', ') || item.display_name;
+
+        row.innerHTML = `
+          <i class="fa-solid ${iconClass} suggestion-icon"></i>
+          <div style="flex: 1; min-width: 0;">
+            <div class="suggestion-title">${item.name}</div>
+            <div class="suggestion-sub">${subTitle}</div>
+          </div>
+        `;
+
+        row.addEventListener('click', () => {
+          if (input) input.value = item.name;
+          hideSuggestions();
+          const destLat = parseFloat(item.lat);
+          const destLon = parseFloat(item.lon);
+          this.calculateAndDrawRoute(this.currentLat, this.currentLon, destLat, destLon, item.name);
+          if (this.map) {
+            this.map.flyTo({ center: [destLon, destLat], zoom: 15, speed: 1.2 });
+          }
+        });
+
+        suggestionsBox.appendChild(row);
+      });
+
+      suggestionsBox.style.display = 'block';
+    };
+
+    if (input) {
+      input.addEventListener('input', () => {
+        const query = input.value.trim();
+        if (debounceTimer) clearTimeout(debounceTimer);
+        if (!query || query.length < 2) {
+          hideSuggestions();
+          return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+          try {
+            const res = await fetch(`/api/geocode/search?q=${encodeURIComponent(query)}`);
+            if (res.ok) {
+              const data = await res.json();
+              renderSuggestions(data);
+            }
+          } catch (e) {
+            console.warn('Live suggest error', e);
+          }
+        }, 280);
+      });
+
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          hideSuggestions();
+          handleSearch();
+        }
+      });
+    }
+
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#topSlimSearchBar')) {
+        hideSuggestions();
+      }
+    });
 
     const handleSearch = () => {
       const query = input ? input.value.trim() : '';
       if (!query) {
-        if (window.showToast) window.showToast('স্থান বা স্থাপনার নাম লিখুন (বাংলা বা English)');
+        if (window.showToast) window.showToast('স্থান, থানা, জেলা বা দেশের নাম লিখুন (বাংলা বা English)');
         return;
       }
+      hideSuggestions();
       this.searchPlaceAndRoute(query);
     };
 
     if (btnSearch) btnSearch.addEventListener('click', handleSearch);
-    if (input) {
-      input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') handleSearch();
-      });
-    }
 
     if (btnCloseRoute) {
       btnCloseRoute.addEventListener('click', () => {
@@ -548,17 +635,27 @@ const MapModule = {
       if (!place) {
         const directRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=bn,en`);
         const directList = await directRes.json();
-        if (directList && directList.length > 0) place = directList[0];
+        if (directList && directList.length > 0) {
+          place = {
+            lat: directList[0].lat,
+            lon: directList[0].lon,
+            name: directList[0].display_name.split(',')[0]
+          };
+        }
       }
 
       if (!place) {
-        alert(`দুঃখিত, "${query}" পাওয়া যায়নি। অনুগ্রহ করে সঠিক নাম লিখুন।`);
+        alert(`দুঃখিত, "${query}" পাওয়া যায়নি। অনুগ্রহ করে সঠিক নাম বা থানা/জেলা লিখুন।`);
         return;
       }
 
       const destLat = parseFloat(place.lat);
       const destLon = parseFloat(place.lon);
-      const destName = place.display_name.split(',')[0];
+      const destName = place.name || (place.display_name ? place.display_name.split(',')[0] : query);
+
+      if (this.map) {
+        this.map.flyTo({ center: [destLon, destLat], zoom: 15, speed: 1.2 });
+      }
 
       await this.calculateAndDrawRoute(this.currentLat, this.currentLon, destLat, destLon, destName);
 

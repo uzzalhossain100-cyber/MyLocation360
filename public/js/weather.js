@@ -128,29 +128,37 @@ const WeatherApp = {
     setInterval(updateTimes, 1000);
   },
 
-  // Parse WMO Weather Codes to Bengali description, Icon and Animation Scene
-  parseWmoCode(code) {
-    // Open-Meteo WMO weather interpretation codes
+  // Parse WMO Weather Codes to Bengali description, Icon and Dynamic Realistic Animation Scene
+  parseWmoCode(code, isDay = 1, tempC = 25) {
+    const isNight = (isDay === 0);
+
     if (code === 0) {
-      return { text: 'রোদ্রোজ্জ্বল (পরিষ্কার আকাশ)', icon: '☀️', scene: 'sunny', badge: 'রোদ্রোজ্জ্বল দৃশ্য' };
+      if (isNight) {
+        return { text: 'পরিষ্কার রাতের আকাশ', icon: '🌙', scene: 'clear-night', badge: 'তারায় ভরা রাতের দৃশ্য' };
+      }
+      return { text: 'রোদ্রোজ্জ্বল পরিষ্কার আকাশ', icon: '☀️', scene: 'clear-day', badge: 'রোদ্রোজ্জ্বল দিনের দৃশ্য' };
     } else if (code === 1 || code === 2) {
-      return { text: 'আংশিক মেঘলা', icon: '🌤️', scene: 'sunny', badge: 'আংশিক মেঘলা দৃশ্য' };
+      if (isNight) {
+        return { text: 'আংশিক মেঘলা রাতের আকাশ', icon: '☁️', scene: 'partly-cloudy-night', badge: 'রাতের আংশিক মেঘলা দৃশ্য' };
+      }
+      return { text: 'আংশিক মেঘলা আকাশ', icon: '🌤️', scene: 'partly-cloudy-day', badge: 'আংশিক মেঘলা দিনের দৃশ্য' };
     } else if (code === 3) {
-      return { text: 'মেঘাচ্ছন্ন (আকাশ মেঘলা)', icon: '☁️', scene: 'cloudy', badge: 'মেঘাচ্ছন্ন দৃশ্য' };
+      return { text: 'মেঘাচ্ছন্ন (আকাশ মেঘলা)', icon: '☁️', scene: 'cloudy', badge: 'মেঘলা আকাশের দৃশ্য' };
     } else if (code === 45 || code === 48) {
-      return { text: 'কুয়াশাচ্ছন্ন পরিবেশ', icon: '🌫️', scene: 'cloudy', badge: 'কুয়াশাচ্ছন্ন দৃশ্য' };
+      return { text: 'কুয়াশাচ্ছন্ন ও শীতকালীন পরিবেশ', icon: '🌫️', scene: 'fog', badge: 'কুয়াশা ও শীতকালীন দৃশ্য' };
     } else if (code >= 51 && code <= 55) {
-      return { text: 'হালকা গুঁড়ি গুঁড়ি বৃষ্টি', icon: '🌦️', scene: 'rain', badge: 'গুঁড়ি গুঁড়ি বৃষ্টি দৃশ্য' };
+      return { text: 'হালকা গুঁড়ি গুঁড়ি বৃষ্টি', icon: '🌦️', scene: 'rain', badge: 'গুঁড়ি গুঁড়ি বৃষ্টির দৃশ্য' };
     } else if (code >= 61 && code <= 65) {
-      return { text: 'বৃষ্টি পড়ছে', icon: '🌧️', scene: 'rain', badge: 'বৃষ্টির দৃশ্য' };
+      return { text: 'বৃষ্টি পড়ছে', icon: '🌧️', scene: 'rain', badge: 'বৃষ্টির জীবন্ত দৃশ্য' };
     } else if (code >= 71 && code <= 77) {
-      return { text: 'তুষারপাত / শৈত্য', icon: '🌨️', scene: 'cloudy', badge: 'শৈত্য দৃশ্য' };
+      return { text: 'তুষারপাত / শৈত্য', icon: '🌨️', scene: 'snow', badge: 'শীত ও তুষারপাতের দৃশ্য' };
     } else if (code >= 80 && code <= 82) {
-      return { text: 'বৃষ্টির ধারা পড়ছে', icon: '🌧️', scene: 'rain', badge: 'বৃষ্টির দৃশ্য' };
+      return { text: 'বৃষ্টির ধারা পড়ছে', icon: '🌧️', scene: 'rain', badge: 'বৃষ্টির জীবন্ত দৃশ্য' };
     } else if (code >= 95 && code <= 99) {
-      return { text: 'বজ্রঝড় ও ভারী বৃষ্টি', icon: '⛈️', scene: 'storm', badge: 'বজ্রঝড়ের দৃশ্য' };
+      return { text: 'বজ্রঝড় ও ভারী বৃষ্টি', icon: '⛈️', scene: 'storm', badge: 'বজ্রঝড় ও মেঘের গর্জন' };
     } else {
-      return { text: 'সাধারণ আবহাওয়া', icon: '🌤️', scene: 'sunny', badge: 'স্বাভাবিক দৃশ্য' };
+      if (isNight) return { text: 'রাতের শান্ত পরিবেশ', icon: '🌙', scene: 'clear-night', badge: 'রাতের শান্ত দৃশ্য' };
+      return { text: 'স্বাভাবিক আবহাওয়া', icon: '🌤️', scene: 'clear-day', badge: 'স্বাভাবিক পরিবেশ' };
     }
   },
 
@@ -165,7 +173,7 @@ const WeatherApp = {
     }
 
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,precipitation_probability,weather_code,wind_speed_10m&daily=uv_index_max&timezone=auto`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,precipitation_probability,weather_code,wind_speed_10m&daily=uv_index_max&timezone=auto`;
       const response = await fetch(url);
       if (!response.ok) throw new Error('Weather API failed');
       const data = await response.json();
@@ -180,8 +188,11 @@ const WeatherApp = {
       const humidity = Math.round(current.relative_humidity_2m ?? 65);
       const uvIndex = daily.uv_index_max && daily.uv_index_max[0] ? Math.round(daily.uv_index_max[0]) : 5;
       const weatherCode = current.weather_code ?? 0;
+      
+      const hours = new Date().getHours();
+      const isDay = current.is_day !== undefined ? current.is_day : (hours >= 6 && hours < 18 ? 1 : 0);
 
-      const condition = this.parseWmoCode(weatherCode);
+      const condition = this.parseWmoCode(weatherCode, isDay, temp);
 
       // Render to DOM
       const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
@@ -203,17 +214,19 @@ const WeatherApp = {
 
     } catch (err) {
       console.warn('Weather fetch error, using fallback:', err);
-      // Sensible realistic fallback
+      const hours = new Date().getHours();
+      const isNight = hours < 6 || hours >= 18;
       document.getElementById('cwTemp').innerText = '৩১';
       document.getElementById('cwFeelsLike').innerText = '৩৪';
-      document.getElementById('cwConditionIcon').innerText = '☀️';
-      document.getElementById('cwConditionName').innerText = 'রোদ্রোজ্জ্বল ও উষ্ণ';
+      document.getElementById('cwConditionIcon').innerText = isNight ? '🌙' : '☀️';
+      document.getElementById('cwConditionName').innerText = isNight ? 'পরিষ্কার রাতের আকাশ' : 'রোদ্রোজ্জ্বল ও উষ্ণ';
       document.getElementById('cwRainChance').innerText = '২০%';
       document.getElementById('cwWindSpeed').innerText = '১২ কিমি/ঘণ্টা';
       document.getElementById('cwHumidity').innerText = '৬২%';
       document.getElementById('cwUvIndex').innerText = '৬ (UV)';
+      document.getElementById('cwAnimBadge').innerText = isNight ? 'তারায় ভরা রাতের দৃশ্য' : 'রোদ্রোজ্জ্বল দিনের দৃশ্য';
       if (window.WeatherScenes && window.WeatherScenes.currentLocationScene) {
-        window.WeatherScenes.currentLocationScene.setScene('sunny');
+        window.WeatherScenes.currentLocationScene.setScene(isNight ? 'clear-night' : 'clear-day');
       }
     }
   },
@@ -265,7 +278,7 @@ const WeatherApp = {
     if (owCity) owCity.innerText = cityName;
 
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,precipitation_probability,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,precipitation_probability,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
       const response = await fetch(url);
       const data = await response.json();
 
@@ -281,7 +294,8 @@ const WeatherApp = {
       const maxTemp = daily.temperature_2m_max && daily.temperature_2m_max[0] ? Math.round(daily.temperature_2m_max[0]) : (temp + 3);
       const weatherCode = current.weather_code ?? 0;
 
-      const condition = this.parseWmoCode(weatherCode);
+      const isDay = current.is_day !== undefined ? current.is_day : (new Date().getHours() >= 6 && new Date().getHours() < 18 ? 1 : 0);
+      const condition = this.parseWmoCode(weatherCode, isDay, temp);
 
       const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
 
