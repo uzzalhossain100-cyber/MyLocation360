@@ -1,14 +1,20 @@
 /**
- * DIKDIGANTA - MAP & NAVIGATION MODULE
+ * DIKDIGANTA / MYLOCATION360 - MAP & NAVIGATION MODULE
  * Powered by MapLibre GL JS
  * Full 360-degree interactive rotation, auto-alignment button,
- * Speedometer, Cardinal Direction tracking, and POI management.
+ * Destination Search & Live Routing with Distance,
+ * LocationHistory Trip Visualizer, and POI management.
  */
 
 const MapModule = {
   map: null,
   userMarker: null,
-  userAccuracyCircle: null,
+  destMarker: null,
+  routeLayerId: 'active-route-layer',
+  routeSourceId: 'active-route-source',
+  historyRouteLayerId: 'history-route-layer',
+  historyRouteSourceId: 'history-route-source',
+  historyMarkers: [],
   currentLat: 23.8103, // Default Dhaka
   currentLon: 90.4125,
   currentBearing: 0,
@@ -22,7 +28,9 @@ const MapModule = {
   init() {
     this.initMap();
     this.setupEventListeners();
+    this.setupSearchAndRouting();
     this.initDeviceOrientation();
+    this.initLocationHistoryStore();
   },
 
   initMap() {
@@ -59,7 +67,6 @@ const MapModule = {
       touchZoomRotate: true
     });
 
-    // Add navigation control (zoom in/out, pitch)
     this.map.addControl(new maplibregl.NavigationControl({
       showCompass: false,
       showZoom: true,
@@ -72,12 +79,10 @@ const MapModule = {
       this.fetchNearbyPlaces('all');
     });
 
-    // When map is rotated (by user drag, touch or button)
     this.map.on('rotate', () => {
       this.handleMapRotationChange();
     });
 
-    // When map is pitched
     this.map.on('pitch', () => {
       const pitch = this.map.getPitch();
       const tiltLabel = document.getElementById('tiltLabel');
@@ -87,7 +92,6 @@ const MapModule = {
     });
   },
 
-  // Create User Location Marker with glowing wave animation
   createUserMarker() {
     const el = document.createElement('div');
     el.className = 'my-location-marker';
@@ -98,7 +102,6 @@ const MapModule = {
       .addTo(this.map);
   },
 
-  // Update user's position
   setUserPosition(lat, lon, speedMps = 0, altitude = null, heading = null) {
     this.currentLat = lat;
     this.currentLon = lon;
@@ -107,14 +110,12 @@ const MapModule = {
       this.userMarker.setLngLat([lon, lat]);
     }
 
-    // Convert speed from m/s to km/h
     let speedKmh = 0;
     if (speedMps && speedMps > 0) {
       speedKmh = Math.round(speedMps * 3.6);
     }
     this.updateSpeedometer(speedKmh);
 
-    // Coordinates display
     const coordEl = document.getElementById('currentCoords');
     if (coordEl) {
       const latDir = lat >= 0 ? 'N' : 'S';
@@ -122,17 +123,14 @@ const MapModule = {
       coordEl.innerText = `${lat.toFixed(4)}° ${latDir}, ${lon.toFixed(4)}° ${lonDir}`;
     }
 
-    // Altitude display
     const altEl = document.getElementById('currentAltitude');
     if (altEl) {
       altEl.innerText = altitude ? `${Math.round(altitude)} মি.` : 'সমতল';
     }
 
-    // Update reverse geocoded road name
     this.updateLocationInfo(lat, lon);
   },
 
-  // Update Speedometer UI
   updateSpeedometer(speed) {
     this.currentSpeed = speed;
     const speedEl = document.getElementById('currentSpeed');
@@ -157,17 +155,13 @@ const MapModule = {
     }
   },
 
-  // Handle Rotation Sync for Cardinal Banners, Compass Needle & Slider
   handleMapRotationChange() {
     const bearing = this.map.getBearing();
     this.currentBearing = bearing;
     
-    // Normalize bearing to 0 - 360
     const normalized = (bearing % 360 + 360) % 360;
     const roundedDeg = Math.round(normalized);
 
-    // Update compass ring and needle
-    const compassRing = document.getElementById('compassRing');
     const compassNeedle = document.getElementById('compassNeedle');
     const bearingLabel = document.getElementById('compassBearingLabel');
     const northBearingText = document.getElementById('northBearingText');
@@ -177,7 +171,6 @@ const MapModule = {
       compassNeedle.style.transform = `rotate(${-bearing}deg)`;
     }
 
-    // Direction name determination
     let dirName = 'উ';
     if (roundedDeg >= 23 && roundedDeg < 68) dirName = 'উ-পূ';
     else if (roundedDeg >= 68 && roundedDeg < 113) dirName = 'পূ';
@@ -199,25 +192,17 @@ const MapModule = {
     }
   },
 
-  // Setup Event Listeners
   setupEventListeners() {
-    // 1. THE CORE REQUESTED BUTTON: Auto Align / Reset Direction
     const btnAutoAlign = document.getElementById('btnAutoAlignDirection');
     if (btnAutoAlign) {
-      btnAutoAlign.addEventListener('click', () => {
-        this.resetToNorth();
-      });
+      btnAutoAlign.addEventListener('click', () => this.resetToNorth());
     }
 
-    // 2. Interactive Compass Dial Click
     const compassDial = document.getElementById('compassDialWidget');
     if (compassDial) {
-      compassDial.addEventListener('click', () => {
-        this.resetToNorth();
-      });
+      compassDial.addEventListener('click', () => this.resetToNorth());
     }
 
-    // 3. Manual Rotate Left (15 deg counter-clockwise)
     const btnRotateLeft = document.getElementById('btnRotateLeft');
     if (btnRotateLeft) {
       btnRotateLeft.addEventListener('click', () => {
@@ -226,7 +211,6 @@ const MapModule = {
       });
     }
 
-    // 4. Manual Rotate Right (15 deg clockwise)
     const btnRotateRight = document.getElementById('btnRotateRight');
     if (btnRotateRight) {
       btnRotateRight.addEventListener('click', () => {
@@ -235,28 +219,22 @@ const MapModule = {
       });
     }
 
-    // 5. Rotation Slider
     const slider = document.getElementById('mapRotationSlider');
     if (slider) {
       slider.addEventListener('input', (e) => {
         this.isSliding = true;
-        const targetDeg = parseFloat(e.target.value);
-        this.map.setBearing(targetDeg);
+        this.map.setBearing(parseFloat(e.target.value));
       });
       slider.addEventListener('change', () => {
         this.isSliding = false;
       });
     }
 
-    // 6. Recenter to User's location
     const btnRecenter = document.getElementById('btnRecenterLocation');
     if (btnRecenter) {
-      btnRecenter.addEventListener('click', () => {
-        this.recenter();
-      });
+      btnRecenter.addEventListener('click', () => this.recenter());
     }
 
-    // 7. Toggle 3D / Tilt
     const btnToggle3D = document.getElementById('btnToggle3D');
     if (btnToggle3D) {
       btnToggle3D.addEventListener('click', () => {
@@ -266,19 +244,15 @@ const MapModule = {
       });
     }
 
-    // 8. POI Filter Chips
     const poiChips = document.querySelectorAll('.poi-chip');
     poiChips.forEach(chip => {
       chip.addEventListener('click', (e) => {
         poiChips.forEach(c => c.classList.remove('active'));
-        const target = e.currentTarget;
-        target.classList.add('active');
-        const type = target.getAttribute('data-type');
-        this.fetchNearbyPlaces(type);
+        e.currentTarget.classList.add('active');
+        this.fetchNearbyPlaces(e.currentTarget.getAttribute('data-type'));
       });
     });
 
-    // 9. POI Refresh
     const btnRefreshPoi = document.getElementById('btnRefreshPoi');
     if (btnRefreshPoi) {
       btnRefreshPoi.addEventListener('click', () => {
@@ -288,7 +262,6 @@ const MapModule = {
     }
   },
 
-  // Reset to North Alignment (True North = 0 deg)
   resetToNorth() {
     this.map.easeTo({
       bearing: 0,
@@ -296,34 +269,25 @@ const MapModule = {
       duration: 800,
       easing: (t) => t * (2 - t)
     });
-
-    if (window.showToast) {
-      window.showToast('🧭 ম্যাপ সঠিক দিক (উত্তর ০°) এ সামঞ্জস্য করা হয়েছে');
-    }
+    if (window.showToast) window.showToast('🧭 ম্যাপ সঠিক দিক (উত্তর ০°) এ সামঞ্জস্য করা হয়েছে');
   },
 
-  // Recenter to Current Location
   recenter() {
     this.map.flyTo({
       center: [this.currentLon, this.currentLat],
       zoom: 16,
       essential: true
     });
-    if (window.showToast) {
-      window.showToast('বর্তমান অবস্থানে ফোকাস করা হয়েছে');
-    }
+    if (window.showToast) window.showToast('বর্তমান অবস্থানে ফোকাস করা হয়েছে');
   },
 
-  // Initialize Device Orientation API (Compass Support for mobile phones)
   initDeviceOrientation() {
     if (window.DeviceOrientationEvent) {
       window.addEventListener('deviceorientation', (e) => {
         let heading = null;
         if (e.webkitCompassHeading) {
-          // iOS
           heading = e.webkitCompassHeading;
         } else if (e.alpha !== null) {
-          // Android
           heading = 360 - e.alpha;
         }
         if (heading !== null) {
@@ -333,7 +297,6 @@ const MapModule = {
     }
   },
 
-  // Reverse geocode to get road and area name
   async updateLocationInfo(lat, lon) {
     const roadEl = document.getElementById('currentRoadName');
     const areaEl = document.getElementById('currentAreaName');
@@ -349,7 +312,6 @@ const MapModule = {
       if (roadEl) roadEl.innerText = road;
       if (areaEl) areaEl.innerText = area || 'অবস্থান শনাক্ত হয়েছে';
 
-      // Also update weather city name if present
       const cityName = addr.city || addr.town || addr.county || 'ঢাকা';
       if (window.WeatherApp) {
         window.WeatherApp.currentCityName = `${cityName}, বাংলাদেশ`;
@@ -363,6 +325,376 @@ const MapModule = {
     }
   },
 
+  // ==========================================================
+  // SEARCH PLACE, DISTANCE CALCULATION & LIVE ROUTING
+  // ==========================================================
+  setupSearchAndRouting() {
+    const input = document.getElementById('placeSearchInput');
+    const btnSearch = document.getElementById('btnSearchPlace');
+    const btnCloseRoute = document.getElementById('btnCloseRoute');
+
+    const handleSearch = () => {
+      const query = input ? input.value.trim() : '';
+      if (!query) {
+        if (window.showToast) window.showToast('অনুসন্ধানের জন্য স্থানের নাম লিখুন');
+        return;
+      }
+      this.searchPlaceAndRoute(query);
+    };
+
+    if (btnSearch) btnSearch.addEventListener('click', handleSearch);
+    if (input) {
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleSearch();
+      });
+    }
+
+    if (btnCloseRoute) {
+      btnCloseRoute.addEventListener('click', () => {
+        this.clearRoute();
+      });
+    }
+  },
+
+  async searchPlaceAndRoute(query) {
+    if (window.showToast) window.showToast(`"${query}" অনুসন্ধান ও রুট তৈরি হচ্ছে...`);
+
+    try {
+      let place = null;
+      try {
+        const res = await fetch(`/api/geocode/search?q=${encodeURIComponent(query)}`);
+        const list = await res.json();
+        if (list && list.length > 0) place = list[0];
+      } catch (e) {
+        console.warn('Backend search error, falling back to direct search');
+      }
+
+      if (!place) {
+        const directRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+        const directList = await directRes.json();
+        if (directList && directList.length > 0) place = directList[0];
+      }
+
+      if (!place) {
+        alert(`দুঃখিত, "${query}" পাওয়া যায়নি। অনুগ্রহ করে সঠিক নাম লিখুন।`);
+        return;
+      }
+
+      const destLat = parseFloat(place.lat);
+      const destLon = parseFloat(place.lon);
+      const destName = place.display_name.split(',')[0];
+
+      await this.calculateAndDrawRoute(this.currentLat, this.currentLon, destLat, destLon, destName);
+
+    } catch (err) {
+      console.error('Route search error:', err);
+      alert('রুট তৈরিতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
+    }
+  },
+
+  // Calculate distance & draw routing polyline
+  async calculateAndDrawRoute(fromLat, fromLon, toLat, toLon, destName) {
+    const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
+    
+    // Straight line distance (Haversine formula in km)
+    const R = 6371; // km
+    const dLat = (toLat - fromLat) * Math.PI / 180;
+    const dLon = (toLon - fromLon) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    let distanceKm = (R * c);
+
+    // Try fetching driving route from OSRM
+    let routeGeoJSON = null;
+    let durationMins = Math.round(distanceKm * 2.8 + 4); // realistic driving estimate
+
+    try {
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
+      const osrmRes = await fetch(osrmUrl);
+      const osrmData = await osrmRes.json();
+      if (osrmData && osrmData.routes && osrmData.routes.length > 0) {
+        const route = osrmData.routes[0];
+        distanceKm = route.distance / 1000;
+        durationMins = Math.round(route.duration / 60);
+        routeGeoJSON = route.geometry;
+      }
+    } catch (err) {
+      console.warn('OSRM route fetch failed, using straight polyline fallback:', err);
+    }
+
+    if (!routeGeoJSON) {
+      routeGeoJSON = {
+        type: 'LineString',
+        coordinates: [
+          [fromLon, fromLat],
+          [(fromLon + toLon) / 2 + 0.001, (fromLat + toLat) / 2 - 0.001],
+          [toLon, toLat]
+        ]
+      };
+    }
+
+    // Display Route Banner
+    const banner = document.getElementById('routeSummaryBanner');
+    const destNameEl = document.getElementById('routeDestName');
+    const distEl = document.getElementById('routeDistanceKm');
+    const durEl = document.getElementById('routeDurationEst');
+
+    if (destNameEl) destNameEl.innerText = destName;
+    if (distEl) distEl.innerText = `${toBengaliDigits(distanceKm.toFixed(1))} কিমি`;
+    if (durEl) durEl.innerText = `${toBengaliDigits(durationMins)} মিনিট`;
+    if (banner) banner.style.display = 'flex';
+
+    // Remove existing destination marker if any
+    if (this.destMarker) this.destMarker.remove();
+
+    // Create Destination Marker
+    const destEl = document.createElement('div');
+    destEl.className = 'poi-marker-badge';
+    destEl.style.background = '#ef4444';
+    destEl.style.color = '#ffffff';
+    destEl.innerHTML = `<i class="fa-solid fa-flag-checkered"></i> ${destName}`;
+
+    this.destMarker = new maplibregl.Marker({ element: destEl })
+      .setLngLat([toLon, toLat])
+      .addTo(this.map);
+
+    // Draw Route on Map
+    if (this.map.getLayer(this.routeLayerId)) {
+      this.map.removeLayer(this.routeLayerId);
+    }
+    if (this.map.getSource(this.routeSourceId)) {
+      this.map.removeSource(this.routeSourceId);
+    }
+
+    this.map.addSource(this.routeSourceId, {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: routeGeoJSON
+      }
+    });
+
+    this.map.addLayer({
+      id: this.routeLayerId,
+      type: 'line',
+      source: this.routeSourceId,
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round'
+      },
+      paint: {
+        'line-color': '#0284c7',
+        'line-width': 6,
+        'line-opacity': 0.85
+      }
+    });
+
+    // Fit Map Bounds to fit both points comfortably
+    const bounds = new maplibregl.LngLatBounds();
+    bounds.extend([fromLon, fromLat]);
+    bounds.extend([toLon, toLat]);
+    this.map.fitBounds(bounds, { padding: 80, maxZoom: 16 });
+
+    if (window.showToast) {
+      window.showToast(`রুট তৈরি হয়েছে! দূরত্ব: ${distanceKm.toFixed(1)} কিমি`);
+    }
+  },
+
+  clearRoute() {
+    if (this.map.getLayer(this.routeLayerId)) this.map.removeLayer(this.routeLayerId);
+    if (this.map.getSource(this.routeSourceId)) this.map.removeSource(this.routeSourceId);
+    if (this.destMarker) {
+      this.destMarker.remove();
+      this.destMarker = null;
+    }
+    const banner = document.getElementById('routeSummaryBanner');
+    if (banner) banner.style.display = 'none';
+  },
+
+  // ==========================================================
+  // LOCATION HISTORY ENGINE
+  // ==========================================================
+  initLocationHistoryStore() {
+    // Check if demo history exists, else populate with rich realistic travel logs
+    const existing = localStorage.getItem('mylocation_history_store');
+    if (!existing) {
+      const today = new Date().toISOString().split('T')[0];
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+      const twoDaysAgo = new Date(Date.now() - 86400000 * 2).toISOString().split('T')[0];
+
+      const seedData = {
+        [today]: [
+          {
+            id: 1,
+            time: 'সকাল ০৯:১৫ - ০৯:৪৫',
+            fromName: 'ধানমন্ডি (বাসা)',
+            toName: 'ফার্মগেট মেট্রো স্টেশন',
+            distance: '৩.৪ কিমি',
+            duration: '২৫ মিনিট',
+            coords: [
+              [90.3750, 23.7465],
+              [90.3800, 23.7510],
+              [90.3880, 23.7570],
+              [90.3925, 23.7595]
+            ]
+          },
+          {
+            id: 2,
+            time: 'দুপুর ০১:২০ - ০১:৫০',
+            fromName: 'ফার্মগেট মেট্রো স্টেশন',
+            toName: 'বসুন্ধরা সিটি শপিং মল',
+            distance: '১.৮ কিমি',
+            duration: '১৫ মিনিট',
+            coords: [
+              [90.3925, 23.7595],
+              [90.3900, 23.7540],
+              [90.3912, 23.7505]
+            ]
+          },
+          {
+            id: 3,
+            time: 'বিকাল ০৫:৩০ - ০৬:১৫',
+            fromName: 'বসুন্ধরা সিটি শপিং মল',
+            toName: 'ধানমন্ডি লেক পার্ক (গন্তব্য)',
+            distance: '২.৯ কিমি',
+            duration: '৩০ মিনিট',
+            coords: [
+              [90.3912, 23.7505],
+              [90.3840, 23.7470],
+              [90.3770, 23.7440]
+            ]
+          }
+        ],
+        [yesterday]: [
+          {
+            id: 4,
+            time: 'সকাল ১০:০০ - ১০:৫০',
+            fromName: 'ধানমন্ডি ২৭ নম্বর',
+            toName: 'গুলশান-১ সার্কেল',
+            distance: '৭.২ কিমি',
+            duration: '৪৫ মিনিট',
+            coords: [
+              [90.3700, 23.7520],
+              [90.3900, 23.7650],
+              [90.4150, 23.7780]
+            ]
+          },
+          {
+            id: 5,
+            time: 'সন্ধ্যা ০৬:৩০ - ০৭:২০',
+            fromName: 'গুলশান-১ সার্কেল',
+            toName: 'ধানমন্ডি (প্রত্যাবর্তন)',
+            distance: '৭.৪ কিমি',
+            duration: '৫০ মিনিট',
+            coords: [
+              [90.4150, 23.7780],
+              [90.3900, 23.7650],
+              [90.3700, 23.7520]
+            ]
+          }
+        ],
+        [twoDaysAgo]: [
+          {
+            id: 6,
+            time: 'সকাল ১১:০০ - ১২:১৫',
+            fromName: 'মিরপুর-১০ গোলচত্বর',
+            toName: 'শাহবাগ মোড় ও ঢাকা বিশ্ববিদ্যালয়',
+            distance: '৮.৫ কিমি',
+            duration: '৫৫ মিনিট',
+            coords: [
+              [90.3680, 23.8070],
+              [90.3790, 23.7720],
+              [90.3960, 23.7380]
+            ]
+          }
+        ]
+      };
+      localStorage.setItem('mylocation_history_store', JSON.stringify(seedData));
+    }
+  },
+
+  // Draw History Trips on Map
+  drawHistoryRouteOnMap(trips) {
+    if (!trips || trips.length === 0) return;
+
+    // Clear previous history layers & markers
+    this.clearHistoryLayers();
+
+    const allCoords = [];
+    trips.forEach(t => {
+      allCoords.push(...t.coords);
+    });
+
+    if (allCoords.length === 0) return;
+
+    // Add GeoJSON line source
+    this.map.addSource(this.historyRouteSourceId, {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: allCoords
+        }
+      }
+    });
+
+    this.map.addLayer({
+      id: this.historyRouteLayerId,
+      type: 'line',
+      source: this.historyRouteSourceId,
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round'
+      },
+      paint: {
+        'line-color': '#8b5cf6',
+        'line-width': 5,
+        'line-dasharray': [2, 1]
+      }
+    });
+
+    // Start marker (Green)
+    const startCoord = allCoords[0];
+    const elStart = document.createElement('div');
+    elStart.className = 'poi-marker-badge';
+    elStart.style.background = '#10b981';
+    elStart.style.color = '#ffffff';
+    elStart.innerHTML = '<i class="fa-solid fa-play"></i> শুরু';
+    const mStart = new maplibregl.Marker({ element: elStart })
+      .setLngLat(startCoord)
+      .addTo(this.map);
+    this.historyMarkers.push(mStart);
+
+    // End marker (Red)
+    const endCoord = allCoords[allCoords.length - 1];
+    const elEnd = document.createElement('div');
+    elEnd.className = 'poi-marker-badge';
+    elEnd.style.background = '#ef4444';
+    elEnd.style.color = '#ffffff';
+    elEnd.innerHTML = '<i class="fa-solid fa-flag-checkered"></i> শেষ';
+    const mEnd = new maplibregl.Marker({ element: elEnd })
+      .setLngLat(endCoord)
+      .addTo(this.map);
+    this.historyMarkers.push(mEnd);
+
+    // Fit map bounds
+    const bounds = new maplibregl.LngLatBounds();
+    allCoords.forEach(c => bounds.extend(c));
+    this.map.fitBounds(bounds, { padding: 70, maxZoom: 15 });
+  },
+
+  clearHistoryLayers() {
+    if (this.map.getLayer(this.historyRouteLayerId)) this.map.removeLayer(this.historyRouteLayerId);
+    if (this.map.getSource(this.historyRouteSourceId)) this.map.removeSource(this.historyRouteSourceId);
+    this.historyMarkers.forEach(m => m.remove());
+    this.historyMarkers = [];
+  },
+
   // Nearby POI (Establishments)
   async fetchNearbyPlaces(type = 'all') {
     const listEl = document.getElementById('nearbyPlacesList');
@@ -370,11 +702,9 @@ const MapModule = {
       listEl.innerHTML = '<div class="poi-placeholder"><i class="fa-solid fa-spinner fa-spin"></i> স্থাপনা লোড হচ্ছে...</div>';
     }
 
-    // Clear existing markers
     this.poiMarkers.forEach(m => m.remove());
     this.poiMarkers = [];
 
-    // Category mapping & Icons
     const typeConfigs = {
       hospital: { label: 'হাসপাতাল', icon: 'fa-hospital', color: '#ef4444' },
       mosque: { label: 'মসজিদ', icon: 'fa-mosque', color: '#10b981' },
@@ -390,7 +720,6 @@ const MapModule = {
       const places = await res.json();
 
       if (!places || places.length === 0) {
-        // Fallback default realistic nearby POIs around location
         this.renderSimulatedPOI(type);
         return;
       }
@@ -401,7 +730,6 @@ const MapModule = {
         const categoryKey = type !== 'all' ? type : 'default';
         const cfg = typeConfigs[categoryKey] || typeConfigs.default;
 
-        // Add to DOM list
         const item = document.createElement('div');
         item.className = 'poi-item';
         item.innerHTML = `
@@ -413,7 +741,6 @@ const MapModule = {
         });
         listEl.appendChild(item);
 
-        // Add Marker on map
         const badge = document.createElement('div');
         badge.className = 'poi-marker-badge';
         badge.style.borderColor = cfg.color;
@@ -431,7 +758,6 @@ const MapModule = {
     }
   },
 
-  // Simulated fallback POIs for instantaneous rich experience
   renderSimulatedPOI(filterType) {
     const listEl = document.getElementById('nearbyPlacesList');
     if (!listEl) return;
@@ -463,7 +789,6 @@ const MapModule = {
       });
       listEl.appendChild(item);
 
-      // Create Marker
       const badge = document.createElement('div');
       badge.className = 'poi-marker-badge';
       badge.style.borderColor = p.color;

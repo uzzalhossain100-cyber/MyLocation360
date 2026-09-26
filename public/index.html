@@ -81,6 +81,37 @@
       <!-- ================= TAB 1: MY LOCATION & MAP ================= -->
       <section id="location-tab" class="tab-pane active">
         
+        <!-- Search Destination & History Bar -->
+        <div class="map-top-action-bar">
+          <div class="place-search-container">
+            <i class="fa-solid fa-magnifying-glass search-field-icon"></i>
+            <input type="text" id="placeSearchInput" placeholder="লোকেশন, স্থাপনা বা স্থান সার্চ করুন (যেমন: ধানমন্ডি লেক, গুলশান, বসুন্ধরা)..." autocomplete="off">
+            <button class="action-search-btn" id="btnSearchPlace" title="দূরত্ব ও রুট দেখুন">
+              <i class="fa-solid fa-route"></i>
+              <span>রুট ও দূরত্ব</span>
+            </button>
+          </div>
+          
+          <button class="history-toggle-btn" id="btnOpenLocationHistory" title="যাতায়াত ও ভ্রমণ ইতিহাস দেখুন">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>LocationHistory</span>
+          </button>
+        </div>
+
+        <!-- Route & Distance Info Float Banner (appears when destination searched) -->
+        <div class="route-summary-banner" id="routeSummaryBanner" style="display: none;">
+          <div class="route-meta-col">
+            <div class="route-dest-name"><i class="fa-solid fa-location-dot text-danger"></i> <span id="routeDestName">গন্তব্য</span></div>
+            <div class="route-metrics-row">
+              <span class="route-metric-chip distance-chip"><i class="fa-solid fa-arrows-left-right"></i> দূরত্ব: <strong id="routeDistanceKm">০ কিমি</strong></span>
+              <span class="route-metric-chip duration-chip"><i class="fa-solid fa-car"></i> সময়: <strong id="routeDurationEst">০ মিনিট</strong></span>
+            </div>
+          </div>
+          <button class="close-route-btn" id="btnCloseRoute" title="রুট ক্লিয়ার করুন">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
         <!-- Map Container & Overlays Wrapper -->
         <div class="map-view-wrapper">
           
@@ -493,6 +524,21 @@
 
     </main>
 
+    <!-- App Download Action Floating Bar (Footer Area) -->
+    <div class="app-download-footer-bar">
+      <div class="download-info">
+        <i class="fa-solid fa-mobile-screen-button download-lead-icon"></i>
+        <div class="download-text">
+          <span class="dl-title">মোবাইল অ্যাপ সংস্করণ</span>
+          <span class="dl-desc">ফোনে ইনস্টল করে যেকোনো সময় সহজে ব্যবহার করুন</span>
+        </div>
+      </div>
+      <button class="btn-download-app" id="btnDownloadApp">
+        <i class="fa-solid fa-cloud-arrow-down"></i>
+        <span>মোবাইল অ্যাপ ডাউনলোড করুন</span>
+      </button>
+    </div>
+
     <!-- Bottom Navigation Bar for Mobile Feel -->
     <footer class="app-mobile-nav">
       <button class="mobile-nav-item active" data-tab="location-tab">
@@ -504,6 +550,96 @@
         <span>আবহাওয়া</span>
       </button>
     </footer>
+
+    <!-- LocationHistory Modal (স্থান ও যাতায়াত ইতিহাস) -->
+    <div class="modal-backdrop" id="locationHistoryModal" style="display:none;">
+      <div class="modal-card history-modal-card">
+        <div class="modal-header-row">
+          <h3 class="modal-title"><i class="fa-solid fa-clock-rotate-left text-primary"></i> LocationHistory (যাতায়াত ইতিহাস)</h3>
+          <button class="modal-close-btn" id="btnCloseHistoryModal"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- Date Navigation Bar -->
+        <div class="history-date-nav-bar">
+          <button class="date-step-btn" id="btnPrevDate" title="আগের তারিখে যান">
+            <i class="fa-solid fa-chevron-left"></i>
+            <span>আগের দিন</span>
+          </button>
+          
+          <div class="current-selected-date-wrap">
+            <input type="date" id="historyDatePicker" class="hidden-date-input">
+            <div class="date-display-badge" id="btnTriggerDatePicker" title="ক্লিক করে তারিখ পরিবর্তন করুন">
+              <i class="fa-regular fa-calendar-check"></i>
+              <span id="historySelectedDateLabel">২৬ সেপ্টেম্বর ২০২৬ (আজ)</span>
+            </div>
+          </div>
+
+          <button class="date-step-btn" id="btnNextDate" title="পরের তারিখে যান">
+            <span>পরের দিন</span>
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+
+        <!-- View Button -->
+        <button class="history-view-btn" id="btnViewHistoryForDate">
+          <i class="fa-solid fa-map-location-dot"></i>
+          <span>ভিউ হিস্টরি ও রুট ম্যাপ</span>
+        </button>
+
+        <!-- History Results List Container -->
+        <div class="history-routes-summary" id="historyRoutesSummary">
+          <div class="history-summary-header">
+            <span>সেই তারিখে আপনার যাতায়াতের রুট তালিকা:</span>
+          </div>
+          <div class="history-trips-list" id="historyTripsList">
+            <!-- Dynamic trips will be injected here -->
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-primary-action" id="btnShowRouteOnMap">
+            <i class="fa-solid fa-diamond-turn-right"></i>
+            <span>ম্যাপে সম্পূর্ণ রুট দেখান</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile App Download & Install Modal -->
+    <div class="modal-backdrop" id="appDownloadModal" style="display:none;">
+      <div class="modal-card download-modal-card">
+        <div class="modal-header-row">
+          <h3 class="modal-title"><i class="fa-solid fa-download text-primary"></i> MyLocation360 অ্যাপ ডাউনলোড</h3>
+          <button class="modal-close-btn" id="btnCloseDownloadModal"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="download-modal-body">
+          <div class="app-badge-center">
+            <img src="/assets/icon-192.svg" alt="MyLocation360" class="dl-app-icon">
+            <div class="dl-app-title">MyLocation360</div>
+            <div class="dl-app-tag">অফিসিয়াল প্রোগ্রেসিভ মোবাইল অ্যাপ (PWA)</div>
+          </div>
+          
+          <div class="install-instructions-card">
+            <h4><i class="fa-brands fa-android text-success"></i> অ্যান্ড্রয়েড (Android) ব্যবহারকারীদের জন্য:</h4>
+            <p>নিচের <strong>"এখনই ইনস্টল করুন"</strong> বাটনে চাপ দিন অথবা ক্রোম ব্রাউজারের থ্রি-ডট মেন্যু (⋮) থেকে <strong>"Install app"</strong> বা <strong>"Add to Home screen"</strong> চাপুন।</p>
+          </div>
+
+          <div class="install-instructions-card">
+            <h4><i class="fa-brands fa-apple text-info"></i> আইফোন (iPhone/iPad) ব্যবহারকারীদের জন্য:</h4>
+            <p>Safari ব্রাউজারে নিচের <strong>Share বাটনে</strong> (□+↑) চাপ দিয়ে <strong>"Add to Home Screen"</strong> (হোম স্ক্রিনে যোগ করুন) চাপুন।</p>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-primary-action" id="btnTriggerPwaInstall">
+            <i class="fa-solid fa-circle-down"></i>
+            <span>এখনই ইনস্টল করুন</span>
+          </button>
+          <button class="btn-secondary-action" id="btnCloseDownloadModal2">
+            বন্ধ করুন
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Welcome & Location Permission Modal (First Launch) -->
     <div class="modal-backdrop" id="permissionModal" style="display:none;">
