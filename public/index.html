@@ -373,10 +373,11 @@
                 </div>
 
                 <div class="metric-item wind-item">
-                  <div class="metric-icon"><i class="fa-solid fa-wind"></i></div>
+                  <div class="metric-icon" id="cwWindIconWrap"><i class="fa-solid fa-wind"></i></div>
                   <div class="metric-info">
-                    <span class="metric-label">বাতাসের গতি</span>
+                    <span class="metric-label">বাতাসের গতি ও দিকপ্রবাহ</span>
                     <span class="metric-val" id="cwWindSpeed">১২ কিমি/ঘণ্টা</span>
+                    <span class="metric-sub-val" id="cwWindDirection">দক্ষিণ-পশ্চিম থেকে উত্তর-পূর্বে ↗️</span>
                   </div>
                 </div>
 
@@ -460,10 +461,16 @@
                   </div>
                   <span class="r-subtitle">বাতাসের ঘূর্ণি, স্যাটেলাইট মেঘ, রাডার বৃষ্টি ও তাপমাত্রার জীবন্ত দৃশ্য</span>
                 </div>
-                <a href="https://zoom.earth/maps/wind-speed/#view=23.8,90.4,6z/model=icon" target="_blank" rel="noopener noreferrer" class="zoom-earth-link-btn" title="Zoom Earth ওয়েবসাইটে ফুলস্ক্রিন দেখুন">
-                  <i class="fa-solid fa-up-right-from-square"></i>
-                  <span>Zoom Earth</span>
-                </a>
+                <div class="radar-header-links">
+                  <a href="https://www.windy.com/-Weather-radar-radar?radar,23.8,90.4,6" target="_blank" rel="noopener noreferrer" class="windy-link-btn" id="windyDirectLink" title="Windy.com এ সরাসরি লাইভ রাডার ও স্যাটেলাইট দেখুন">
+                    <i class="fa-solid fa-wind"></i>
+                    <span>Windy.com</span>
+                  </a>
+                  <a href="https://zoom.earth/maps/wind-speed/#view=23.8,90.4,6z/model=icon" target="_blank" rel="noopener noreferrer" class="zoom-earth-link-btn" id="zoomEarthLink" title="Zoom Earth ওয়েবসাইটে ফুলস্ক্রিন দেখুন">
+                    <i class="fa-solid fa-up-right-from-square"></i>
+                    <span>Zoom Earth</span>
+                  </a>
+                </div>
               </div>
 
               <div class="weather-map-stage-wrapper">

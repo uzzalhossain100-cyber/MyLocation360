@@ -339,6 +339,40 @@ const WeatherApp = {
     }
   },
 
+  // Wind Direction Compass & Flow Calculation
+  getWindFlowDescription(deg) {
+    if (deg === undefined || deg === null || isNaN(deg)) {
+      return { flowText: 'বাতাস শান্ত', arrow: '⬆️', angle: 0 };
+    }
+
+    const val = Math.floor((deg / 22.5) + 0.5) % 16;
+    const directions = [
+      { name: 'উত্তর', to: 'দক্ষিণ', arrow: '⬇️' },
+      { name: 'উত্তর-উত্তরপূর্ব', to: 'দক্ষিণ-দক্ষিণপশ্চিম', arrow: '↙️' },
+      { name: 'উত্তর-পূর্ব', to: 'দক্ষিণ-পশ্চিম', arrow: '↙️' },
+      { name: 'পূর্ব-উত্তরপূর্ব', to: 'পশ্চিম-দক্ষিণপশ্চিম', arrow: '↙️' },
+      { name: 'পূর্ব', to: 'পশ্চিম', arrow: '⬅️' },
+      { name: 'পূর্ব-দক্ষিণপূর্ব', to: 'পশ্চিম-উত্তরপশ্চিম', arrow: '↖️' },
+      { name: 'দক্ষিণ-পূর্ব', to: 'উত্তর-পশ্চিম', arrow: '↖️' },
+      { name: 'দক্ষিণ-দক্ষিণপূর্ব', to: 'উত্তর-উত্তরপশ্চিম', arrow: '↖️' },
+      { name: 'দক্ষিণ', to: 'উত্তর', arrow: '⬆️' },
+      { name: 'দক্ষিণ-দক্ষিণপশ্চিম', to: 'উত্তর-উত্তরপূর্ব', arrow: '↗️' },
+      { name: 'দক্ষিণ-পশ্চিম', to: 'উত্তর-পূর্ব', arrow: '↗️' },
+      { name: 'পশ্চিম-দক্ষিণপশ্চিম', to: 'পূর্ব-উত্তরপূর্ব', arrow: '↗️' },
+      { name: 'পশ্চিম', to: 'পূর্ব', arrow: '➡️' },
+      { name: 'পশ্চিম-উত্তরপশ্চিম', to: 'পূর্ব-দক্ষিণপূর্ব', arrow: '↘️' },
+      { name: 'উত্তর-পশ্চিম', to: 'দক্ষিণ-পূর্ব', arrow: '↘️' },
+      { name: 'উত্তর-উত্তরপশ্চিম', to: 'দক্ষিণ-দক্ষিণপূর্ব', arrow: '↘️' }
+    ];
+
+    const d = directions[val] || directions[0];
+    return {
+      flowText: `${d.name} থেকে ${d.to} দিকে ${d.arrow}`,
+      arrow: d.arrow,
+      angle: deg
+    };
+  },
+
   // Primary Comprehensive Weather Fetcher
   async fetchWeather(lat, lon, cityName, isMyGps = false) {
     this.viewLat = lat;
@@ -363,7 +397,7 @@ const WeatherApp = {
     }
 
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,precipitation_probability,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m&timezone=auto&forecast_days=2`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto&forecast_days=2`;
       const response = await fetch(url);
       if (!response.ok) throw new Error('Weather API failed');
       const data = await response.json();
@@ -380,6 +414,7 @@ const WeatherApp = {
       const feelsLike = Math.round(current.apparent_temperature ?? (temp + 2));
       const rainChance = current.precipitation_probability !== undefined ? current.precipitation_probability : (current.precipitation > 0 ? 80 : 15);
       const windSpeed = Math.round(current.wind_speed_10m ?? 12);
+      const windDirDeg = current.wind_direction_10m ?? 220;
       const humidity = Math.round(current.relative_humidity_2m ?? 65);
 
       const minTemp = daily.temperature_2m_min && daily.temperature_2m_min[0] !== undefined ? Math.round(daily.temperature_2m_min[0]) : (temp - 4);
@@ -390,6 +425,7 @@ const WeatherApp = {
       const isDay = current.is_day !== undefined ? current.is_day : (hours >= 6 && hours < 18 ? 1 : 0);
 
       const condition = this.parseWmoCode(weatherCode, isDay, temp);
+      const windFlow = this.getWindFlowDescription(windDirDeg);
 
       const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
 
@@ -400,9 +436,20 @@ const WeatherApp = {
       document.getElementById('cwConditionName').innerText = condition.text;
       document.getElementById('cwRainChance').innerText = `${toBengaliDigits(rainChance)}%`;
       document.getElementById('cwWindSpeed').innerText = `${toBengaliDigits(windSpeed)} কিমি/ঘণ্টা`;
+      
+      const windDirEl = document.getElementById('cwWindDirection');
+      if (windDirEl) {
+        windDirEl.innerText = windFlow.flowText;
+      }
+
+      const windIconWrap = document.getElementById('cwWindIconWrap');
+      if (windIconWrap) {
+        windIconWrap.innerHTML = `<i class="fa-solid fa-location-arrow" style="transform: rotate(${windDirDeg - 45}deg); transition: transform 0.4s ease; color:#38bdf8;"></i>`;
+      }
+
       document.getElementById('cwHumidity').innerText = `${toBengaliDigits(humidity)}%`;
       
-      // MINIMUM & MAXIMUM TEMPERATURE (Replaces UV index!)
+      // MINIMUM & MAXIMUM TEMPERATURE
       const minMaxEl = document.getElementById('cwMinMaxTemp');
       if (minMaxEl) {
         minMaxEl.innerText = `${toBengaliDigits(minTemp)}° / ${toBengaliDigits(maxTemp)}° সে.`;
@@ -415,22 +462,64 @@ const WeatherApp = {
         window.WeatherScenes.currentLocationScene.setScene(condition.scene);
       }
 
-      // Update Live Interactive Simulation Frame location
-      const iframe = document.getElementById('liveWeatherFrame');
-      if (iframe) {
-        iframe.src = `https://embed.windy.com/embed.html?lat=${lat}&lon=${lon}&zoom=6&level=surface&overlay=${this.activeRadarLayer || 'wind'}&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
-      }
-
-      const zoomEarthLink = document.querySelector('.zoom-earth-link-btn');
-      if (zoomEarthLink) {
-        zoomEarthLink.href = `https://zoom.earth/maps/wind-speed/#view=${lat},${lon},6z/model=icon`;
-      }
+      // Update Live Interactive Simulation Frame with Windy.com identical specs
+      this.updateSimulationFrame(lat, lon, this.activeRadarLayer || 'wind');
 
       // Render Next 24-Hour Hourly Forecast
       this.renderHourlyForecast(hourly);
 
     } catch (err) {
       console.warn('Weather fetch error:', err);
+    }
+  },
+
+  // Update Simulation Iframe & Direct Links to match www.windy.com identically
+  updateSimulationFrame(lat, lon, layerType) {
+    const iframe = document.getElementById('liveWeatherFrame');
+    const zoomEarthLink = document.getElementById('zoomEarthLink');
+    const windyDirectLink = document.getElementById('windyDirectLink');
+
+    let overlay = 'wind';
+    let product = 'ecmwf';
+    let windyDirectPath = 'wind';
+
+    if (layerType === 'satellite') {
+      overlay = 'satellite';
+      product = 'satellite';
+      windyDirectPath = '-Satellite-satellite?satellite';
+    } else if (layerType === 'radar') {
+      overlay = 'radar';
+      product = 'radar';
+      windyDirectPath = '-Weather-radar-radar?radar';
+    } else if (layerType === 'temp') {
+      overlay = 'temp';
+      product = 'ecmwf';
+      windyDirectPath = '-Temperature-temp?temp';
+    } else if (layerType === 'rain') {
+      overlay = 'rain';
+      product = 'ecmwf';
+      windyDirectPath = '-Rain-thunder-rain?rain';
+    } else {
+      overlay = 'wind';
+      product = 'ecmwf';
+      windyDirectPath = '-Wind-wind?wind';
+    }
+
+    if (iframe) {
+      // Official Windy embed URL format that renders radar & satellite identically to www.windy.com
+      iframe.src = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=6&overlay=${overlay}&product=${product}&level=surface&lat=${lat}&lon=${lon}&message=true&marker=true`;
+    }
+
+    if (windyDirectLink) {
+      windyDirectLink.href = `https://www.windy.com/${windyDirectPath},${lat},${lon},6`;
+    }
+
+    if (zoomEarthLink) {
+      const zoomPath = layerType === 'satellite' ? 'satellite' :
+                       layerType === 'wind' ? 'wind-speed' :
+                       layerType === 'temp' ? 'temperature' :
+                       layerType === 'rain' ? 'precipitation' : 'radar';
+      zoomEarthLink.href = `https://zoom.earth/maps/${zoomPath}/#view=${lat},${lon},6z/model=icon`;
     }
   },
 
@@ -620,39 +709,19 @@ const WeatherApp = {
   switchRadarLayer(layerType) {
     this.activeRadarLayer = layerType;
     const statusText = document.getElementById('radarStatusText');
-    const iframe = document.getElementById('liveWeatherFrame');
-    const zoomEarthLink = document.querySelector('.zoom-earth-link-btn');
-
     const lat = this.viewLat || 23.8;
     const lon = this.viewLon || 90.4;
 
-    // Update Iframe Simulation Source
-    if (iframe) {
-      const overlayKey = layerType === 'satellite' ? 'satellite' :
-                         layerType === 'radar' ? 'radar' :
-                         layerType === 'wind' ? 'wind' :
-                         layerType === 'temp' ? 'temp' : 'rain';
-
-      iframe.src = `https://embed.windy.com/embed.html?lat=${lat}&lon=${lon}&zoom=6&level=surface&overlay=${overlayKey}&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
-    }
-
-    // Update Zoom Earth external link
-    if (zoomEarthLink) {
-      const zoomPath = layerType === 'satellite' ? 'satellite' :
-                       layerType === 'wind' ? 'wind-speed' :
-                       layerType === 'temp' ? 'temperature' :
-                       layerType === 'rain' ? 'precipitation' : 'radar';
-      zoomEarthLink.href = `https://zoom.earth/maps/${zoomPath}/#view=${lat},${lon},6z/model=icon`;
-    }
+    this.updateSimulationFrame(lat, lon, layerType);
 
     if (layerType === 'satellite') {
-      if (statusText) statusText.innerText = '🛰️ লাইভ স্যাটেলাইট ভিউ: মহাকাশ থেকে সরাসরি পৃথিবীর মেঘমালা ও আবহাওয়ার দৃশ্য';
+      if (statusText) statusText.innerText = '🛰️ লাইভ স্যাটেলাইট ভিউ: মহাকাশ থেকে সরাসরি পৃথিবীর মেঘমালা ও আবহাওয়ার দৃশ্য (www.windy.com অনুরূপ)';
       if (window.showToast) window.showToast('🛰️ লাইভ স্যাটেলাইট দৃশ্য সক্রিয়');
     } else if (layerType === 'radar') {
-      if (statusText) statusText.innerText = '📡 আবহাওয়া রাডার: ডপলার রাডারে সরাসরি বৃষ্টি ও মেঘের ঘূর্ণি পরিস্থিতি';
-      if (window.showToast) window.showToast('📡 লাইভ আবহাওয়া রাডার সক্রিয়');
+      if (statusText) statusText.innerText = '📡 ডপলার আবহাওয়া রাডার: সরাসরি বৃষ্টিপাত ও মেঘের ঘূর্ণি পরিস্থিতি (www.windy.com অনুরূপ)';
+      if (window.showToast) window.showToast('📡 লাইভ ডপলার রাডার সক্রিয়');
     } else if (layerType === 'wind') {
-      if (statusText) statusText.innerText = '💨 বাতাসের গতি: বাতাস কোন দিক থেকে কোন দিকে প্রবাহিত হচ্ছে তার লাইভ অ্যানিমেশন';
+      if (statusText) statusText.innerText = '💨 বাতাসের গতি: বাতাস কোন দিক থেকে কোন দিকে প্রবাহিত হচ্ছে তার লাইভ ঘূর্ণায়মান অ্যানিমেশন';
       if (window.showToast) window.showToast('💨 বাতাসের গতি ও দিকপ্রবাহ সক্রিয়');
     } else if (layerType === 'temp') {
       if (statusText) statusText.innerText = '🌡️ তাপমাত্রা মানচিত্র: বিভিন্ন অঞ্চলের সেলসিয়াস তাপমাত্রা (°C) ও উত্তাপ পরিস্থিতি';

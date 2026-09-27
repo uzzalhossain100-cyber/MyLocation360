@@ -4043,3 +4043,40 @@ body.in-fullmap-mode .corner-tool-btn {
   color: #f1f5f9;
   text-align: center;
 }
+
+/* Wind Direction Sub-Label & Windy Direct Link */
+.metric-sub-val {
+  font-size: 0.68rem;
+  color: #38bdf8;
+  font-weight: 600;
+  margin-top: 3px;
+  display: block;
+  line-height: 1.25;
+}
+.radar-header-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.windy-link-btn {
+  background: rgba(234, 88, 12, 0.2);
+  border: 1px solid rgba(249, 115, 22, 0.45);
+  color: #fb923c;
+  border-radius: 9999px;
+  padding: 5px 12px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.windy-link-btn:hover {
+  background: #ea580c;
+  color: #ffffff;
+  border-color: #f97316;
+  transform: translateY(-1px);
+}
