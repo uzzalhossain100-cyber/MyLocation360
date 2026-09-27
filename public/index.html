@@ -100,23 +100,6 @@
         </button>
       </div>
 
-      <!-- Second Row: Small Search Bar (Only shown on map view) with Clear Button -->
-      <div class="slim-search-bar" id="topSlimSearchBar">
-        <div class="search-field-pill">
-          <i class="fa-solid fa-magnifying-glass search-ico"></i>
-          <input type="text" id="placeSearchInput" placeholder="স্থান, থানা, জেলা বা দেশ সার্চ করুন (বাংলা/English)..." autocomplete="off">
-          <button class="search-clear-btn" id="btnClearPlaceSearch" type="button" style="display:none;" title="ক্লিয়ার করুন">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-          <button class="search-go-btn" id="btnSearchPlace" title="রুট দেখুন">
-            <i class="fa-solid fa-route"></i>
-            <span>রুট</span>
-          </button>
-        </div>
-        <!-- Live Auto-suggest Dropdown -->
-        <div class="search-suggestions-box" id="searchSuggestionsBox" style="display: none;"></div>
-      </div>
-
     </header>
 
     <!-- Main Content Area -->
@@ -125,50 +108,7 @@
       <!-- ================= TAB 1: MY LOCATION & MAP ================= -->
       <section id="location-tab" class="tab-pane active">
 
-        <!-- Route & Distance Info Float Banner (appears when destination searched or clicked on map) -->
-        <div class="route-summary-banner" id="routeSummaryBanner" style="display: none;">
-          <div class="route-meta-col">
-            <div class="route-dest-header-row">
-              <div class="route-dest-name"><i class="fa-solid fa-location-dot text-danger"></i> <span id="routeDestName">গন্তব্য</span></div>
-              <button class="close-route-btn" id="btnCloseRoute" title="রুট ক্লিয়ার করুন">
-                <i class="fa-solid fa-xmark"></i> ক্লিয়ার
-              </button>
-            </div>
-            
-            <!-- Travel Mode Selection (কার, বাইক, বাস, ট্রেন, হাঁটা) -->
-            <div class="travel-mode-bar">
-              <span class="mode-label">মাধ্যম:</span>
-              <div class="mode-pills-group">
-                <button class="travel-mode-chip active" data-mode="car" title="কার / ড্রাইভিং">
-                  <i class="fa-solid fa-car"></i> কার
-                </button>
-                <button class="travel-mode-chip" data-mode="bike" title="মোটর সাইকেল">
-                  <i class="fa-solid fa-motorcycle"></i> বাইক
-                </button>
-                <button class="travel-mode-chip" data-mode="bus" title="বাস">
-                  <i class="fa-solid fa-bus"></i> বাস
-                </button>
-                <button class="travel-mode-chip" data-mode="train" title="ট্রেন / মেট্রো">
-                  <i class="fa-solid fa-train"></i> ট্রেন
-                </button>
-                <button class="travel-mode-chip" data-mode="walk" title="পায়ে হাঁটা (সবচেয়ে কম দূরত্ব)">
-                  <i class="fa-solid fa-person-walking"></i> হাঁটা
-                </button>
-                <button class="travel-mode-chip" data-mode="plane" title="প্লেন / বিমান">
-                  <i class="fa-solid fa-plane-departure"></i> প্লেন
-                </button>
-              </div>
-            </div>
-
-            <div class="route-metrics-row">
-              <span class="route-metric-chip distance-chip"><i class="fa-solid fa-arrows-left-right"></i> দূরত্ব: <strong id="routeDistanceKm">০ কিমি</strong></span>
-              <span class="route-metric-chip duration-chip"><i class="fa-solid fa-clock"></i> সময়: <strong id="routeDurationEst">০ মিনিট</strong></span>
-              <span class="route-metric-chip speed-mode-chip" id="routeModeDesc"><i class="fa-solid fa-car"></i> কার রুট</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Clean, Beautiful & Perfectly Fitted Map Viewport Wrapper -->
+        <!-- Clean, Beautiful & Dominant Map Viewport Wrapper (বেশির ভাগ জায়গায় ম্যাপ ভিউ) -->
         <div class="map-view-wrapper clean-map-view" id="mapViewWrapper">
           
           <!-- Minimal Cardinal Indicators (খুব ছোট ও মার্জিত সাংকেতিক দিক চিহ্ন) -->
@@ -190,7 +130,7 @@
             <span class="mini-label">পূ (E)</span>
           </div>
 
-          <!-- The Map canvas (Clean View, Click to select location, Zoom for street view) -->
+          <!-- The Map canvas (Dominant Clean View, Click to select location, Zoom for street view) -->
           <div id="map" class="map-canvas"></div>
 
           <!-- Top-Right Essential Map View Tools (Satellite & Real Street View 360) -->
@@ -210,45 +150,6 @@
             <i class="fa-solid fa-hand-pointer"></i> ম্যাপে ক্লিক করে যেকোনো স্থান নির্বাচন ও রুট দেখুন
           </div>
 
-          <!-- DOCK BAR (ALWAYS AT THE EXACT BOTTOM OF MAP VIEW - NORMAL & FULLSCREEN) -->
-          <div class="map-bottom-dock-bar" id="mapBottomDockBar">
-            
-            <!-- ১. আমার লোকেশন আইকন -->
-            <button class="dock-btn-item" id="btnRecenterLocation" title="আমার বর্তমান লোকেশন">
-              <i class="fa-solid fa-location-crosshairs text-primary"></i>
-              <span class="dock-label">আমার লোকেশন</span>
-            </button>
-
-            <!-- ২. দিক চিহ্নিত করার আইকন -->
-            <button class="dock-btn-item" id="btnAutoAlignDirection" title="দিক চিহ্নিত করুন (অটো সঠিক দিকে ঘুরবে)">
-              <i class="fa-solid fa-compass text-danger"></i>
-              <span class="dock-label">দিক চিহ্নিত</span>
-            </button>
-
-            <!-- ৩. চলার গতি (Speedometer) -->
-            <div class="dock-btn-item dock-speed-item" title="চলার গতি (কিমি/ঘণ্টা)">
-              <i class="fa-solid fa-gauge-high text-success"></i>
-              <div class="dock-speed-content">
-                <span class="dock-speed-val" id="currentSpeed">০</span>
-                <span class="dock-speed-unit">কিমি/ঘণ্টা</span>
-              </div>
-              <span class="dock-sub-dir" id="dockMoveDir" style="font-size:0.58rem; color:#a7f3d0; line-height:1;">স্থির</span>
-            </div>
-
-            <!-- ৪. ২ডি / ৩ডি অপশন -->
-            <button class="dock-btn-item" id="btnToggle3D" title="2D / 3D ভিউ পরিবর্তন">
-              <i class="fa-solid fa-cube text-warning"></i>
-              <span class="dock-label" id="tiltLabel">2D/3D</span>
-            </button>
-
-            <!-- ৫. ফুল ম্যাপ / ম্যাপ ছোট বাটন -->
-            <button class="dock-btn-item dock-fullmap-toggle" id="btnToggleFullMap" title="ফুল ম্যাপ দেখুন বা ছোট করুন">
-              <i class="fa-solid fa-expand text-info" id="fullMapIcon"></i>
-              <span class="dock-label" id="fullMapText">ফুল ম্যাপ</span>
-            </button>
-
-          </div>
-
           <!-- Direct Floating Close Button in Full Map Mode -->
           <button class="fm-floating-close-btn" id="btnExitFullMapFloating" style="display:none;" title="ম্যাপ ছোট করুন">
             <i class="fa-solid fa-compress"></i> <span>ম্যাপ ছোট করুন</span>
@@ -256,69 +157,126 @@
 
         </div>
 
-        <!-- External POI Category Filter Bar (Placed outside the map) -->
-        <div class="external-poi-bar">
-          <span class="poi-bar-title"><i class="fa-solid fa-filter"></i> স্থাপনা:</span>
-          <div class="poi-chips-row">
-            <button class="poi-chip active" data-type="all"><i class="fa-solid fa-layer-group"></i> সব</button>
-            <button class="poi-chip" data-type="hospital"><i class="fa-solid fa-hospital"></i> হাসপাতাল</button>
-            <button class="poi-chip" data-type="mosque"><i class="fa-solid fa-mosque"></i> মসজিদ</button>
-            <button class="poi-chip" data-type="restaurant"><i class="fa-solid fa-utensils"></i> রেস্তোরাঁ</button>
-            <button class="poi-chip" data-type="school"><i class="fa-solid fa-graduation-cap"></i> স্কুল</button>
-            <button class="poi-chip" data-type="atm"><i class="fa-solid fa-money-check-dollar"></i> এটিএম</button>
-            <button class="poi-chip" data-type="fuel"><i class="fa-solid fa-gas-pump"></i> জ্বালানি</button>
-          </div>
-        </div>
-
-        <!-- Dashboard Bar under the map: Speed, Road, Coordinates & Nearby Places -->
-        <div class="location-dashboard-grid">
+        <!-- ================= COMPACT CONTROL HUB AT BOTTOM OF MAP ================= -->
+        <div class="map-bottom-controls-hub" id="mapBottomControlsHub">
           
-          <!-- Speedometer Card -->
-          <div class="dash-card speed-card">
-            <div class="dash-card-header">
-              <span class="card-icon"><i class="fa-solid fa-gauge-high"></i></span>
-              <span class="card-title">চলার গতি (Speed)</span>
+          <!-- ১. সার্চ বার (স্থান, থানা, জেলা বা দেশ সার্চ) -->
+          <div class="slim-search-bar bottom-placed-search" id="topSlimSearchBar">
+            <div class="search-field-pill">
+              <i class="fa-solid fa-magnifying-glass search-ico"></i>
+              <input type="text" id="placeSearchInput" placeholder="স্থান, থানা, জেলা বা দেশ সার্চ করুন..." autocomplete="off">
+              <button class="search-clear-btn" id="btnClearPlaceSearch" type="button" style="display:none;" title="ক্লিয়ার করুন">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+              <button class="search-go-btn" id="btnSearchPlace" title="রুট দেখুন">
+                <i class="fa-solid fa-route"></i>
+                <span>রুট</span>
+              </button>
             </div>
-            <div class="speedometer-visual">
-              <div class="speed-value" id="dashSpeedValue">০</div>
-              <div class="speed-unit">কিমি/ঘণ্টা</div>
+            <!-- Live Auto-suggest Dropdown -->
+            <div class="search-suggestions-box" id="searchSuggestionsBox" style="display: none;"></div>
+          </div>
+
+          <!-- ২. গন্তব্য লোকেশন, দূরত্ব, সময় ও মাধ্যম স্ট্রিপ (সার্চ বা ক্লিক করলে আসবে) -->
+          <div class="route-summary-banner bottom-route-strip" id="routeSummaryBanner" style="display: none;">
+            <div class="route-meta-col">
+              <div class="route-dest-header-row">
+                <div class="route-dest-name"><i class="fa-solid fa-location-dot text-danger"></i> <span id="routeDestName">গন্তব্য</span></div>
+                <button class="close-route-btn" id="btnCloseRoute" title="রুট ক্লিয়ার করুন">
+                  <i class="fa-solid fa-xmark"></i> ক্লিয়ার
+                </button>
+              </div>
+              
+              <!-- Travel Mode Selection (কার, বাইক, বাস, ট্রেন, হাঁটা) -->
+              <div class="travel-mode-bar">
+                <span class="mode-label">মাধ্যম:</span>
+                <div class="mode-pills-group">
+                  <button class="travel-mode-chip active" data-mode="car" title="কার / ড্রাইভিং">
+                    <i class="fa-solid fa-car"></i> কার
+                  </button>
+                  <button class="travel-mode-chip" data-mode="bike" title="মোটর সাইকেল">
+                    <i class="fa-solid fa-motorcycle"></i> বাইক
+                  </button>
+                  <button class="travel-mode-chip" data-mode="bus" title="বাস">
+                    <i class="fa-solid fa-bus"></i> বাস
+                  </button>
+                  <button class="travel-mode-chip" data-mode="train" title="ট্রেন / মেট্রো">
+                    <i class="fa-solid fa-train"></i> ট্রেন
+                  </button>
+                  <button class="travel-mode-chip" data-mode="walk" title="পায়ে হাঁটা">
+                    <i class="fa-solid fa-person-walking"></i> হাঁটা
+                  </button>
+                </div>
+              </div>
+
+              <!-- দূরত্ব ও সময় অপশন -->
+              <div class="route-metrics-row">
+                <span class="route-metric-chip distance-chip"><i class="fa-solid fa-arrows-left-right"></i> দূরত্ব: <strong id="routeDistanceKm">০ কিমি</strong></span>
+                <span class="route-metric-chip duration-chip"><i class="fa-solid fa-clock"></i> সময়: <strong id="routeDurationEst">০ মিনিট</strong></span>
+                <span class="route-metric-chip speed-mode-chip" id="routeModeDesc"><i class="fa-solid fa-car"></i> কার রুট</span>
+              </div>
             </div>
-            <div class="speed-status-badge" id="speedStatus">স্থির অবস্থায় আছেন</div>
+          </div>
+
+          <!-- ৩. চলার গতি (Speed) ও ম্যাপ কুইক কন্ট্রোল বার -->
+          <div class="map-bottom-dock-bar" id="mapBottomDockBar">
             
-            <!-- চলাচলের দিক নির্দেশক বার (যেমন: আপনি পূর্ব দিকে চলছেন ➡️) -->
-            <div class="travel-direction-indicator" id="travelDirectionIndicator">
-              <i class="fa-solid fa-compass text-primary" id="travelDirectionIcon"></i>
-              <span id="travelDirectionText">বর্তমানে আপনি স্থির অবস্থানে আছেন</span>
+            <!-- আমার লোকেশন আইকন -->
+            <button class="dock-btn-item" id="btnRecenterLocation" title="আমার বর্তমান লোকেশন">
+              <i class="fa-solid fa-location-crosshairs text-primary"></i>
+              <span class="dock-label">আমার লোকেশন</span>
+            </button>
+
+            <!-- দিক চিহ্নিত করার আইকন -->
+            <button class="dock-btn-item" id="btnAutoAlignDirection" title="দিক চিহ্নিত করুন">
+              <i class="fa-solid fa-compass text-danger"></i>
+              <span class="dock-label">দিক চিহ্নিত</span>
+            </button>
+
+            <!-- চলার গতি (Speedometer) -->
+            <div class="dock-btn-item dock-speed-item active-speed-badge" title="চলার গতি (কিমি/ঘণ্টা)">
+              <div class="dock-speed-content">
+                <span class="dock-speed-val" id="currentSpeed">০</span>
+                <span class="dock-speed-unit">কিমি/ঘণ্টা</span>
+              </div>
+              <span class="dock-sub-dir" id="dockMoveDir">স্থির</span>
             </div>
+
+            <!-- ২ডি / ৩ডি অপশন -->
+            <button class="dock-btn-item" id="btnToggle3D" title="2D / 3D ভিউ পরিবর্তন">
+              <i class="fa-solid fa-cube text-warning"></i>
+              <span class="dock-label" id="tiltLabel">2D/3D</span>
+            </button>
+
+            <!-- ফুল ম্যাপ / ম্যাপ ছোট বাটন -->
+            <button class="dock-btn-item dock-fullmap-toggle" id="btnToggleFullMap" title="ফুল ম্যাপ দেখুন বা ছোট করুন">
+              <i class="fa-solid fa-expand text-info" id="fullMapIcon"></i>
+              <span class="dock-label" id="fullMapText">ফুল ম্যাপ</span>
+            </button>
+
           </div>
 
-          <!-- Current Road & Location Info Card -->
-          <div class="dash-card road-card">
-            <div class="dash-card-header">
-              <span class="card-icon"><i class="fa-solid fa-road"></i></span>
-              <span class="card-title">বর্তমান রাস্তা ও এলাকা</span>
-            </div>
-            <div class="road-name-display" id="currentRoadName">লোকেশন লোড হচ্ছে...</div>
-            <div class="road-sub-display" id="currentAreaName">অপেক্ষা করুন, জিপিএস সিগন্যাল যাচাই হচ্ছে</div>
-            <div class="coord-tag-row">
-              <span class="coord-tag"><i class="fa-solid fa-location-dot"></i> <span id="currentCoords">23.8103° N, 90.4125° E</span></span>
-              <span class="coord-tag"><i class="fa-solid fa-mountain"></i> উচ্চতা: <span id="currentAltitude">১৫ মি.</span></span>
-            </div>
-          </div>
-
-          <!-- Nearby Places List Card -->
-          <div class="dash-card nearby-card">
-            <div class="dash-card-header">
-              <span class="card-icon"><i class="fa-solid fa-signs-post"></i></span>
-              <span class="card-title">আশেপাশের পরিচিত স্থাপনা (POI)</span>
-              <button class="refresh-poi-btn" id="btnRefreshPoi" title="রিফ্রেশ করুন"><i class="fa-solid fa-arrows-rotate"></i></button>
-            </div>
-            <div class="nearby-places-list" id="nearbyPlacesList">
-              <div class="poi-placeholder">আশেপাশের স্থাপনা খোঁজা হচ্ছে...</div>
-            </div>
+          <!-- লাইভ চলাচলের দিকপ্রবাহ লাইন (যেমন: আপনি পূর্ব দিকে চলছেন ➡️) -->
+          <div class="travel-direction-indicator bottom-dir-bar" id="travelDirectionIndicator">
+            <i class="fa-solid fa-compass text-primary" id="travelDirectionIcon"></i>
+            <span id="travelDirectionText">বর্তমানে আপনি স্থির অবস্থানে আছেন</span>
           </div>
 
         </div>
+
+        <!-- Hidden Compatibility Holders (for JS background calls without layout clutter) -->
+        <div style="display: none;" aria-hidden="true">
+          <div id="dashSpeedValue">০</div>
+          <div id="speedStatus">স্থির অবস্থায় আছেন</div>
+          <div id="currentRoadName">প্রধান সড়ক</div>
+          <div id="currentAreaName">ঢাকা</div>
+          <div id="currentCoords">0, 0</div>
+          <div id="currentAltitude">0</div>
+          <div id="nearbyPlacesList"></div>
+          <button id="btnRefreshPoi"></button>
+        </div>
+
+      </section>
 
       </section>
 

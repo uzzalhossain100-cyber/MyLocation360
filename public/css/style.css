@@ -3187,46 +3187,165 @@ body {
   height: 100% !important;
 }
 
-/* Dock bar locked at bottom in full map mode */
-body.in-fullmap-mode .map-bottom-dock-bar {
-  position: fixed !important;
-  bottom: 8px !important;
-  left: 8px !important;
-  right: 8px !important;
-  max-width: 580px !important;
-  margin: 0 auto !important;
-  z-index: 1000000 !important;
-  background: rgba(13, 20, 34, 0.96) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75) !important;
-  border: 1px solid rgba(56, 189, 248, 0.45) !important;
-  padding: 6px 8px !important;
+/* ==========================================================
+   DOMINANT MAP VIEWPORT & BOTTOM SLIM CONTROLS HUB
+   (বেশির ভাগ জায়গায় ম্যাপ ভিউ এবং নিচে ছোট ছোট জায়গায়
+   সার্চ, গন্তব্য লোকেশন, দূরত্ব, সময় ও চলার গতি)
+   ========================================================== */
+#location-tab {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 46px);
+  padding: 0;
 }
 
-/* In Full Map Mode: Hide Top Search Bar so top is 100% clean & unobstructed */
-body.in-fullmap-mode #topSlimSearchBar {
-  display: none !important;
+.map-view-wrapper.clean-map-view {
+  flex: 1 1 auto;
+  width: 100%;
+  height: calc(100vh - 195px);
+  min-height: 380px;
+  max-height: none;
+  position: relative;
+  border-radius: 0;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
 }
 
-/* Route Banner placed SLIM at the BOTTOM above dock bar in full map mode (Never blocks map top!) */
-body.in-fullmap-mode .route-summary-banner {
-  position: fixed !important;
+@media (min-width: 900px) {
+  .map-view-wrapper.clean-map-view {
+    height: calc(100vh - 175px);
+    min-height: 520px;
+  }
+}
+
+.map-bottom-controls-hub {
+  flex: 0 0 auto;
+  background: linear-gradient(180deg, #0b1329 0%, #080d1a 100%);
+  padding: 6px 10px 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Bottom placed search bar */
+.bottom-placed-search {
+  margin: 0 !important;
+  width: 100% !important;
+}
+
+.bottom-placed-search .search-field-pill {
+  padding: 4px 8px !important;
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+}
+
+.bottom-placed-search .search-field-pill input {
+  font-size: 0.82rem !important;
+  padding: 4px 6px !important;
+}
+
+.bottom-placed-search .search-suggestions-box {
+  bottom: calc(100% + 4px) !important;
   top: auto !important;
-  bottom: 68px !important;
-  left: 8px !important;
-  right: 8px !important;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Bottom Route Strip (Dest Name, Distance, Duration, Mode, Clear) */
+.bottom-route-strip {
+  margin: 0 !important;
+  padding: 6px 10px !important;
+  background: rgba(15, 23, 42, 0.92) !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+  border-radius: 10px !important;
+}
+
+.bottom-route-strip .route-dest-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3px;
+}
+
+.bottom-route-strip .route-dest-name {
+  font-size: 0.85rem !important;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 75%;
+}
+
+.bottom-route-strip .travel-mode-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 3px;
+}
+
+.bottom-route-strip .travel-mode-chip {
+  padding: 2px 7px !important;
+  font-size: 0.68rem !important;
+  border-radius: 6px !important;
+}
+
+.bottom-route-strip .route-metrics-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.bottom-route-strip .route-metric-chip {
+  font-size: 0.72rem !important;
+  padding: 2px 7px !important;
+}
+
+/* Bottom Dock Bar placed inside controls hub */
+.map-bottom-controls-hub .map-bottom-dock-bar {
+  position: static !important;
+  transform: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 4px 8px !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.bottom-dir-bar {
+  margin: 0 !important;
+  padding: 2px 6px !important;
+  font-size: 0.72rem !important;
+  text-align: center !important;
+  justify-content: center !important;
+  border-radius: 6px !important;
+}
+
+/* Fullscreen Map Mode overrides */
+body.in-fullmap-mode .map-bottom-controls-hub {
+  position: fixed !important;
+  bottom: 6px !important;
+  left: 6px !important;
+  right: 6px !important;
   max-width: 580px !important;
   margin: 0 auto !important;
-  z-index: 1000000 !important;
-  background: rgba(13, 20, 34, 0.94) !important;
+  background: rgba(10, 17, 32, 0.94) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
-  border-radius: 12px !important;
+  border-radius: 14px !important;
   border: 1px solid rgba(56, 189, 248, 0.4) !important;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7) !important;
-  padding: 4px 10px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 3px !important;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.8) !important;
+  z-index: 10000000 !important;
 }
 
 body.in-fullmap-mode .route-summary-banner .route-dest-header-row {
