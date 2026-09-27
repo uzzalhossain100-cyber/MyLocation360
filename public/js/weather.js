@@ -188,28 +188,7 @@ const WeatherApp = {
       });
     });
 
-    // 5. Interactive Atmospheric Scene Switcher Pills
-    const scenePillBtns = document.querySelectorAll('.scene-pill-btn');
-    scenePillBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        scenePillBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        const scene = btn.getAttribute('data-scene');
-        const badge = btn.getAttribute('data-badge');
-
-        const badgeEl = document.getElementById('cwAnimBadge');
-        if (badgeEl && badge) badgeEl.innerText = badge;
-
-        if (window.WeatherScenes && window.WeatherScenes.currentLocationScene) {
-          window.WeatherScenes.currentLocationScene.setScene(scene);
-        }
-
-        if (window.showToast) window.showToast(`দৃশ্য পরিবর্তিত হয়েছে: ${btn.innerText}`);
-      });
-    });
-
-    // 6. Weather Map Layer Toggle Buttons (বৃষ্টিপাত, তাপমাত্রা, বাতাস)
+    // 5. Weather Map Layer Toggle Buttons (স্যাটেলাইট, রাডার, বাতাসের গতি, তাপমাত্রা, বৃষ্টিপাত)
     const layerBtns = document.querySelectorAll('.w-layer-btn');
     layerBtns.forEach(btn => {
       btn.addEventListener('click', () => {

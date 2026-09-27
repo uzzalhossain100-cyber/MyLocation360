@@ -4022,3 +4022,24 @@ body.in-fullmap-mode .corner-tool-btn {
   pointer-events: none;
   line-height: 1.25;
 }
+
+/* Sky Celestial Live Status Bar (Sun Path & Moon Phase) */
+.sky-celestial-info-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  background: rgba(13, 20, 34, 0.88);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+.celestial-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  text-align: center;
+}

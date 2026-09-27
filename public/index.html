@@ -423,15 +423,12 @@
                   </div>
                 </div>
 
-                <!-- Scene Preview Switcher for user exploration -->
-                <div class="scene-switcher-pills">
-                  <span class="scene-pills-label"><i class="fa-solid fa-eye"></i> দৃশ্য পরীক্ষা:</span>
-                  <button class="scene-pill-btn" data-scene="clear-night" data-badge="তারায় ভরা রাতের আকাশ (চাঁদ ও তারা)" title="রাতের পরিষ্কার আকাশ">🌙 রাতের আকাশ</button>
-                  <button class="scene-pill-btn" data-scene="cloudy-night" data-badge="রাতের মেঘাচ্ছন্ন দৃশ্য (অন্ধকারে দৃশ্যমান মেঘ)" title="অন্ধকারে দৃশ্যমান মেঘ">☁️ রাতের মেঘ</button>
-                  <button class="scene-pill-btn" data-scene="rain-night" data-badge="রাতের বৃষ্টির জীবন্ত দৃশ্য" title="অন্ধকার রাতে বৃষ্টি">🌧️ রাতের বৃষ্টি</button>
-                  <button class="scene-pill-btn" data-scene="fog-night" data-badge="রাতের শীত ও কুয়াশার দৃশ্য" title="রাতের কুয়াশা">🌫️ রাতের কুয়াশা</button>
-                  <button class="scene-pill-btn" data-scene="clear-day" data-badge="রোদ্রোজ্জ্বল দিনের দৃশ্য" title="দিনের রোদ">☀️ দিনের রোদ</button>
-                  <button class="scene-pill-btn" data-scene="partly-cloudy-day" data-badge="আংশিক মেঘলা দিনের দৃশ্য" title="আংশিক মেঘ">🌤️ আংশিক মেঘ</button>
+                <!-- Live Astrological & Solar Trajectory Status Bar (No artificial scene preview) -->
+                <div class="sky-celestial-info-bar" id="skyCelestialInfoBar">
+                  <div class="celestial-status-badge" id="celestialStatusBadge">
+                    <i class="fa-solid fa-sun text-warning" id="celestialStatusIcon"></i>
+                    <span id="celestialStatusText">সূর্যের গতিপথ ও রোদের তীব্রতা হিসাব হচ্ছে...</span>
+                  </div>
                 </div>
               </div>
 
