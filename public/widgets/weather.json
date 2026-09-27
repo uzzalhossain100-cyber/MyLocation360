@@ -1,0 +1,23 @@
+{
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "⛅ লাইভ আবহাওয়া",
+      "weight": "Bolder",
+      "size": "Medium"
+    },
+    {
+      "type": "TextBlock",
+      "text": "${temperature}° সে. - ${condition}",
+      "size": "Large",
+      "weight": "Bolder"
+    },
+    {
+      "type": "TextBlock",
+      "text": "লোকেশন: ${location}",
+      "isSubtle": true
+    }
+  ]
+}

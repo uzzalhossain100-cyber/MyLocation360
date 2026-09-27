@@ -1,21 +1,93 @@
 {
   "name": "MyLocation360",
   "short_name": "MyLocation360",
-  "description": "স্মার্ট ম্যাপ, দিকদর্শন, চলার গতি ও রিয়েলটাইম আবহাওয়া অ্যাপ্লিকেশন",
-  "start_url": "/",
+  "description": "স্মার্ট জিপিএস দিকদর্শন, চলার গতি ও রিয়েলটাইম জীবন্ত আবহাওয়া প্ল্যাটফর্ম",
+  "id": "/?source=pwa",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#2563eb",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait-primary",
+  "background_color": "#0a0f1d",
+  "theme_color": "#0284c7",
   "icons": [
     {
       "src": "/assets/icon-192.svg",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     },
     {
       "src": "/assets/icon-512.svg",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "মাই লোকেশন ও স্পিডোমিটার",
+      "short_name": "মাই লোকেশন",
+      "description": "লাইভ জিপিএস অবস্থান, রিয়েল-টাইম কম্পাস দিক ও চলার গতি",
+      "url": "/?feature=location",
+      "icons": [
+        {
+          "src": "/assets/icon-192.svg",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "লাইভ আবহাওয়া ও রাডার",
+      "short_name": "লাইভ আবহাওয়া",
+      "description": "বর্তমান তাপমাত্রা, আকাশ দৃশ্য ও ডপলার রাডার",
+      "url": "/?feature=weather",
+      "icons": [
+        {
+          "src": "/assets/icon-192.svg",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "widgets": [
+    {
+      "name": "মাই লোকেশন উইজেট",
+      "short_name": "মাই লোকেশন",
+      "description": "লাইভ জিপিএস অবস্থান, দিক নির্দেশক কম্পাস ও স্পিডোমিটার",
+      "tag": "mylocation-widget",
+      "template": "widget-location",
+      "ms_ac_template": "/widgets/location.json",
+      "data": "/widgets/location-data.json",
+      "type": "application/json",
+      "screenshots": [
+        {
+          "src": "/assets/icon-192.svg",
+          "sizes": "192x192",
+          "label": "মাই লোকেশন উইজেট"
+        }
+      ]
+    },
+    {
+      "name": "লাইভ আবহাওয়া উইজেট",
+      "short_name": "লাইভ আবহাওয়া",
+      "description": "বর্তমান তাপমাত্রা, আকাশ দৃশ্য ও ডপলার রাডার",
+      "tag": "weather-widget",
+      "template": "widget-weather",
+      "ms_ac_template": "/widgets/weather.json",
+      "data": "/widgets/weather-data.json",
+      "type": "application/json",
+      "screenshots": [
+        {
+          "src": "/assets/icon-192.svg",
+          "sizes": "192x192",
+          "label": "লাইভ আবহাওয়া উইজেট"
+        }
+      ]
     }
   ]
 }

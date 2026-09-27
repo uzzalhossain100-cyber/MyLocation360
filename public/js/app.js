@@ -23,11 +23,21 @@ let deferredInstallPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
+  console.log('[PWA] beforeinstallprompt captured for mobile widgets!');
   const btnDl = document.getElementById('btnDownloadApp');
   if (btnDl) {
     btnDl.style.animation = 'pulse-ring 2s infinite ease-in-out';
   }
 });
+
+// Register Service Worker for PWA Widgets & Background Sync
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((reg) => console.log('[ServiceWorker] registered successfully:', reg.scope))
+      .catch((err) => console.warn('[ServiceWorker] registration failed:', err));
+  });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   if (window.MapModule) window.MapModule.init();
@@ -39,7 +49,23 @@ document.addEventListener('DOMContentLoaded', () => {
   setupHelpModal();
   setupLocationHistoryWorkflow();
   setupAppDownloadWorkflow();
+  handleUrlWidgetParams();
 });
+
+// Check if app was opened via Widget Shortcut (/?feature=location or /?feature=weather)
+function handleUrlWidgetParams() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const feature = urlParams.get('feature') || urlParams.get('tab');
+  const portalOverlay = document.getElementById('homePortalOverlay');
+
+  if (feature === 'location') {
+    if (portalOverlay) portalOverlay.style.display = 'none';
+    if (window.switchAppTab) window.switchAppTab('location-tab');
+  } else if (feature === 'weather') {
+    if (portalOverlay) portalOverlay.style.display = 'none';
+    if (window.switchAppTab) window.switchAppTab('weather-tab');
+  }
+}
 
 /* ================= HOME WELCOME PORTAL WORKFLOW ================= */
 function setupHomePortalWorkflow() {
@@ -122,6 +148,13 @@ function setupMobileLockscreenAndWallpaperWorkflow() {
   const btnDownloadLabel = document.getElementById('btnDownloadWallpaperLabel');
   const btnLaunchLive = document.getElementById('btnLaunchLiveDisplay');
 
+  // Widget Modal Elements
+  const btnWidget = document.getElementById('btnSetHomeWidget');
+  const widgetModalBackdrop = document.getElementById('widgetGuideModalBackdrop');
+  const btnCloseWidgetModal = document.getElementById('btnCloseWidgetGuideModal');
+  const btnGotWidget = document.getElementById('btnGotWidgetGuide');
+  const btnInstallPwa = document.getElementById('btnInstallPwaWidget');
+
   // Preview elements
   const phoneClock = document.getElementById('phoneLiveClock');
   const phoneDate = document.getElementById('phoneLiveDate');
@@ -186,6 +219,51 @@ function setupMobileLockscreenAndWallpaperWorkflow() {
 
   function closeModal() {
     if (modalBackdrop) modalBackdrop.style.display = 'none';
+  }
+
+  function openWidgetModal() {
+    if (widgetModalBackdrop) widgetModalBackdrop.style.display = 'flex';
+  }
+
+  function closeWidgetModal() {
+    if (widgetModalBackdrop) widgetModalBackdrop.style.display = 'none';
+  }
+
+  if (btnWidget) {
+    btnWidget.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openWidgetModal();
+    });
+  }
+
+  if (btnCloseWidgetModal) {
+    btnCloseWidgetModal.addEventListener('click', closeWidgetModal);
+  }
+
+  if (btnGotWidget) {
+    btnGotWidget.addEventListener('click', closeWidgetModal);
+  }
+
+  if (widgetModalBackdrop) {
+    widgetModalBackdrop.addEventListener('click', (e) => {
+      if (e.target === widgetModalBackdrop) closeWidgetModal();
+    });
+  }
+
+  if (btnInstallPwa) {
+    btnInstallPwa.addEventListener('click', async () => {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice.outcome === 'accepted') {
+          console.log('[PWA] User accepted the widget install prompt');
+          alert('উইজেট সফলভাবে সক্রিয় হয়েছে! এখন হোমস্ক্রিনে লং-প্রেস করে Widgets তালিকা থেকে MyLocation360 উইজেট যোগ করতে পারবেন।');
+        }
+        deferredInstallPrompt = null;
+      } else {
+        alert('আপনার ব্রাউজারের মেনু (⋮) ওপেন করে "Add to Home screen" বা "Install App" চাপুন। এরপর মোবাইলের Widgets লিস্টে এই অ্যাপের "মাই লোকেশন" ও "লাইভ আবহাওয়া" উইজেট সরাসরি দেখা যাবে!');
+      }
+    });
   }
 
   if (btnLockscreen) {

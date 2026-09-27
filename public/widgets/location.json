@@ -1,0 +1,22 @@
+{
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "📍 মাই লোকেশন",
+      "weight": "Bolder",
+      "size": "Medium"
+    },
+    {
+      "type": "TextBlock",
+      "text": "${address}",
+      "wrap": true
+    },
+    {
+      "type": "TextBlock",
+      "text": "গতি: ${speed} কিমি/ঘ. | দিক: ${direction}",
+      "isSubtle": true
+    }
+  ]
+}
