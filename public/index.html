@@ -522,43 +522,39 @@
                   <i class="fa-solid fa-location-crosshairs text-success"></i> <span>আমার অবস্থান রিফ্রেশ 🔄</span>
                 </button>
 
-                <!-- Interactive WebGL Live Weather Map (Supports dragging anywhere without auto-reset) -->
-                <div id="weatherRadarMap" class="live-weather-map-canvas"></div>
-
-                <!-- Center Crosshair Marker to indicate targeted point when dragging -->
-                <div class="weather-map-center-target" id="weatherMapCenterTarget" title="মানচিত্রের নির্বাচিত লক্ষ্যস্থল">
-                  <div class="target-pulse"></div>
-                  <i class="fa-solid fa-crosshairs"></i>
-                </div>
+                <!-- Official Windy.com Live Simulation Engine (Identical to windy.com with animated wind particles, radar & satellite) -->
+                <iframe id="liveWeatherFrame" class="live-weather-iframe" 
+                  src="https://embed.windy.com/embed2.html?lat=23.8103&lon=90.4125&zoom=6&level=surface&overlay=wind&product=ecmwf&menu=true&message=true&marker=true&calendar=now&pressure=true&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1" 
+                  frameborder="0" allowfullscreen></iframe>
 
                 <!-- Right-side Zoom Earth Style Layer Switcher (স্যাটেলাইট, রাডার, বাতাসের গতি, তাপমাত্রা, বৃষ্টিপাত) -->
                 <div class="weather-map-layer-controls">
-                  <button class="w-layer-btn" data-layer="satellite" id="btnLayerSatellite" title="লাইভ মহাকাশ স্যাটেলাইট দৃশ্য">
-                    <i class="fa-solid fa-satellite"></i>
-                    <span>স্যাটেলাইট</span>
+                  <button class="w-layer-btn active" data-layer="wind" id="btnLayerWind" title="বাতাসের গতি ও দিকপ্রবাহ">
+                    <i class="fa-solid fa-wind"></i>
+                    <span>বাতাসের গতি</span>
+                  </button>
+                  <button class="w-layer-btn" data-layer="rain" id="btnLayerRain" title="বৃষ্টিপাত ও মেঘের পরিস্থিতি">
+                    <i class="fa-solid fa-cloud-showers-heavy"></i>
+                    <span>বৃষ্টিপাত</span>
                   </button>
                   <button class="w-layer-btn" data-layer="radar" id="btnLayerRadar" title="ডপলার আবহাওয়া রাডার">
                     <i class="fa-solid fa-tower-broadcast"></i>
                     <span>রাডার</span>
                   </button>
-                  <button class="w-layer-btn" data-layer="wind" id="btnLayerWind" title="বাতাসের গতি ও দিকপ্রবাহ">
-                    <i class="fa-solid fa-wind"></i>
-                    <span>বাতাসের গতি</span>
+                  <button class="w-layer-btn" data-layer="satellite" id="btnLayerSatellite" title="লাইভ মহাকাশ স্যাটেলাইট দৃশ্য">
+                    <i class="fa-solid fa-satellite"></i>
+                    <span>স্যাটেলাইট</span>
                   </button>
                   <button class="w-layer-btn" data-layer="temp" id="btnLayerTemp" title="তাপমাত্রার পরিস্থিতি ও হিটম্যাপ">
                     <i class="fa-solid fa-temperature-half"></i>
                     <span>তাপমাত্রা</span>
-                  </button>
-                  <button class="w-layer-btn active" data-layer="rain" id="btnLayerRain" title="বৃষ্টিপাত ও মেঘের পরিস্থিতি">
-                    <i class="fa-solid fa-cloud-showers-heavy"></i>
-                    <span>বৃষ্টিপাত</span>
                   </button>
                 </div>
 
                 <!-- Bottom Status Pill showing Active Mode & Layer Info -->
                 <div class="radar-layer-status-pill" id="radarLayerStatusPill">
                   <i class="fa-solid fa-circle-info text-info"></i>
-                  <span id="radarStatusText">🌧️ বৃষ্টিপাত পরিস্থিতি: বর্তমান বৃষ্টি ও মেঘের ঘনত্ব ও বৃষ্টিপাতের পূর্বাভাস দৃশ্যমান হচ্ছে</span>
+                  <span id="radarStatusText">💨 Windy.com লাইভ ইঞ্জিন: প্রবাহিত বাতাসের কণা, মেঘমালা ও আবহাওয়ার জীবন্ত দৃশ্য সক্রিয়</span>
                 </div>
               </div>
             </div>

@@ -304,13 +304,19 @@ const WeatherApp = {
       this.isRadarMapUserInteracted = false;
       this.draggedLat = null;
       this.draggedLon = null;
-      if (this.radarMap) {
-        this.radarMap.flyTo({ center: [this.myGpsLon || 90.41, this.myGpsLat || 23.81], zoom: 7.2, speed: 1.2 });
+
+      const iframe = document.getElementById('liveWeatherFrame');
+      if (iframe) {
+        const lat = this.myGpsLat || 23.8103;
+        const lon = this.myGpsLon || 90.4125;
+        const overlay = this.activeRadarLayer || 'wind';
+        iframe.src = `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&zoom=6&level=surface&overlay=${overlay}&product=ecmwf&menu=true&message=true&marker=true&calendar=now&pressure=true&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
       }
+
       this.fetchWeather(this.myGpsLat || 23.8103, this.myGpsLon || 90.4125, this.myGpsExactAddress, true);
       const statusText = document.getElementById('radarStatusText');
       if (statusText) {
-        statusText.innerText = '📍 আপনার বর্তমান জিপিএস অবস্থানের আবহাওয়া ও মানচিত্র প্রদর্শিত হচ্ছে';
+        statusText.innerText = '📍 আপনার বর্তমান জিপিএস অবস্থানের আবহাওয়া ও Windy লাইভ মানচিত্র প্রদর্শিত হচ্ছে';
       }
       if (window.showToast) window.showToast('📍 আবহাওয়া মানচিত্র আপনার বর্তমান অবস্থানে ফিরিয়ে আনা হয়েছে');
     };
@@ -968,49 +974,51 @@ const WeatherApp = {
   },
 
   // Switch Radar Layer: 'satellite', 'radar', 'wind', 'temp', 'rain'
-  // CRITICAL USER REQUIREMENT: After dragging to another place, clicking ANY layer button 
-  // inspects and shows that newly dragged location's weather and state without resetting/refreshing!
+  // CRITICAL USER REQUIREMENT: Windy.com identical live engine with zero auto-reset during drag
   async switchRadarLayer(layerType) {
     this.activeRadarLayer = layerType;
     const statusText = document.getElementById('radarStatusText');
+    const iframe = document.getElementById('liveWeatherFrame');
 
-    // 1. Apply visual layer filters/tiles without modifying map center or zoom
-    this.applyRadarMapLayers(layerType);
-
-    // 2. Read exact CURRENT map center directly from active MapLibre instance
-    let targetLat = this.viewLat || 23.8103;
-    let targetLon = this.viewLon || 90.4125;
-
-    if (this.radarMap) {
-      const center = this.radarMap.getCenter();
-      targetLat = center.lat;
-      targetLon = center.lng;
-      this.draggedLat = targetLat;
-      this.draggedLon = targetLon;
+    // 1. If user has dragged / navigated the map to another location, DO NOT reset or reload the iframe!
+    if (this.isRadarMapUserInteracted) {
+      if (statusText) {
+        statusText.innerHTML = `💡 <b>অবস্থান সুরক্ষিত:</b> আপনি মানচিত্র টেনেছেন, তাই অবস্থান অক্ষুণ্ণ রাখতে পেজটি রিফ্রেশ করা হয়নি। উইন্ডির ভেতরের মেনু থেকেও সরাসরি লেয়ার বদলাতে পারেন, অথবা মূল অবস্থানে ফিরতে 'আমার অবস্থান রিফ্রেশ 🔄' বাটনে চাপুন।`;
+      }
+      if (window.showToast) {
+        window.showToast('💡 অবস্থান সুরক্ষিত রাখতে মানচিত্র রিফ্রেশ করা হয়নি');
+      }
+      return;
     }
 
-    // 3. Update external deep-links for current location
-    this.updateSimulationFrame(targetLat, targetLon, layerType);
+    // 2. If user is at their original position, update Windy iframe to this selected layer
+    if (iframe) {
+      const lat = this.viewLat || 23.8103;
+      const lon = this.viewLon || 90.4125;
+      let overlay = 'wind';
+      if (layerType === 'satellite') overlay = 'satellite';
+      else if (layerType === 'radar') overlay = 'radar';
+      else if (layerType === 'rain') overlay = 'rain';
+      else if (layerType === 'temp') overlay = 'temp';
+      else overlay = 'wind';
 
-    // 4. Fetch and display weather for current dragged map center without resetting map position
-    await this.fetchWeather(targetLat, targetLon, null, false);
-
-    const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
+      iframe.src = `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&zoom=6&level=surface&overlay=${overlay}&product=ecmwf&menu=true&message=true&marker=true&calendar=now&pressure=true&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
+    }
 
     if (layerType === 'satellite') {
-      if (statusText) statusText.innerHTML = `🛰️ <b>স্যাটেলাইট ভিউ:</b> মহাকাশ থেকে সরাসরি পৃথিবীর মেঘমালা ও আবহাওয়ার দৃশ্য (${toBengaliDigits(targetLat.toFixed(2))}°N, ${toBengaliDigits(targetLon.toFixed(2))}°E)`;
+      if (statusText) statusText.innerHTML = '🛰️ <b>স্যাটেলাইট ভিউ:</b> মহাকাশ থেকে সরাসরি পৃথিবীর মেঘমালা ও আবহাওয়ার লাইভ স্যাটেলাইট দৃশ্য';
       if (window.showToast) window.showToast('🛰️ লাইভ স্যাটেলাইট দৃশ্য সক্রিয়');
     } else if (layerType === 'radar') {
-      if (statusText) statusText.innerHTML = `📡 <b>ডপলার রাডার:</b> সরাসরি বৃষ্টিপাত ও মেঘের ঘূর্ণি পরিস্থিতি (${toBengaliDigits(targetLat.toFixed(2))}°N, ${toBengaliDigits(targetLon.toFixed(2))}°E)`;
+      if (statusText) statusText.innerHTML = '📡 <b>ডপলার আবহাওয়া রাডার:</b> সরাসরি বৃষ্টিপাত ও মেঘের ঘূর্ণি পরিস্থিতি (Windy Radar Engine)';
       if (window.showToast) window.showToast('📡 লাইভ ডপলার রাডার সক্রিয়');
     } else if (layerType === 'wind') {
-      if (statusText) statusText.innerHTML = `💨 <b>বাতাসের গতি:</b> বর্তমান স্থানের বাতাসের তীব্রতা ও দিকপ্রবাহ (${toBengaliDigits(targetLat.toFixed(2))}°N, ${toBengaliDigits(targetLon.toFixed(2))}°E)`;
+      if (statusText) statusText.innerHTML = '💨 <b>বাতাসের গতি:</b> বাতাস কোন দিক থেকে কোন দিকে প্রবাহিত হচ্ছে তার লাইভ কণা অ্যানিমেশন (Windy Wind Particle Flow)';
       if (window.showToast) window.showToast('💨 বাতাসের গতি ও দিকপ্রবাহ সক্রিয়');
     } else if (layerType === 'temp') {
-      if (statusText) statusText.innerHTML = `🌡️ <b>তাপমাত্রা পরিস্থিতি:</b> বর্তমান অঞ্চলের সেলসিয়াস তাপমাত্রা (°C) ও উত্তাপ (${toBengaliDigits(targetLat.toFixed(2))}°N, ${toBengaliDigits(targetLon.toFixed(2))}°E)`;
+      if (statusText) statusText.innerHTML = '🌡️ <b>তাপমাত্রা পরিস্থিতি:</b> বিভিন্ন অঞ্চলের সেলসিয়াস তাপমাত্রা (°C) ও উত্তাপ হিটম্যাপ';
       if (window.showToast) window.showToast('🌡️ তাপমাত্রা পরিস্থিতি সক্রিয়');
     } else if (layerType === 'rain') {
-      if (statusText) statusText.innerHTML = `🌧️ <b>বৃষ্টিপাত পরিস্থিতি:</b> বর্তমান বৃষ্টি, আর্দ্রতা ও মেঘের ঘনত্ব (${toBengaliDigits(targetLat.toFixed(2))}°N, ${toBengaliDigits(targetLon.toFixed(2))}°E)`;
+      if (statusText) statusText.innerHTML = '🌧️ <b>বৃষ্টিপাত পরিস্থিতি:</b> বর্তমান বৃষ্টি ও মেঘের ঘনত্ব ও বৃষ্টিপাতের পূর্বাভাস';
       if (window.showToast) window.showToast('🌧️ বৃষ্টিপাত পরিস্থিতি সক্রিয়');
     }
   }
