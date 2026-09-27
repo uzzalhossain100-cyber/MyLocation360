@@ -51,6 +51,13 @@ const MapModule = {
     this.setupStreetViewPanorama();
     this.initDeviceOrientation();
     this.initLocationHistoryStore();
+
+    setTimeout(() => {
+      if (this.map) this.map.resize();
+    }, 120);
+    setTimeout(() => {
+      if (this.map) this.map.resize();
+    }, 450);
   },
 
   initMap() {

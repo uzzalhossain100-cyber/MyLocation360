@@ -3189,42 +3189,47 @@ body {
 
 /* ==========================================================
    DOMINANT MAP VIEWPORT & BOTTOM SLIM CONTROLS HUB
-   (বেশির ভাগ জায়গায় ম্যাপ ভিউ এবং নিচে ছোট ছোট জায়গায়
+   (পরিমিত উচ্চতায় স্পষ্ট ম্যাপ এবং নিচে ছোট ছোট জায়গায়
    সার্চ, গন্তব্য লোকেশন, দূরত্ব, সময় ও চলার গতি)
    ========================================================== */
 #location-tab {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 44px);
-  height: calc(100dvh - 44px);
-  max-height: calc(100dvh - 44px);
-  overflow: hidden;
+  display: block;
   padding: 0;
+  width: 100%;
 }
 
 .map-view-wrapper.clean-map-view {
-  flex: 1 1 auto;
-  width: 100%;
-  height: auto;
-  min-height: 240px;
-  position: relative;
+  width: 100% !important;
+  height: 52vh !important;
+  min-height: 320px !important;
+  max-height: 550px !important;
+  position: relative !important;
   border-radius: 0;
   border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+  display: block !important;
+  overflow: hidden;
 }
 
 @media (min-width: 900px) {
   .map-view-wrapper.clean-map-view {
-    min-height: 380px;
+    height: 58vh !important;
+    min-height: 400px !important;
   }
 }
 
+.clean-map-view .map-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  display: block !important;
+}
+
 .map-bottom-controls-hub {
-  flex: 0 0 auto;
   background: linear-gradient(180deg, #0b1329 0%, #080d1a 100%);
-  padding: 5px 8px 6px 8px;
+  padding: 6px 10px 10px 10px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
   z-index: 100;
