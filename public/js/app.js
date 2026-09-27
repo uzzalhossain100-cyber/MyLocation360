@@ -128,10 +128,14 @@ function setupTabNavigation() {
       }
     });
 
-    // 4. Hide/Show Search Bar depending on tab
+    // 4. Hide/Show Search Bar and History Button depending on tab
     const topSearch = document.getElementById('topSlimSearchBar');
     if (topSearch) {
       topSearch.style.display = (targetTabId === 'location-tab') ? 'block' : 'none';
+    }
+    const btnHistory = document.getElementById('btnOpenLocationHistory');
+    if (btnHistory) {
+      btnHistory.style.display = (targetTabId === 'location-tab') ? 'inline-flex' : 'none';
     }
 
     // 5. Scroll to top so user sees the page cleanly

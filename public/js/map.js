@@ -187,6 +187,20 @@ const MapModule = {
   },
 
   setUserPosition(lat, lon, speedMps = 0, altitude = null, heading = null) {
+    // Calculate distance from last recorded point to eliminate GPS jitter/drift
+    let distMovedMeters = 0;
+    if (this.currentLat && this.currentLon) {
+      const dLat = (lat - this.currentLat) * 111320;
+      const dLon = (lon - this.currentLon) * 111320 * Math.cos(lat * Math.PI / 180);
+      distMovedMeters = Math.sqrt(dLat * dLat + dLon * dLon);
+    }
+
+    // Determine accurate movement heading
+    let moveHeading = heading;
+    if ((moveHeading === null || isNaN(moveHeading)) && distMovedMeters >= 3 && this.currentLat && this.currentLon) {
+      moveHeading = this.calculateBearing(this.currentLat, this.currentLon, lat, lon);
+    }
+
     this.currentLat = lat;
     this.currentLon = lon;
 
@@ -194,11 +208,14 @@ const MapModule = {
       this.userMarker.setLngLat([lon, lat]);
     }
 
+    // Strict GPS Drift & Noise Filter:
+    // If speed is below 0.65 m/s (~2.3 km/h) or movement is under 3 meters, force strict 0 km/h
     let speedKmh = 0;
-    if (speedMps && speedMps > 0) {
+    if (speedMps && speedMps >= 0.65 && distMovedMeters >= 2.5) {
       speedKmh = Math.round(speedMps * 3.6);
     }
-    this.updateSpeedometer(speedKmh);
+
+    this.updateSpeedometer(speedKmh, moveHeading);
 
     // LIVE NAVIGATION AUTO-FOLLOW: Map smoothly moves and tracks user as they walk or drive!
     if (this.isAutoFollow && this.map) {
@@ -208,8 +225,8 @@ const MapModule = {
         essential: true
       };
       // Rotate map along user heading if moving (> 2.5 km/h)
-      if (heading !== null && !isNaN(heading) && speedKmh >= 2.5) {
-        easeOptions.bearing = heading;
+      if (moveHeading !== null && !isNaN(moveHeading) && speedKmh >= 2.5) {
+        easeOptions.bearing = moveHeading;
       }
       this.map.easeTo(easeOptions);
     }
@@ -230,31 +247,69 @@ const MapModule = {
     this.recordLiveGpsHistory(lat, lon);
   },
 
-  updateSpeedometer(speed) {
+  calculateBearing(lat1, lon1, lat2, lon2) {
+    const y = Math.sin((lon2 - lon1) * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180);
+    const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
+              Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos((lon2 - lon1) * Math.PI / 180);
+    return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+  },
+
+  getHeadingDirectionInfo(deg) {
+    if (deg === null || isNaN(deg)) return { text: 'আপনি সোজা চলছেন ⬆️', short: 'চলছেন' };
+    const n = (deg % 360 + 360) % 360;
+    if (n >= 337.5 || n < 22.5) return { text: 'আপনি উত্তর দিকে চলছেন ⬆️', short: 'উত্তর ⬆️' };
+    if (n >= 22.5 && n < 67.5) return { text: 'আপনি উত্তর-পূর্ব দিকে চলছেন ↗️', short: 'উ-পূ ↗️' };
+    if (n >= 67.5 && n < 112.5) return { text: 'আপনি পূর্ব দিকে চলছেন ➡️', short: 'পূর্ব ➡️' };
+    if (n >= 112.5 && n < 157.5) return { text: 'আপনি দক্ষিণ-পূর্ব দিকে চলছেন ↘️', short: 'দ-পূ ↘️' };
+    if (n >= 157.5 && n < 202.5) return { text: 'আপনি দক্ষিণ দিকে চলছেন ⬇️', short: 'দক্ষিণ ⬇️' };
+    if (n >= 202.5 && n < 247.5) return { text: 'আপনি দক্ষিণ-পশ্চিম দিকে চলছেন ↙️', short: 'দ-প ↙️' };
+    if (n >= 247.5 && n < 292.5) return { text: 'আপনি পশ্চিম দিকে চলছেন ⬅️', short: 'পশ্চিম ⬅️' };
+    return { text: 'আপনি উত্তর-পশ্চিম দিকে চলছেন ↖️', short: 'উ-প ↖️' };
+  },
+
+  updateSpeedometer(speed, heading = null) {
     this.currentSpeed = speed;
     const speedEl = document.getElementById('currentSpeed');
     const dashSpeedEl = document.getElementById('dashSpeedValue');
     const fmSpeedEl = document.getElementById('fmSpeedNum');
     const statusEl = document.getElementById('speedStatus');
+    const dirIndicatorText = document.getElementById('travelDirectionText');
+    const dockSubDir = document.getElementById('dockMoveDir');
     const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
 
     if (speedEl) speedEl.innerText = toBengaliDigits(speed);
     if (dashSpeedEl) dashSpeedEl.innerText = toBengaliDigits(speed);
     if (fmSpeedEl) fmSpeedEl.innerText = toBengaliDigits(speed);
 
-    if (statusEl) {
-      if (speed === 0) {
+    if (speed === 0) {
+      if (statusEl) {
         statusEl.innerText = 'স্থির অবস্থায় আছেন';
         statusEl.style.color = '#94a3b8';
-      } else if (speed < 7) {
-        statusEl.innerText = 'হাঁটার গতিতে চলছেন';
-        statusEl.style.color = '#38bdf8';
-      } else if (speed < 25) {
-        statusEl.innerText = 'সাইকেল বা রিকশায় চলছেন';
-        statusEl.style.color = '#34d399';
-      } else {
-        statusEl.innerText = 'গাড়িতে দ্রুত গতিতে চলছেন';
-        statusEl.style.color = '#f59e0b';
+      }
+      if (dirIndicatorText) {
+        dirIndicatorText.innerText = 'বর্তমানে আপনি স্থির অবস্থানে আছেন 🛑';
+        dirIndicatorText.style.color = '#94a3b8';
+      }
+      if (dockSubDir) dockSubDir.innerText = 'স্থির';
+    } else {
+      const dirInfo = this.getHeadingDirectionInfo(heading);
+      if (dirIndicatorText) {
+        dirIndicatorText.innerText = dirInfo.text;
+        dirIndicatorText.style.color = '#38bdf8';
+      }
+      if (dockSubDir) dockSubDir.innerText = dirInfo.short;
+
+      if (statusEl) {
+        if (speed < 7) {
+          statusEl.innerText = `হাঁটার গতিতে চলছেন (${toBengaliDigits(speed)} কিমি/ঘণ্টা)`;
+          statusEl.style.color = '#38bdf8';
+        } else if (speed < 25) {
+          statusEl.innerText = `সাইকেল বা রিকশায় চলছেন (${toBengaliDigits(speed)} কিমি/ঘণ্টা)`;
+          statusEl.style.color = '#34d399';
+        } else {
+          statusEl.innerText = `গাড়িতে দ্রুত গতিতে চলছেন (${toBengaliDigits(speed)} কিমি/ঘণ্টা)`;
+          statusEl.style.color = '#f59e0b';
+        }
       }
     }
   },
@@ -361,6 +416,7 @@ const MapModule = {
     const fullMapText = document.getElementById('fullMapText');
     const btnStreetView = document.getElementById('btnToggleStreetView');
     const mapLayerText = document.getElementById('mapLayerText');
+    const btnFloatingClose = document.getElementById('btnExitFullMapFloating');
 
     const toggleFullMap = (enable) => {
       this.isFullMapMode = enable !== undefined ? enable : !this.isFullMapMode;
@@ -369,21 +425,31 @@ const MapModule = {
         document.body.classList.add('in-fullmap-mode');
         if (fullMapIcon) fullMapIcon.className = 'fa-solid fa-compress text-danger';
         if (fullMapText) fullMapText.innerText = 'ম্যাপ ছোট';
+        if (btnFloatingClose) btnFloatingClose.style.display = 'flex';
         if (window.showToast) window.showToast('ফুল ম্যাপ সক্রিয় (নিচে সব অপশন দৃশ্যমান)');
       } else {
         wrapper.classList.remove('fullscreen-map-mode');
         document.body.classList.remove('in-fullmap-mode');
         if (fullMapIcon) fullMapIcon.className = 'fa-solid fa-expand text-info';
         if (fullMapText) fullMapText.innerText = 'ফুল ম্যাপ';
+        if (btnFloatingClose) btnFloatingClose.style.display = 'none';
       }
       
       this.map.resize();
-      setTimeout(() => this.map.resize(), 60);
-      setTimeout(() => this.map.resize(), 180);
+      this.recenter();
+      setTimeout(() => {
+        this.map.resize();
+        this.recenter();
+      }, 80);
+      setTimeout(() => this.map.resize(), 240);
     };
 
     if (btnFullMap) {
       btnFullMap.addEventListener('click', () => toggleFullMap());
+    }
+
+    if (btnFloatingClose) {
+      btnFloatingClose.addEventListener('click', () => toggleFullMap(false));
     }
 
     if (btnStreetView) {
@@ -528,6 +594,7 @@ const MapModule = {
   setupSearchAndRouting() {
     const input = document.getElementById('placeSearchInput');
     const btnSearch = document.getElementById('btnSearchPlace');
+    const btnClearSearch = document.getElementById('btnClearPlaceSearch');
     const btnCloseRoute = document.getElementById('btnCloseRoute');
     const suggestionsBox = document.getElementById('searchSuggestionsBox');
 
@@ -537,6 +604,12 @@ const MapModule = {
       if (suggestionsBox) {
         suggestionsBox.style.display = 'none';
         suggestionsBox.innerHTML = '';
+      }
+    };
+
+    const updateClearBtnVisibility = () => {
+      if (btnClearSearch && input) {
+        btnClearSearch.style.display = input.value.trim().length > 0 ? 'inline-flex' : 'none';
       }
     };
 
@@ -569,12 +642,13 @@ const MapModule = {
 
         row.addEventListener('click', () => {
           if (input) input.value = item.name;
+          updateClearBtnVisibility();
           hideSuggestions();
           const destLat = parseFloat(item.lat);
           const destLon = parseFloat(item.lon);
           this.calculateAndDrawRoute(this.currentLat, this.currentLon, destLat, destLon, item.name);
           if (this.map) {
-            this.map.flyTo({ center: [destLon, destLat], zoom: 15, speed: 1.2 });
+            this.map.flyTo({ center: [destLon, destLat], zoom: 16, speed: 1.2 });
           }
         });
 
@@ -587,6 +661,7 @@ const MapModule = {
     if (input) {
       input.addEventListener('input', () => {
         const query = input.value.trim();
+        updateClearBtnVisibility();
         if (debounceTimer) clearTimeout(debounceTimer);
         if (!query || query.length < 2) {
           hideSuggestions();
@@ -614,6 +689,17 @@ const MapModule = {
       });
     }
 
+    if (btnClearSearch) {
+      btnClearSearch.addEventListener('click', () => {
+        if (input) input.value = '';
+        updateClearBtnVisibility();
+        hideSuggestions();
+        this.clearRoute();
+        this.recenter();
+        if (window.showToast) window.showToast('সার্চ ক্লিয়ার করা হয়েছে এবং মূল অবস্থানে ফিরে গেছেন');
+      });
+    }
+
     // Hide dropdown when clicking outside
     document.addEventListener('click', (e) => {
       if (!e.target.closest('#topSlimSearchBar')) {
@@ -628,6 +714,7 @@ const MapModule = {
         return;
       }
       hideSuggestions();
+      updateClearBtnVisibility();
       this.searchPlaceAndRoute(query);
     };
 
@@ -635,7 +722,10 @@ const MapModule = {
 
     if (btnCloseRoute) {
       btnCloseRoute.addEventListener('click', () => {
+        if (input) input.value = '';
+        updateClearBtnVisibility();
         this.clearRoute();
+        this.recenter();
       });
     }
   },
@@ -934,10 +1024,15 @@ const MapModule = {
     if (this.destMarker) this.destMarker.remove();
 
     const destEl = document.createElement('div');
-    destEl.className = 'poi-marker-badge';
-    destEl.style.background = markerBg;
-    destEl.style.color = '#ffffff';
-    destEl.innerHTML = `<i class="fa-solid ${icon}"></i> ${destName}`;
+    destEl.className = 'searched-dest-pin-marker';
+    destEl.innerHTML = `
+      <div class="dest-pin-beacon" style="background: ${markerBg};"></div>
+      <div class="dest-pin-bubble" style="background: ${markerBg};">
+        <i class="fa-solid ${icon}"></i>
+        <span>${destName}</span>
+      </div>
+      <div class="dest-pin-needle" style="border-top-color: ${markerBg};"></div>
+    `;
 
     this.destMarker = new maplibregl.Marker({ element: destEl })
       .setLngLat([toLon, toLat])

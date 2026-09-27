@@ -2930,7 +2930,9 @@ body {
 }
 
 .top-brand-only-row {
-  justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 2px 0;
 }
 }
@@ -4508,4 +4510,134 @@ body.in-fullmap-mode .corner-tool-btn {
   color: #ffffff;
   border-color: #f97316;
   transform: translateY(-1px);
+}
+
+/* ==========================================================
+   ENHANCED SEARCH PIN, TRAVEL DIRECTION & FULLSCREEN FIX
+   ========================================================== */
+
+/* Searched Destination Pin Marker */
+.searched-dest-pin-marker {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translate(-50%, -100%);
+  cursor: pointer;
+  z-index: 50;
+  pointer-events: auto;
+}
+
+.dest-pin-bubble {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.82rem;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65), 0 0 10px rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+}
+
+.dest-pin-needle {
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #0284c7;
+  margin-top: -1px;
+}
+
+.dest-pin-beacon {
+  position: absolute;
+  bottom: -4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  animation: destBeaconPulse 1.8s infinite ease-out;
+  opacity: 0.7;
+}
+
+@keyframes destBeaconPulse {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+/* Search Input Clear Button */
+.search-clear-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.search-clear-btn:hover {
+  color: #f87171;
+}
+
+/* Travel Direction Indicator */
+.travel-direction-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 4px 10px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #38bdf8;
+}
+
+/* Full Map Floating Close Button */
+.fm-floating-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10000;
+  background: rgba(220, 38, 38, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.fm-floating-close-btn:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+/* Fullscreen Map Dock Bar Fix */
+.map-view-wrapper.fullscreen-map-mode .map-bottom-dock-bar {
+  position: fixed !important;
+  bottom: 12px !important;
+  left: 10px !important;
+  right: 10px !important;
+  max-width: 620px !important;
+  margin: 0 auto !important;
+  z-index: 9999999 !important;
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }

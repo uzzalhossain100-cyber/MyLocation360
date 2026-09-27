@@ -86,19 +86,28 @@
     <!-- Ultra Compact Top Bar -->
     <header class="app-compact-header">
       
-      <!-- Top Row: Small Brand Logo (Opens Home) -->
+      <!-- Top Row: Small Brand Logo (Opens Home) & Location History Button for MyLocation -->
       <div class="top-tabs-slim-row top-brand-only-row">
         <div class="mini-brand-tag" id="btnOpenHomePortal" title="হোম পেজে ফিরে যান" style="cursor: pointer;">
           <img src="/assets/icon-192.svg" alt="360" class="mini-logo">
           <span class="mini-title">MyLocation360</span>
         </div>
+
+        <!-- History Button: Exclusively visible in MyLocation view -->
+        <button class="compact-history-action-btn" id="btnOpenLocationHistory" title="যাতায়াত ইতিহাস দেখুন">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>হিস্টরি</span>
+        </button>
       </div>
 
-      <!-- Second Row: Small Search Bar (Only shown on map view) -->
+      <!-- Second Row: Small Search Bar (Only shown on map view) with Clear Button -->
       <div class="slim-search-bar" id="topSlimSearchBar">
         <div class="search-field-pill">
           <i class="fa-solid fa-magnifying-glass search-ico"></i>
           <input type="text" id="placeSearchInput" placeholder="স্থান, থানা, জেলা বা দেশ সার্চ করুন (বাংলা/English)..." autocomplete="off">
+          <button class="search-clear-btn" id="btnClearPlaceSearch" type="button" style="display:none;" title="ক্লিয়ার করুন">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
           <button class="search-go-btn" id="btnSearchPlace" title="রুট দেখুন">
             <i class="fa-solid fa-route"></i>
             <span>রুট</span>
@@ -223,6 +232,7 @@
                 <span class="dock-speed-val" id="currentSpeed">০</span>
                 <span class="dock-speed-unit">কিমি/ঘণ্টা</span>
               </div>
+              <span class="dock-sub-dir" id="dockMoveDir" style="font-size:0.58rem; color:#a7f3d0; line-height:1;">স্থির</span>
             </div>
 
             <!-- ৪. ২ডি / ৩ডি অপশন -->
@@ -238,6 +248,11 @@
             </button>
 
           </div>
+
+          <!-- Direct Floating Close Button in Full Map Mode -->
+          <button class="fm-floating-close-btn" id="btnExitFullMapFloating" style="display:none;" title="ম্যাপ ছোট করুন">
+            <i class="fa-solid fa-compress"></i> <span>ম্যাপ ছোট করুন</span>
+          </button>
 
         </div>
 
@@ -269,6 +284,12 @@
               <div class="speed-unit">কিমি/ঘণ্টা</div>
             </div>
             <div class="speed-status-badge" id="speedStatus">স্থির অবস্থায় আছেন</div>
+            
+            <!-- চলাচলের দিক নির্দেশক বার (যেমন: আপনি পূর্ব দিকে চলছেন ➡️) -->
+            <div class="travel-direction-indicator" id="travelDirectionIndicator">
+              <i class="fa-solid fa-compass text-primary" id="travelDirectionIcon"></i>
+              <span id="travelDirectionText">বর্তমানে আপনি স্থির অবস্থানে আছেন</span>
+            </div>
           </div>
 
           <!-- Current Road & Location Info Card -->
