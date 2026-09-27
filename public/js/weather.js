@@ -657,12 +657,23 @@ const WeatherApp = {
         }
       }
 
-      // Update Animated Weather Scene with Actual Sunrise/Sunset and Local Time
-      if (window.WeatherScenes && window.WeatherScenes.currentLocationScene) {
-        if (daily.sunrise && daily.sunrise[0] && daily.sunset && daily.sunset[0]) {
-          window.WeatherScenes.currentLocationScene.setCelestialTimes(daily.sunrise[0], daily.sunset[0], data.timezone);
+      // Update Animated Weather Scene with Actual Sunrise/Sunset and Local Time (Both Full Stage and Home Mini Scene)
+      const homeMiniBadge = document.getElementById('homeMiniAnimBadge');
+      if (homeMiniBadge) homeMiniBadge.innerText = condition.badge;
+
+      if (window.WeatherScenes) {
+        if (window.WeatherScenes.currentLocationScene) {
+          if (daily.sunrise && daily.sunrise[0] && daily.sunset && daily.sunset[0]) {
+            window.WeatherScenes.currentLocationScene.setCelestialTimes(daily.sunrise[0], daily.sunset[0], data.timezone);
+          }
+          window.WeatherScenes.currentLocationScene.setScene(condition.scene);
         }
-        window.WeatherScenes.currentLocationScene.setScene(condition.scene);
+        if (window.WeatherScenes.homeMiniScene) {
+          if (daily.sunrise && daily.sunrise[0] && daily.sunset && daily.sunset[0]) {
+            window.WeatherScenes.homeMiniScene.setCelestialTimes(daily.sunrise[0], daily.sunset[0], data.timezone);
+          }
+          window.WeatherScenes.homeMiniScene.setScene(condition.scene);
+        }
       }
 
       // Render Next 24-Hour Hourly Forecast strictly starting from CURRENT hour

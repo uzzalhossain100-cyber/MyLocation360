@@ -1154,7 +1154,8 @@ class WeatherSceneRenderer {
 // Global factory initializer
 window.initWeatherScenes = () => {
   window.WeatherScenes = {
-    currentLocationScene: new WeatherSceneRenderer('cwAnimCanvas', 'cwSceneOverlay', 'cwAnimationStage')
+    currentLocationScene: new WeatherSceneRenderer('cwAnimCanvas', 'cwSceneOverlay', 'cwAnimationStage'),
+    homeMiniScene: new WeatherSceneRenderer('homeMiniAnimCanvas', 'homeMiniSceneOverlay', 'homeMiniAnimationStage')
   };
 };
 

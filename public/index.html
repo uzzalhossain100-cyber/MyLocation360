@@ -142,18 +142,20 @@
               </div>
             </div>
 
-            <!-- বর্তমান লোকেশনের জীবন্ত দৃশ্য (Live Visual Weather Scene) -->
-            <div class="home-live-scene-card" id="homeLiveSceneContainer">
-              <div class="home-scene-sky" id="homeSkyVisual">
-                <div class="home-celestial-body" id="homeCelestialBody"></div>
-                <div class="home-cloud-layer">
-                  <div class="home-cloud c1"></div>
-                  <div class="home-cloud c2"></div>
-                </div>
-                <div class="home-rain-layer" id="homeRainVisual" style="display: none;"></div>
-                <div class="home-scene-caption">
-                  <span class="scene-badge"><i class="fa-solid fa-eye"></i> বর্তমান লোকেশনের জীবন্ত দৃশ্য</span>
-                  <span class="scene-summary-text" id="homeSceneSummary">রোদ ঝলমলে আকাশ</span>
+            <!-- বর্তমান লোকেশনের জীবন্ত দৃশ্য (ভেতরের নির্বাচিত এলাকার মতই ছোট আকারে ক্যানভাস দৃশ্য) -->
+            <div class="home-mini-scene-card" id="homeMiniSceneContainer">
+              <div class="home-mini-scene-header">
+                <span class="h-mini-badge"><i class="fa-solid fa-wand-magic-sparkles text-amber"></i> বর্তমান লোকেশনের জীবন্ত দৃশ্য</span>
+                <span class="h-mini-status" id="homeMiniAnimBadge">রোদ্রোজ্জ্বল দৃশ্য</span>
+              </div>
+              <div class="animation-stage-container home-mini-stage" id="homeMiniAnimationStage">
+                <canvas id="homeMiniAnimCanvas" class="weather-canvas mini-canvas"></canvas>
+                <div class="scene-overlay home-mini-overlay" id="homeMiniSceneOverlay">
+                  <div class="sun-glow" id="homeMiniSunGlow"></div>
+                  <div class="cloud-layer layer-1" id="homeMiniCloudLayer1"></div>
+                  <div class="cloud-layer layer-2" id="homeMiniCloudLayer2"></div>
+                  <div class="rain-layer" id="homeMiniRainLayer"></div>
+                  <div class="lightning-flash" id="homeMiniLightning"></div>
                 </div>
               </div>
             </div>
@@ -170,11 +172,108 @@
 
       </div>
 
+      <!-- Mobile Lockscreen & Wallpaper Set Bar (লকস্ক্রিনে সেট করুন ও ওয়ালপেপার সেট করুন) -->
+      <div class="home-mobile-set-bar">
+        <button type="button" class="btn-set-mobile btn-set-lockscreen" id="btnSetHomeLockscreen">
+          <i class="fa-solid fa-mobile-screen-button"></i>
+          <span>লকস্ক্রিনে সেট করুন</span>
+        </button>
+        <button type="button" class="btn-set-mobile btn-set-wallpaper" id="btnSetHomeWallpaper">
+          <i class="fa-solid fa-image"></i>
+          <span>ওয়ালপেপার সেট করুন</span>
+        </button>
+      </div>
+
       <!-- Footer Info Bar -->
       <div class="home-portal-footer">
         <span>স্মার্ট অবস্থান ট্র্যাকিং • বাস্তব সময়ের আবহাওয়া • ডপলার রাডার ও ৩৬০° ভিউ</span>
       </div>
 
+    </div>
+  </div>
+
+  <!-- Mobile Lockscreen / Wallpaper Interactive Setup & Live Preview Modal -->
+  <div class="mobile-set-modal-backdrop" id="mobileSetModalBackdrop" style="display: none;">
+    <div class="mobile-set-modal-box">
+      <div class="modal-set-header">
+        <div class="modal-set-title-wrap">
+          <i class="fa-solid fa-mobile-screen text-sky" id="modalSetIcon"></i>
+          <h3 class="modal-set-title" id="modalSetTitle">মোবাইলে সেট করুন</h3>
+        </div>
+        <button type="button" class="btn-modal-close" id="btnCloseMobileSetModal">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-set-body">
+        <p class="modal-set-desc" id="modalSetDesc">আপনার বর্তমান অবস্থান ও লাইভ আবহাওয়ার দৃশ্য সমন্বিত স্ক্রিন প্রস্তুত করা হয়েছে:</p>
+        
+        <!-- Live Generated Wallpaper Preview Card -->
+        <div class="wallpaper-preview-phone" id="wallpaperPreviewPhone">
+          <div class="phone-notch"></div>
+          <div class="phone-screen-content" id="phoneScreenContent">
+            <div class="phone-time-wrap">
+              <span class="phone-clock" id="phoneLiveClock">১২:৪৫</span>
+              <span class="phone-date" id="phoneLiveDate">রবিবার, ২৭ সেপ্টেম্বর</span>
+            </div>
+            <div class="phone-widgets">
+              <!-- Location Widget -->
+              <div class="phone-widget-card">
+                <i class="fa-solid fa-location-dot text-primary"></i>
+                <div class="widget-text">
+                  <span class="w-label">আমার লোকেশন</span>
+                  <span class="w-val" id="phonePreviewAddress">ধানমন্ডি, ঢাকা</span>
+                </div>
+              </div>
+              <!-- Weather & Speed Widget -->
+              <div class="phone-widget-grid">
+                <div class="phone-widget-card mini">
+                  <i class="fa-solid fa-temperature-half text-amber"></i>
+                  <div>
+                    <span class="w-val" id="phonePreviewTemp">৩১° সে.</span>
+                    <span class="w-label" id="phonePreviewCond">রোদ্রোজ্জ্বল</span>
+                  </div>
+                </div>
+                <div class="phone-widget-card mini">
+                  <i class="fa-solid fa-gauge-high text-sky"></i>
+                  <div>
+                    <span class="w-val" id="phonePreviewSpeed">০ কিমি/ঘ.</span>
+                    <span class="w-label" id="phonePreviewDir">উত্তর দিক</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="phone-footer-brand">MyLocation360 Live</div>
+          </div>
+        </div>
+
+        <!-- Action Instructions -->
+        <div class="modal-set-instructions" id="modalSetInstructions">
+          <div class="inst-step">
+            <span class="step-num">১</span>
+            <span>নিচের <strong>"সেভ করে সেট করুন"</strong> চাপলে হাই-রেজ্যোলিউশন ইমেজ সেভ হবে।</span>
+          </div>
+          <div class="inst-step">
+            <span class="step-num">২</span>
+            <span>মোবাইলের গ্যালারি বা সেটিংস ওপেন করে <strong>"Use as Wallpaper / Lockscreen"</strong> সিলেক্ট করুন।</span>
+          </div>
+          <div class="inst-step">
+            <span class="step-num">৩</span>
+            <span>অথবা সরাসরি মোবাইলে <strong>"লাইভ ফুলস্ক্রিন ডিসপ্লে"</strong> চালু রাখতে পারেন।</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-set-actions">
+        <button type="button" class="btn-action-save" id="btnDownloadWallpaper">
+          <i class="fa-solid fa-download"></i>
+          <span id="btnDownloadWallpaperLabel">সেভ করে সেট করুন</span>
+        </button>
+        <button type="button" class="btn-action-live" id="btnLaunchLiveDisplay">
+          <i class="fa-solid fa-expand"></i>
+          <span>লাইভ ফুলস্ক্রিন ডিসপ্লে</span>
+        </button>
+      </div>
     </div>
   </div>
 
