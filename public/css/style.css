@@ -3190,28 +3190,70 @@ body {
 /* Dock bar locked at bottom in full map mode */
 body.in-fullmap-mode .map-bottom-dock-bar {
   position: fixed !important;
-  bottom: 14px !important;
-  left: 10px !important;
-  right: 10px !important;
-  max-width: 620px !important;
+  bottom: 8px !important;
+  left: 8px !important;
+  right: 8px !important;
+  max-width: 580px !important;
   margin: 0 auto !important;
-  z-index: 100000 !important;
-  background: rgba(13, 20, 34, 0.94) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7) !important;
-  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  z-index: 1000000 !important;
+  background: rgba(13, 20, 34, 0.96) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75) !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  padding: 6px 8px !important;
 }
 
-/* Route Banner fixed at top in full map mode */
+/* In Full Map Mode: Hide Top Search Bar so top is 100% clean & unobstructed */
+body.in-fullmap-mode #topSlimSearchBar {
+  display: none !important;
+}
+
+/* Route Banner placed SLIM at the BOTTOM above dock bar in full map mode (Never blocks map top!) */
 body.in-fullmap-mode .route-summary-banner {
   position: fixed !important;
-  top: 12px !important;
-  left: 10px !important;
-  right: 10px !important;
-  max-width: 620px !important;
+  top: auto !important;
+  bottom: 68px !important;
+  left: 8px !important;
+  right: 8px !important;
+  max-width: 580px !important;
   margin: 0 auto !important;
-  z-index: 100000 !important;
-  border-radius: var(--radius-md) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7) !important;
+  z-index: 1000000 !important;
+  background: rgba(13, 20, 34, 0.94) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7) !important;
+  padding: 4px 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+}
+
+body.in-fullmap-mode .route-summary-banner .route-dest-header-row {
+  margin-bottom: 2px !important;
+}
+
+body.in-fullmap-mode .route-summary-banner .route-dest-name {
+  font-size: 0.84rem !important;
+}
+
+body.in-fullmap-mode .route-summary-banner .travel-mode-bar {
+  padding: 1px 0 !important;
+  gap: 4px !important;
+}
+
+body.in-fullmap-mode .route-summary-banner .travel-mode-chip {
+  padding: 1px 6px !important;
+  font-size: 0.65rem !important;
+}
+
+body.in-fullmap-mode .route-summary-banner .route-metrics-row {
+  gap: 4px !important;
+}
+
+body.in-fullmap-mode .route-summary-banner .route-metric-chip {
+  font-size: 0.68rem !important;
+  padding: 1px 6px !important;
 }
 
 /* ==========================================================
@@ -4602,24 +4644,24 @@ body.in-fullmap-mode .corner-tool-btn {
 
 /* Full Map Floating Close Button */
 .fm-floating-close-btn {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  z-index: 10000;
+  position: fixed !important;
+  top: 10px !important;
+  right: 10px !important;
+  z-index: 10000000 !important;
   background: rgba(220, 38, 38, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   color: #ffffff;
   border: 1.5px solid rgba(255, 255, 255, 0.35);
-  padding: 8px 16px;
+  padding: 5px 12px;
   border-radius: 9999px;
-  font-size: 0.82rem;
+  font-size: 0.74rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   transition: all 0.2s ease;
 }
 
