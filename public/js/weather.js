@@ -582,8 +582,33 @@ const WeatherApp = {
       const maxTemp = daily.temperature_2m_max && daily.temperature_2m_max[0] !== undefined ? Math.round(daily.temperature_2m_max[0]) : (temp + 3);
       const weatherCode = current.weather_code ?? 0;
       
-      const hours = new Date().getHours();
-      const isDay = current.is_day !== undefined ? current.is_day : (hours >= 6 && hours < 18 ? 1 : 0);
+      // Strict Sunrise & Sunset Check to completely guarantee sun disappears after sunset
+      let isDay = 1;
+      if (daily.sunrise && daily.sunrise[0] && daily.sunset && daily.sunset[0]) {
+        try {
+          const riseParts = daily.sunrise[0].split('T')[1].split(':');
+          const setParts = daily.sunset[0].split('T')[1].split(':');
+          const riseDecimal = parseInt(riseParts[0], 10) + parseInt(riseParts[1], 10) / 60;
+          const setDecimal = parseInt(setParts[0], 10) + parseInt(setParts[1], 10) / 60;
+
+          let localDecimal = new Date().getHours() + new Date().getMinutes() / 60;
+          if (data.timezone) {
+            const f = new Intl.DateTimeFormat('en-US', { timeZone: data.timezone, hour12: false, hour: 'numeric', minute: 'numeric' });
+            const p = f.formatToParts(new Date());
+            const h = parseInt(p.find(x => x.type === 'hour')?.value || '0', 10) % 24;
+            const m = parseInt(p.find(x => x.type === 'minute')?.value || '0', 10);
+            localDecimal = h + m / 60;
+          }
+          isDay = (localDecimal >= riseDecimal && localDecimal < setDecimal) ? 1 : 0;
+        } catch (e) {
+          isDay = current.is_day !== undefined ? current.is_day : (new Date().getHours() >= 6 && new Date().getHours() < 18 ? 1 : 0);
+        }
+      } else if (current.is_day !== undefined) {
+        isDay = current.is_day;
+      } else {
+        const hours = new Date().getHours();
+        isDay = (hours >= 6 && hours < 18) ? 1 : 0;
+      }
 
       const condition = this.parseWmoCode(weatherCode, isDay, temp);
       const windFlow = this.getWindFlowDescription(windDirDeg);

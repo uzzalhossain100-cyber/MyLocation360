@@ -41,6 +41,11 @@ class WeatherSceneRenderer {
       this.initSceneObjects();
       this.updateSunProgressFromTime();
       this.animate();
+
+      // Periodically check sunset / sunrise time every 30 seconds
+      setInterval(() => {
+        this.updateSunProgressFromTime();
+      }, 30000);
     }
   }
 
@@ -177,7 +182,8 @@ class WeatherSceneRenderer {
     const set = this.sunsetDecimal || 17.83;
 
     // Calculate Daytime progression from sunrise (0.0) to sunset (1.0)
-    if (localHours >= rise && localHours <= set) {
+    // Strictly: After sunset or before sunrise, isDaytimeNow MUST be false!
+    if (localHours >= rise && localHours < set) {
       this.sunProgress = (localHours - rise) / (set - rise);
       this.isDaytimeNow = true;
     } else if (localHours < rise) {
@@ -185,11 +191,28 @@ class WeatherSceneRenderer {
       this.sunProgress = 0.0;
       this.isDaytimeNow = false;
     } else {
-      // After sunset (dusk/night)
+      // After sunset (dusk/night) - Sun is completely below horizon
       this.sunProgress = 1.0;
       this.isDaytimeNow = false;
     }
     this.sunProgress = Math.max(0.0, Math.min(1.0, this.sunProgress));
+
+    // If it's night time, ensure scene switches to night variant so sun is never drawn
+    if (!this.isDaytimeNow) {
+      const nightMap = {
+        'clear-day': 'clear-night',
+        'partly-cloudy-day': 'partly-cloudy-night',
+        'cloudy': 'cloudy-night',
+        'fog': 'fog-night',
+        'rain': 'rain-night',
+        'storm': 'storm-night'
+      };
+      if (nightMap[this.currentScene]) {
+        this.currentScene = nightMap[this.currentScene];
+        this.initSceneObjects();
+        this.updateDomOverlays();
+      }
+    }
 
     // Calculate Nighttime Moon progression from sunset (0.0) to next sunrise (1.0)
     const nightDuration = (24 - set) + rise; // Total hours of night
@@ -382,8 +405,25 @@ class WeatherSceneRenderer {
   }
 
   setScene(sceneType) {
-    if (this.currentScene === sceneType) return;
-    this.currentScene = sceneType;
+    let targetScene = sceneType;
+    if (!this.isDaytimeNow) {
+      if (targetScene === 'clear-day') targetScene = 'clear-night';
+      else if (targetScene === 'partly-cloudy-day') targetScene = 'partly-cloudy-night';
+      else if (targetScene === 'cloudy') targetScene = 'cloudy-night';
+      else if (targetScene === 'fog') targetScene = 'fog-night';
+      else if (targetScene === 'rain') targetScene = 'rain-night';
+      else if (targetScene === 'storm') targetScene = 'storm-night';
+    } else {
+      if (targetScene === 'clear-night') targetScene = 'clear-day';
+      else if (targetScene === 'partly-cloudy-night') targetScene = 'partly-cloudy-day';
+      else if (targetScene === 'cloudy-night') targetScene = 'cloudy';
+      else if (targetScene === 'fog-night') targetScene = 'fog';
+      else if (targetScene === 'rain-night') targetScene = 'rain';
+      else if (targetScene === 'storm-night') targetScene = 'storm';
+    }
+
+    if (this.currentScene === targetScene) return;
+    this.currentScene = targetScene;
     this.moonData = this.getMoonPhaseInfo();
     this.updateSunProgressFromTime();
     this.resize();
@@ -484,6 +524,13 @@ class WeatherSceneRenderer {
      ☀️ DAYTIME: CELESTIAL SUN PATH ARC & ACCURATE SOLAR POSITION
      ========================================================== */
   renderSunnyScene(isPartlyCloudy) {
+    // STRICT SUNSET CHECK:
+    // If it is night time, after sunset, or before sunrise, absolutely DO NOT render daytime sun!
+    if (!this.isDaytimeNow || this.sunProgress >= 1.0 || this.sunProgress <= 0.0) {
+      this.renderNightScene(isPartlyCloudy ? 'partly-cloudy' : 'clear');
+      return;
+    }
+
     const ctx = this.ctx;
     const w = this.width;
     const h = this.height;
