@@ -47,6 +47,7 @@ function setupHomePortalWorkflow() {
   const btnLocation = document.getElementById('portalBtnLocation');
   const btnWeather = document.getElementById('portalBtnWeather');
   const btnOpenPortal = document.getElementById('btnOpenHomePortal');
+  const btnBottomHome = document.getElementById('bottomNavBtnHome');
 
   function openFeature(tabId) {
     if (portalOverlay) {
@@ -58,6 +59,13 @@ function setupHomePortalWorkflow() {
     }
     if (window.switchAppTab) {
       window.switchAppTab(tabId);
+    }
+  }
+
+  function returnToHome() {
+    if (portalOverlay) {
+      portalOverlay.classList.remove('portal-closing');
+      portalOverlay.style.display = 'flex';
     }
   }
 
@@ -74,20 +82,22 @@ function setupHomePortalWorkflow() {
   }
 
   if (btnOpenPortal) {
-    btnOpenPortal.addEventListener('click', () => {
-      if (portalOverlay) {
-        portalOverlay.style.display = 'flex';
-      }
-    });
+    btnOpenPortal.addEventListener('click', returnToHome);
   }
+
+  if (btnBottomHome) {
+    btnBottomHome.addEventListener('click', returnToHome);
+  }
+
+  window.returnToHomePortal = returnToHome;
 }
 
 /* ================= TAB NAVIGATION ================= */
 function setupTabNavigation() {
-  const topTabBtns = document.querySelectorAll('.nav-tab-btn, .compact-tab-btn');
-  const bottomNavItems = document.querySelectorAll('.mobile-nav-item');
   const tabPanes = document.querySelectorAll('.tab-pane');
   const mapWrapper = document.getElementById('mapViewWrapper');
+  const activeIcon = document.getElementById('bottomNavActiveIcon');
+  const activeLabel = document.getElementById('bottomNavActiveLabel');
 
   function switchTab(targetTabId) {
     // 1. If currently in full map mode, ALWAYS exit full map first
@@ -98,17 +108,16 @@ function setupTabNavigation() {
       if (window.MapModule) window.MapModule.isFullMapMode = false;
     }
 
-    // 2. Update Top Tabs
-    topTabBtns.forEach(btn => {
-      btn.classList.toggle('active', btn.getAttribute('data-tab') === targetTabId);
-    });
+    // 2. Update Bottom Nav Active Feature
+    if (targetTabId === 'location-tab') {
+      if (activeIcon) activeIcon.className = 'fa-solid fa-location-crosshairs';
+      if (activeLabel) activeLabel.innerText = 'মাই লোকেশন';
+    } else if (targetTabId === 'weather-tab') {
+      if (activeIcon) activeIcon.className = 'fa-solid fa-cloud-sun';
+      if (activeLabel) activeLabel.innerText = 'লাইভ আবহাওয়া';
+    }
 
-    // 3. Update Mobile Bottom Nav
-    bottomNavItems.forEach(item => {
-      item.classList.toggle('active', item.getAttribute('data-tab') === targetTabId);
-    });
-
-    // 4. Update Tab Panes
+    // 3. Update Tab Panes
     tabPanes.forEach(pane => {
       if (pane.id === targetTabId) {
         pane.classList.add('active');
@@ -119,16 +128,16 @@ function setupTabNavigation() {
       }
     });
 
-    // 5. Hide/Show Search Bar depending on tab
+    // 4. Hide/Show Search Bar depending on tab
     const topSearch = document.getElementById('topSlimSearchBar');
     if (topSearch) {
       topSearch.style.display = (targetTabId === 'location-tab') ? 'block' : 'none';
     }
 
-    // 6. Scroll to top so user sees the page cleanly
+    // 5. Scroll to top so user sees the page cleanly
     window.scrollTo({ top: 0, behavior: 'instant' });
 
-    // 7. Refresh respective engines
+    // 6. Refresh respective engines
     if (targetTabId === 'location-tab') {
       setTimeout(() => {
         if (window.MapModule && window.MapModule.map) {
@@ -158,26 +167,6 @@ function setupTabNavigation() {
   }
 
   window.switchAppTab = switchTab;
-
-  // Direct explicit listeners for top buttons
-  const btnLoc = document.getElementById('tabBtnLocation');
-  const btnWea = document.getElementById('tabBtnWeather');
-  if (btnLoc) btnLoc.addEventListener('click', () => switchTab('location-tab'));
-  if (btnWea) btnWea.addEventListener('click', () => switchTab('weather-tab'));
-
-  topTabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tabId = btn.getAttribute('data-tab');
-      if (tabId) switchTab(tabId);
-    });
-  });
-
-  bottomNavItems.forEach(item => {
-    item.addEventListener('click', () => {
-      const tabId = item.getAttribute('data-tab');
-      if (tabId) switchTab(tabId);
-    });
-  });
 }
 
 /* ================= LOCATION HISTORY WORKFLOW ================= */

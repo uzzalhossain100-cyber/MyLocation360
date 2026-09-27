@@ -83,31 +83,15 @@
   <!-- Main App Shell -->
   <div id="app" class="app-container">
     
-    <!-- Ultra Compact Top Bar (MyLocation, আবহাওয়া, হিস্টরি ও সার্চ বার) -->
+    <!-- Ultra Compact Top Bar -->
     <header class="app-compact-header">
       
-      <!-- Top Row: Small Brand, MyLocation & Weather Tabs, and History Button in one slim row -->
-      <div class="top-tabs-slim-row">
+      <!-- Top Row: Small Brand Logo (Opens Home) -->
+      <div class="top-tabs-slim-row top-brand-only-row">
         <div class="mini-brand-tag" id="btnOpenHomePortal" title="হোম পেজে ফিরে যান" style="cursor: pointer;">
           <img src="/assets/icon-192.svg" alt="360" class="mini-logo">
-          <span class="mini-title">360</span>
+          <span class="mini-title">MyLocation360</span>
         </div>
-
-        <nav class="compact-nav-tabs">
-          <button class="compact-tab-btn active" id="tabBtnLocation" data-tab="location-tab" title="মানচিত্র ও দিকদর্শন">
-            <i class="fa-solid fa-location-crosshairs"></i>
-            <span>MyLocation</span>
-          </button>
-          <button class="compact-tab-btn" id="tabBtnWeather" data-tab="weather-tab" title="লাইভ আবহাওয়া">
-            <i class="fa-solid fa-cloud-sun"></i>
-            <span>আবহাওয়া</span>
-          </button>
-        </nav>
-
-        <button class="compact-history-action-btn" id="btnOpenLocationHistory" title="যাতায়াত ইতিহাস দেখুন">
-          <i class="fa-solid fa-clock-rotate-left"></i>
-          <span>হিস্টরি</span>
-        </button>
       </div>
 
       <!-- Second Row: Small Search Bar (Only shown on map view) -->
@@ -591,15 +575,18 @@
       </button>
     </div>
 
-    <!-- Bottom Navigation Bar for Mobile Feel -->
-    <footer class="app-mobile-nav">
-      <button class="mobile-nav-item active" data-tab="location-tab">
-        <i class="fa-solid fa-map-location-dot"></i>
-        <span>MyLocation</span>
+    <!-- Bottom Navigation Bar for Mobile & Desktop: Home Button + Active Feature -->
+    <footer class="app-mobile-nav" id="appBottomNav">
+      <!-- 1. Home Button (হোম বাটনে ক্লিক করলে হোম পেজে ফেরত যাবে) -->
+      <button class="mobile-nav-item" id="bottomNavBtnHome" type="button" title="হোম পেজে ফিরে যান">
+        <i class="fa-solid fa-house"></i>
+        <span>হোম</span>
       </button>
-      <button class="mobile-nav-item" data-tab="weather-tab">
-        <i class="fa-solid fa-cloud-sun"></i>
-        <span>আবহাওয়া</span>
+
+      <!-- 2. Currently Active Selected Option (যে অপশনে প্রবেশ করেছে সেই অপশন নির্বাচিত অবস্থায় থাকবে) -->
+      <button class="mobile-nav-item active" id="bottomNavActiveFeature" type="button">
+        <i class="fa-solid fa-location-crosshairs" id="bottomNavActiveIcon"></i>
+        <span id="bottomNavActiveLabel">মাই লোকেশন</span>
       </button>
     </footer>
 

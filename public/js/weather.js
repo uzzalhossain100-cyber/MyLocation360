@@ -36,9 +36,43 @@ const WeatherApp = {
     if (exactAddress) {
       this.myGpsExactAddress = exactAddress;
     }
+
+    // Reverse geocode exact real location (রোড, মহল্লা, থানা/উপজেলা, জেলা)
+    this.reverseGeocodeMyPosition(lat, lon);
+
     // If currently on my GPS view, update display immediately
     if (this.isViewingMyGps) {
       this.fetchWeather(lat, lon, this.myGpsExactAddress, true);
+    }
+  },
+
+  // Reverse geocoding to resolve exact location address
+  async reverseGeocodeMyPosition(lat, lon) {
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=bn,en`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data) return;
+
+      const a = data.address || {};
+      const parts = [];
+      const placePart = a.neighbourhood || a.suburb || a.residential || a.quarter || a.hamlet;
+      if (placePart) parts.push(placePart);
+      if (a.road) parts.unshift(a.road);
+      const cityPart = a.city || a.town || a.municipality || a.county || a.district;
+      if (cityPart) parts.push(cityPart);
+
+      let exact = parts.length > 0 ? parts.join(', ') : (data.display_name ? data.display_name.split(',').slice(0, 3).join(', ') : null);
+      if (exact) {
+        this.myGpsExactAddress = exact;
+        if (this.isViewingMyGps) {
+          this.viewCityName = exact;
+          const cityEl = document.getElementById('cwCityName');
+          if (cityEl) cityEl.innerText = exact;
+        }
+      }
+    } catch (e) {
+      console.warn('Reverse geocode error:', e);
     }
   },
 
