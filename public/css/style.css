@@ -3189,20 +3189,22 @@ body {
 
 /* ==========================================================
    DOMINANT MAP VIEWPORT & BOTTOM SLIM CONTROLS HUB
-   (পরিমিত উচ্চতায় স্পষ্ট ম্যাপ এবং নিচে ছোট ছোট জায়গায়
-   সার্চ, গন্তব্য লোকেশন, দূরত্ব, সময় ও চলার গতি)
+   (উপরে ম্যাপ, নিচে সার্চ, তার নিচে আমার লোকেশন,
+   দিক চিহ্নিত, চলার গতি ও 2D/3D প্রথম স্ক্রিনেই দৃশ্যমান,
+   এবং নিচে স্ক্রল করলে মোবাইল অ্যাপ দেখা যাবে)
    ========================================================== */
 #location-tab {
   display: block;
   padding: 0;
   width: 100%;
+  overflow: visible; /* নিচে স্ক্রল করলে বাকি অ্যাপ দেখা যাবে */
 }
 
 .map-view-wrapper.clean-map-view {
   width: 100% !important;
-  height: 52vh !important;
-  min-height: 320px !important;
-  max-height: 550px !important;
+  height: 48vh !important;
+  min-height: 285px !important;
+  max-height: 380px !important;
   position: relative !important;
   border-radius: 0;
   border-bottom: 1px solid rgba(56, 189, 248, 0.2);
@@ -3212,8 +3214,9 @@ body {
 
 @media (min-width: 900px) {
   .map-view-wrapper.clean-map-view {
-    height: 58vh !important;
-    min-height: 400px !important;
+    height: 52vh !important;
+    min-height: 350px !important;
+    max-height: 460px !important;
   }
 }
 
@@ -3226,10 +3229,10 @@ body {
 
 .map-bottom-controls-hub {
   background: linear-gradient(180deg, #0b1329 0%, #080d1a 100%);
-  padding: 6px 10px 10px 10px;
+  padding: 5px 8px 8px 8px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
   z-index: 100;
@@ -3264,7 +3267,7 @@ body {
 /* Bottom Route Strip (Dest Name, Distance, Duration, Mode, Clear) */
 .bottom-route-strip {
   margin: 0 !important;
-  padding: 6px 10px !important;
+  padding: 5px 8px !important;
   background: rgba(15, 23, 42, 0.92) !important;
   border: 1px solid rgba(56, 189, 248, 0.35) !important;
   border-radius: 10px !important;
@@ -3274,11 +3277,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
 .bottom-route-strip .route-dest-name {
-  font-size: 0.85rem !important;
+  font-size: 0.84rem !important;
   font-weight: 700;
   color: #ffffff;
   white-space: nowrap;
@@ -3290,13 +3293,13 @@ body {
 .bottom-route-strip .travel-mode-bar {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-bottom: 3px;
+  gap: 3px;
+  margin-bottom: 2px;
 }
 
 .bottom-route-strip .travel-mode-chip {
-  padding: 2px 7px !important;
-  font-size: 0.68rem !important;
+  padding: 2px 6px !important;
+  font-size: 0.66rem !important;
   border-radius: 6px !important;
 }
 
@@ -3308,8 +3311,8 @@ body {
 }
 
 .bottom-route-strip .route-metric-chip {
-  font-size: 0.72rem !important;
-  padding: 2px 7px !important;
+  font-size: 0.70rem !important;
+  padding: 1px 6px !important;
 }
 
 /* Bottom Dock Bar placed inside controls hub */
@@ -3319,10 +3322,10 @@ body {
   width: 100% !important;
   max-width: 100% !important;
   margin: 0 !important;
-  padding: 4px 8px !important;
-  background: rgba(15, 23, 42, 0.8) !important;
+  padding: 4px 6px !important;
+  background: rgba(15, 23, 42, 0.82) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 12px !important;
+  border-radius: 10px !important;
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
@@ -3331,27 +3334,99 @@ body {
 .bottom-dir-bar {
   margin: 0 !important;
   padding: 2px 6px !important;
-  font-size: 0.72rem !important;
+  font-size: 0.70rem !important;
   text-align: center !important;
   justify-content: center !important;
   border-radius: 6px !important;
 }
 
-/* Fullscreen Map Mode overrides */
-body.in-fullmap-mode .map-bottom-controls-hub {
+/* ==========================================================
+   FULLSCREEN MAP MODE (ম্যাপ ফুল করলে নিচের অপশন দেখা যাবে না,
+   শুধু ম্যাপ ছোট করুন, স্যাটেলাইট ভিউ ও স্ট্রিট ভিউ ডান পাশে থাকবে)
+   ========================================================== */
+body.in-fullmap-mode .map-bottom-controls-hub,
+body.in-fullmap-mode .map-bottom-dock-bar,
+body.in-fullmap-mode .route-summary-banner,
+body.in-fullmap-mode .slim-search-bar,
+body.in-fullmap-mode .travel-direction-indicator,
+body.in-fullmap-mode .app-compact-header,
+body.in-fullmap-mode .app-mobile-nav,
+body.in-fullmap-mode .map-click-hint-badge {
+  display: none !important;
+}
+
+/* Full Map Container: 100% Fullscreen */
+.map-view-wrapper.fullscreen-map-mode {
   position: fixed !important;
-  bottom: 6px !important;
-  left: 6px !important;
-  right: 6px !important;
-  max-width: 580px !important;
-  margin: 0 auto !important;
-  background: rgba(10, 17, 32, 0.94) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border-radius: 14px !important;
-  border: 1px solid rgba(56, 189, 248, 0.4) !important;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.8) !important;
-  z-index: 10000000 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  z-index: 99999999 !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.map-view-wrapper.fullscreen-map-mode .map-canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Full Map Right-Side Tools: ম্যাপ ছোট করুন, স্যাটেলাইট ভিউ ও স্ট্রিট ভিউ */
+body.in-fullmap-mode .map-corner-tools,
+.map-view-wrapper.fullscreen-map-mode .map-corner-tools {
+  position: fixed !important;
+  top: 14px !important;
+  right: 12px !important;
+  z-index: 100000000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 7px !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+body.in-fullmap-mode .corner-tool-btn,
+.map-view-wrapper.fullscreen-map-mode .corner-tool-btn {
+  background: rgba(13, 20, 34, 0.92) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1.2px solid rgba(255, 255, 255, 0.28) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65) !important;
+  padding: 6px 11px !important;
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  border-radius: 9999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+}
+
+body.in-fullmap-mode .corner-tool-btn:hover,
+.map-view-wrapper.fullscreen-map-mode .corner-tool-btn:hover {
+  transform: translateY(-1px) scale(1.03) !important;
+}
+
+.fm-exit-tool-btn {
+  background: rgba(220, 38, 38, 0.95) !important;
+  border-color: rgba(254, 202, 202, 0.45) !important;
+  color: #ffffff !important;
+}
+
+.fm-exit-tool-btn:hover {
+  background: #b91c1c !important;
 }
 
 body.in-fullmap-mode .route-summary-banner .route-dest-header-row {

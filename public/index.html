@@ -133,15 +133,22 @@
           <!-- The Map canvas (Dominant Clean View, Click to select location, Zoom for street view) -->
           <div id="map" class="map-canvas"></div>
 
-          <!-- Top-Right Essential Map View Tools (Satellite & Real Street View 360) -->
-          <div class="map-corner-tools">
-            <button class="corner-tool-btn layer-toggle-btn" id="btnToggleStreetView" title="স্ট্রিট ও স্যাটেলাইট ভিউ পরিবর্তন">
-              <i class="fa-solid fa-layer-group"></i>
+          <!-- Right-Side Essential Map Tools (Satellite, Street View & Exit Fullscreen) -->
+          <div class="map-corner-tools" id="mapCornerTools">
+            <!-- ম্যাপ ছোট করুন বাটন (ফুল ম্যাপ মোডে প্রদর্শিত হবে) -->
+            <button class="corner-tool-btn fm-exit-tool-btn" id="btnExitFullMapFloating" style="display:none;" title="ম্যাপ ছোট করুন">
+              <i class="fa-solid fa-compress text-danger"></i>
+              <span>ম্যাপ ছোট</span>
+            </button>
+            <!-- স্যাটেলাইট ভিউ বাটন -->
+            <button class="corner-tool-btn layer-toggle-btn" id="btnToggleStreetView" title="স্যাটেলাইট ও সাধারণ ভিউ পরিবর্তন">
+              <i class="fa-solid fa-layer-group text-info"></i>
               <span id="mapLayerText">স্যাটেলাইট</span>
             </button>
+            <!-- স্ট্রিট ভিউ বাটন -->
             <button class="corner-tool-btn panorama-toggle-btn" id="btnOpenStreetPanorama" title="রাস্তার ৩৬০° আসল স্ট্রিট ভিউ দেখুন">
               <i class="fa-solid fa-street-view text-warning"></i>
-              <span>রাস্তার ভিউ</span>
+              <span>স্ট্রিট ভিউ</span>
             </button>
           </div>
 
@@ -149,11 +156,6 @@
           <div class="map-click-hint-badge">
             <i class="fa-solid fa-hand-pointer"></i> ম্যাপে ক্লিক করে যেকোনো স্থান নির্বাচন ও রুট দেখুন
           </div>
-
-          <!-- Direct Floating Close Button in Full Map Mode -->
-          <button class="fm-floating-close-btn" id="btnExitFullMapFloating" style="display:none;" title="ম্যাপ ছোট করুন">
-            <i class="fa-solid fa-compress"></i> <span>ম্যাপ ছোট করুন</span>
-          </button>
 
         </div>
 

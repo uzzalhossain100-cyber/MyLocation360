@@ -425,8 +425,8 @@ const MapModule = {
         document.body.classList.add('in-fullmap-mode');
         if (fullMapIcon) fullMapIcon.className = 'fa-solid fa-compress text-danger';
         if (fullMapText) fullMapText.innerText = 'ম্যাপ ছোট';
-        if (btnFloatingClose) btnFloatingClose.style.display = 'flex';
-        if (window.showToast) window.showToast('ফুল ম্যাপ সক্রিয় (নিচে সব অপশন দৃশ্যমান)');
+        if (btnFloatingClose) btnFloatingClose.style.display = 'inline-flex';
+        if (window.showToast) window.showToast('ফুল ম্যাপ মোড চালু হয়েছে');
       } else {
         wrapper.classList.remove('fullscreen-map-mode');
         document.body.classList.remove('in-fullmap-mode');
