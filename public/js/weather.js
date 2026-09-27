@@ -645,15 +645,6 @@ const WeatherApp = {
     }
   },
 
-    if (zoomEarthLink) {
-      const zoomPath = layerType === 'satellite' ? 'satellite' :
-                       layerType === 'wind' ? 'wind-speed' :
-                       layerType === 'temp' ? 'temperature' :
-                       layerType === 'rain' ? 'precipitation' : 'radar';
-      zoomEarthLink.href = `https://zoom.earth/maps/${zoomPath}/#view=${lat},${lon},6z/model=icon`;
-    }
-  },
-
   // Render Next 24-Hour Forecast (Hourly Timeline strictly starting from CURRENT hour)
   renderHourlyForecast(hourly, currentLocalTimeStr) {
     const container = document.getElementById('hourlyTimelineContainer');
@@ -741,12 +732,38 @@ const WeatherApp = {
     }
   },
 
+  // Ensure weather radar map is initialized and rendered with correct container dimensions
+  ensureRadarMapReady() {
+    const container = document.getElementById('weatherRadarMap');
+    if (!container) return;
+
+    if (!this.radarMap) {
+      this.initWeatherRadarMap();
+    } else {
+      try {
+        this.radarMap.resize();
+      } catch (e) {}
+    }
+
+    // Trigger progressive resize checks across tab open animations
+    [50, 150, 300, 600, 1000].forEach(delay => {
+      setTimeout(() => {
+        if (this.radarMap) {
+          try {
+            this.radarMap.resize();
+          } catch (e) {}
+        }
+      }, delay);
+    });
+  },
+
   // ==========================================================
   // INTERACTIVE BANGLADESH & GLOBAL WEATHER RADAR MAP
   // ==========================================================
   initWeatherRadarMap() {
     const container = document.getElementById('weatherRadarMap');
     if (!container) return;
+    if (this.radarMap) return;
 
     try {
       this.radarMap = new maplibregl.Map({
@@ -756,15 +773,23 @@ const WeatherApp = {
           sources: {
             'radar-osm': {
               type: 'raster',
-              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tiles: [
+                'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+              ],
               tileSize: 256,
-              maxzoom: 19
+              maxzoom: 19,
+              attribution: 'CartoDB / OpenStreetMap'
             },
             'radar-satellite': {
               type: 'raster',
-              tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+              tiles: [
+                'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+              ],
               tileSize: 256,
-              maxzoom: 19
+              maxzoom: 19,
+              attribution: 'Esri World Imagery'
             }
           },
           layers: [
@@ -799,9 +824,12 @@ const WeatherApp = {
       }), 'top-left');
 
       this.radarMap.on('load', async () => {
-        await this.loadRainRadarTiles();
+        try {
+          this.radarMap.resize();
+        } catch (e) {}
+
         this.renderWeatherPoints();
-        // apply initial active layer
+        await this.loadRainRadarTiles();
         this.applyRadarMapLayers(this.activeRadarLayer || 'rain');
       });
 

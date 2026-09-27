@@ -238,27 +238,92 @@ const BD_POPULAR_PLACES = [
   { name: 'খাগড়াছড়ি', en: 'Khagrachhari', subdistrict: 'খাগড়াছড়ি সদর', district: 'চট্টগ্রাম বিভাগ', country: 'বাংলাদেশ', lat: '23.1193', lon: '91.9847', type: 'city' }
 ];
 
-// Search location, institution, establishment, landmark & place geocoding
+// Helper: Haversine distance in kilometers
+function calcDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
+
+// Search location, village, union, school, college, institution, landmark & place geocoding
 app.get('/api/geocode/search', async (req, res) => {
-  const { q } = req.query;
+  const { q, lat, lon } = req.query;
   if (!q || !q.trim()) {
     return res.status(400).json({ error: 'Query q is required' });
   }
   const cleanQ = q.trim();
   const lowerQ = cleanQ.toLowerCase();
 
+  const userLat = lat ? parseFloat(lat) : null;
+  const userLon = lon ? parseFloat(lon) : null;
+  const hasUserCoords = userLat !== null && !isNaN(userLat) && userLon !== null && !isNaN(userLon);
+
   try {
     let combinedResults = [];
     const seenMap = new Map();
 
     const addUniqueResult = (item) => {
-      const lat = parseFloat(item.lat);
-      const lon = parseFloat(item.lon);
-      if (isNaN(lat) || isNaN(lon)) return;
-      const key = `${lat.toFixed(4)},${lon.toFixed(4)}`;
-      if (!seenMap.has(key) && !seenMap.has(item.name)) {
+      const iLat = parseFloat(item.lat);
+      const iLon = parseFloat(item.lon);
+      if (isNaN(iLat) || isNaN(iLon)) return;
+      const key = `${iLat.toFixed(4)},${iLon.toFixed(4)}`;
+      if (!seenMap.has(key) && !seenMap.has(item.name.toLowerCase())) {
         seenMap.set(key, true);
-        seenMap.set(item.name, true);
+        seenMap.set(item.name.toLowerCase(), true);
+
+        // Detect type from name / properties if generic
+        const nameLower = (item.name + ' ' + (item.display_name || '')).toLowerCase();
+        let detectedType = item.type || 'place';
+        if (nameLower.includes('স্কুল') || nameLower.includes('বিদ্যালয়') || nameLower.includes('বিদ্যালয়') || nameLower.includes('school') || nameLower.includes('মাদ্রাসা') || nameLower.includes('madrasa')) {
+          detectedType = 'school';
+        } else if (nameLower.includes('কলেজ') || nameLower.includes('college') || nameLower.includes('মহাবিদ্যালয়')) {
+          detectedType = 'college';
+        } else if (nameLower.includes('বিশ্ববিদ্যালয়') || nameLower.includes('বিশ্ববিদ্যালয়') || nameLower.includes('university') || nameLower.includes('বুয়েট') || nameLower.includes('buet')) {
+          detectedType = 'university';
+        } else if (nameLower.includes('হাসপাতাল') || nameLower.includes('hospital') || nameLower.includes('ক্লিনিক') || nameLower.includes('clinic') || nameLower.includes('স্বাস্থ্য')) {
+          detectedType = 'hospital';
+        } else if (nameLower.includes('গ্রাম') || nameLower.includes('village') || nameLower.includes('মৌজা') || nameLower.includes('ইউনিয়ন') || nameLower.includes('union') || nameLower.includes('hamlet')) {
+          detectedType = 'village';
+        } else if (nameLower.includes('বাজার') || nameLower.includes('market') || nameLower.includes('হাট') || nameLower.includes('মার্কেট') || nameLower.includes('mall') || nameLower.includes('প্লাজা')) {
+          detectedType = 'commercial';
+        }
+        item.type = detectedType;
+
+        // Determine Region / Tier Priority
+        const isInsideBangladesh = (iLat >= 20.4 && iLat <= 26.8 && iLon >= 88.0 && iLon <= 92.9) ||
+                                  (item.country && (item.country.includes('বাংলাদেশ') || item.country.toLowerCase().includes('bangladesh')));
+
+        if (hasUserCoords) {
+          const dist = calcDistanceKm(userLat, userLon, iLat, iLon);
+          item.distance = dist;
+
+          if (dist <= 30) {
+            item.tier = 1; // Priority 1: User's location area / Nearby
+            const distStr = dist < 1 ? `${toBengaliDigits(Math.round(dist * 1000))} মি.` : `${toBengaliDigits(dist.toFixed(1))} কিমি`;
+            item.badgeText = `📍 আপনার নিকটস্থ (${distStr})`;
+            item.tierName = 'nearby';
+          } else if (isInsideBangladesh) {
+            item.tier = 2; // Priority 2: Across Bangladesh
+            item.badgeText = '🇧🇩 বাংলাদেশ';
+            item.tierName = 'bangladesh';
+          } else {
+            item.tier = 3; // Priority 3: Worldwide / Global
+            item.badgeText = '🌍 বিশ্ব';
+            item.tierName = 'world';
+          }
+        } else {
+          item.tier = isInsideBangladesh ? 2 : 3;
+          item.badgeText = isInsideBangladesh ? '🇧🇩 বাংলাদেশ' : '🌍 বিশ্ব';
+          item.tierName = isInsideBangladesh ? 'bangladesh' : 'world';
+        }
+
         combinedResults.push(item);
       }
     };
@@ -287,33 +352,60 @@ app.get('/api/geocode/search', async (req, res) => {
 
     localMatches.forEach(addUniqueResult);
 
-    // 2. Parallel Online Search: Nominatim + Photon Komoot (unrestricted, includes all institutions, buildings, schools, hospitals, landmarks)
+    // 2. Parallel Online Search: Nominatim + Photon Komoot (unrestricted, includes all villages, schools, colleges, institutions)
     const onlinePromises = [];
 
-    // 2a. Nominatim Query (with Bangladesh bias & accept-language)
+    // 2a. Photon Komoot API with user coords bias (indexes ALL villages, schools, colleges, landmarks)
+    const photonUrl = hasUserCoords
+      ? `https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQ)}&limit=25&lat=${userLat}&lon=${userLon}&lang=en`
+      : `https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQ)}&limit=25&lang=en`;
+
     onlinePromises.push(
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQ)}&limit=12&addressdetails=1&accept-language=bn,en&viewbox=88.0,20.5,92.7,26.7`, {
+      fetch(photonUrl)
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null)
+    );
+
+    // 2b. OpenStreetMap Nominatim Unrestricted Search (supports villages, hamlets, schools, colleges in Bengali and English)
+    const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQ)}&limit=20&addressdetails=1&accept-language=bn,en`;
+    onlinePromises.push(
+      fetch(nomUrl, {
         headers: {
-          'User-Agent': 'MyLocation360App/2.0 (contact@arena.ai)',
+          'User-Agent': 'MyLocation360App/3.0 (contact@arena.ai)',
           'Accept-Language': 'bn,en;q=0.9'
         }
       }).then(r => r.ok ? r.json() : []).catch(() => [])
     );
 
-    // 2b. Photon by Komoot (indexes all OSM POIs, schools, hospitals, universities, landmarks, shops, places worldwide)
-    onlinePromises.push(
-      fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQ)}&limit=12&lang=en`)
-        .then(r => r.ok ? r.json() : null)
-        .catch(() => null)
-    );
+    const [photonRes, nomRes] = await Promise.allSettled(onlinePromises);
 
-    const [nomRes, photonRes] = await Promise.allSettled(onlinePromises);
+    // Process Photon Komoot results (great for local villages, schools, colleges)
+    if (photonRes.status === 'fulfilled' && photonRes.value && photonRes.value.features) {
+      photonRes.value.features.forEach(f => {
+        const p = f.properties || {};
+        const coords = f.geometry ? f.geometry.coordinates : null;
+        if (!coords) return;
+        const pName = p.name || p.street || cleanQ;
+        const parts = [pName, p.district || p.suburb, p.city || p.county, p.country].filter(Boolean);
+
+        addUniqueResult({
+          display_name: parts.join(', '),
+          name: pName,
+          subdistrict: p.suburb || p.district || '',
+          district: p.city || p.county || p.state || '',
+          country: p.country || '',
+          lat: coords[1].toString(),
+          lon: coords[0].toString(),
+          type: p.osm_value || p.type || 'place'
+        });
+      });
+    }
 
     // Process Nominatim results
     if (nomRes.status === 'fulfilled' && Array.isArray(nomRes.value)) {
       nomRes.value.forEach(item => {
         const addr = item.address || {};
-        const thana = addr.suburb || addr.quarter || addr.neighbourhood || addr.subdistrict || addr.hamlet || '';
+        const thana = addr.village || addr.hamlet || addr.suburb || addr.quarter || addr.neighbourhood || addr.subdistrict || '';
         const district = addr.city || addr.town || addr.county || addr.state || '';
         const country = addr.country || '';
         const itemName = item.name || item.display_name.split(',')[0];
@@ -331,60 +423,21 @@ app.get('/api/geocode/search', async (req, res) => {
       });
     }
 
-    // Process Photon Komoot results
-    if (photonRes.status === 'fulfilled' && photonRes.value && photonRes.value.features) {
-      photonRes.value.features.forEach(f => {
-        const p = f.properties || {};
-        const coords = f.geometry ? f.geometry.coordinates : null;
-        if (!coords) return;
-        const pName = p.name || p.street || cleanQ;
-        const parts = [pName, p.district || p.suburb, p.city || p.county, p.country].filter(Boolean);
+    // 3. Strict 3-Tier Priority Sorting:
+    // Tier 1: User's location area first (sorted by closest distance)
+    // Tier 2: Across Bangladesh (villages, schools, colleges, districts)
+    // Tier 3: Worldwide / International locations
+    combinedResults.sort((a, b) => {
+      if (a.tier !== b.tier) {
+        return a.tier - b.tier; // 1 before 2 before 3
+      }
+      if (a.tier === 1 && a.distance !== undefined && b.distance !== undefined) {
+        return a.distance - b.distance; // closest nearby first
+      }
+      return 0;
+    });
 
-        addUniqueResult({
-          display_name: parts.join(', '),
-          name: pName,
-          subdistrict: p.suburb || p.district || '',
-          district: p.city || p.county || p.state || '',
-          country: p.country || '',
-          lat: coords[1].toString(),
-          lon: coords[0].toString(),
-          type: p.type || p.osm_value || 'place'
-        });
-      });
-    }
-
-    // 3. Fallback: Global Nominatim search if results are still sparse
-    if (combinedResults.length < 3) {
-      try {
-        const globalUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQ)}&limit=10&addressdetails=1&accept-language=bn,en`;
-        const gRes = await fetch(globalUrl, {
-          headers: {
-            'User-Agent': 'MyLocation360App/2.0 (contact@arena.ai)',
-            'Accept-Language': 'bn,en;q=0.9'
-          }
-        });
-        if (gRes.ok) {
-          const gData = await gRes.json();
-          if (Array.isArray(gData)) {
-            gData.forEach(item => {
-              const itemName = item.name || item.display_name.split(',')[0];
-              addUniqueResult({
-                display_name: item.display_name,
-                name: itemName,
-                subdistrict: '',
-                district: '',
-                country: '',
-                lat: item.lat,
-                lon: item.lon,
-                type: item.type || 'place'
-              });
-            });
-          }
-        }
-      } catch (e) {}
-    }
-
-    res.json(combinedResults.slice(0, 15));
+    res.json(combinedResults.slice(0, 18));
 
   } catch (error) {
     console.error('Search geocode overall error:', error);

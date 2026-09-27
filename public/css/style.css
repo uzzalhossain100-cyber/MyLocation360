@@ -4010,6 +4010,10 @@ body.in-fullmap-mode .map-bottom-dock-bar {
 .sugg-park { background: rgba(34, 197, 94, 0.25); color: #bbf7d0; border: 1px solid rgba(34, 197, 94, 0.4); }
 .sugg-sport { background: rgba(168, 85, 247, 0.25); color: #e9d5ff; border: 1px solid rgba(168, 85, 247, 0.4); }
 .sugg-city { background: rgba(100, 116, 139, 0.3); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.4); }
+.sugg-village { background: rgba(16, 185, 129, 0.25); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+.sugg-tier-nearby { background: rgba(16, 185, 129, 0.35); color: #ecfdf5; border: 1.2px solid #10b981; font-weight: 700; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+.sugg-tier-bd { background: rgba(2, 132, 199, 0.25); color: #bae6fd; border: 1px solid rgba(56, 189, 248, 0.4); }
+.sugg-tier-world { background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
 .suggestion-sub {
   font-size: 0.74rem;
   color: #94a3b8;
@@ -4869,12 +4873,20 @@ body.in-fullmap-mode .corner-tool-btn {
 }
 
 .live-weather-map-canvas {
-  width: 100%;
-  height: 100%;
+  width: 100% !important;
+  height: 100% !important;
   position: absolute;
   top: 0;
   left: 0;
   z-index: 1;
+  background: #0f172a;
+}
+
+#weatherRadarMap .maplibregl-canvas-container,
+#weatherRadarMap .maplibregl-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
 }
 
 /* Center crosshairs on live weather map */

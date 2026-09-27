@@ -733,21 +733,27 @@ const MapModule = {
         let iconClass = 'fa-location-dot';
         let typeBadge = '';
 
-        if (item.type === 'university' || item.type === 'college') {
+        if (item.type === 'university') {
           iconClass = 'fa-graduation-cap';
-          typeBadge = '<span class="sugg-badge sugg-edu">প্রতিষ্ঠান</span>';
+          typeBadge = '<span class="sugg-badge sugg-edu">বিশ্ববিদ্যালয়</span>';
+        } else if (item.type === 'college') {
+          iconClass = 'fa-building-columns';
+          typeBadge = '<span class="sugg-badge sugg-edu">কলেজ</span>';
         } else if (item.type === 'school') {
           iconClass = 'fa-school';
-          typeBadge = '<span class="sugg-badge sugg-edu">বিদ্যালয়</span>';
+          typeBadge = '<span class="sugg-badge sugg-edu">বিদ্যালয় / মাদ্রাসা</span>';
         } else if (item.type === 'hospital' || item.type === 'clinic') {
           iconClass = 'fa-hospital';
           typeBadge = '<span class="sugg-badge sugg-hosp">হাসপাতাল</span>';
+        } else if (item.type === 'village' || item.type === 'hamlet') {
+          iconClass = 'fa-house-chimney-window';
+          typeBadge = '<span class="sugg-badge sugg-village">গ্রাম / পাড়া</span>';
         } else if (item.type === 'monument' || item.type === 'historic' || item.type === 'museum') {
           iconClass = 'fa-landmark';
           typeBadge = '<span class="sugg-badge sugg-land">স্থাপনা</span>';
         } else if (item.type === 'mall' || item.type === 'commercial' || item.type === 'shop') {
           iconClass = 'fa-cart-shopping';
-          typeBadge = '<span class="sugg-badge sugg-shop">শপিং মল</span>';
+          typeBadge = '<span class="sugg-badge sugg-shop">বাজার / মল</span>';
         } else if (item.type === 'airport') {
           iconClass = 'fa-plane-departure';
           typeBadge = '<span class="sugg-badge sugg-trans">বিমানবন্দর</span>';
@@ -771,6 +777,16 @@ const MapModule = {
           typeBadge = '<span class="sugg-badge sugg-city">শহর</span>';
         }
 
+        // Region / Priority Tier Pill
+        let tierBadge = '';
+        if (item.tierName === 'nearby') {
+          tierBadge = `<span class="sugg-badge sugg-tier-nearby">${item.badgeText || '📍 আপনার নিকটস্থ'}</span>`;
+        } else if (item.tierName === 'bangladesh') {
+          tierBadge = `<span class="sugg-badge sugg-tier-bd">🇧🇩 বাংলাদেশ</span>`;
+        } else if (item.tierName === 'world') {
+          tierBadge = `<span class="sugg-badge sugg-tier-world">🌍 বিশ্ব</span>`;
+        }
+
         const subTitle = [item.subdistrict, item.district, item.country].filter(Boolean).join(', ') || item.display_name;
 
         row.innerHTML = `
@@ -779,6 +795,7 @@ const MapModule = {
             <div class="suggestion-title-wrap">
               <span class="suggestion-title">${item.name}</span>
               ${typeBadge}
+              ${tierBadge}
             </div>
             <div class="suggestion-sub">${subTitle}</div>
           </div>
@@ -814,7 +831,9 @@ const MapModule = {
 
         debounceTimer = setTimeout(async () => {
           try {
-            const res = await fetch(`/api/geocode/search?q=${encodeURIComponent(query)}`);
+            const userLat = this.currentLat || 23.8103;
+            const userLon = this.currentLon || 90.4125;
+            const res = await fetch(`/api/geocode/search?q=${encodeURIComponent(query)}&lat=${userLat}&lon=${userLon}`);
             if (res.ok) {
               const data = await res.json();
               renderSuggestions(data);
@@ -880,7 +899,9 @@ const MapModule = {
     try {
       let place = null;
       try {
-        const res = await fetch(`/api/geocode/search?q=${encodeURIComponent(query)}`);
+        const userLat = this.currentLat || 23.8103;
+        const userLon = this.currentLon || 90.4125;
+        const res = await fetch(`/api/geocode/search?q=${encodeURIComponent(query)}&lat=${userLat}&lon=${userLon}`);
         const list = await res.json();
         if (list && list.length > 0) place = list[0];
       } catch (e) {

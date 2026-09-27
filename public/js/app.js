@@ -159,10 +159,12 @@ function setupTabNavigation() {
             window.WeatherScenes.otherLocationScene.resize();
           }
         }
-        // Guarantee current weather is rendered
+        // Guarantee current weather & live radar map are rendered
         if (window.WeatherApp) {
           window.WeatherApp.startLiveClock();
-          if (window.WeatherApp.radarMap) {
+          if (typeof window.WeatherApp.ensureRadarMapReady === 'function') {
+            window.WeatherApp.ensureRadarMapReady();
+          } else if (window.WeatherApp.radarMap) {
             window.WeatherApp.radarMap.resize();
           }
         }
