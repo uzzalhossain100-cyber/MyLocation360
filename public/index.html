@@ -500,6 +500,11 @@
                   <span class="r-subtitle">বাতাসের ঘূর্ণি, স্যাটেলাইট মেঘ, রাডার বৃষ্টি ও তাপমাত্রার জীবন্ত দৃশ্য</span>
                 </div>
                 <div class="radar-header-links">
+                  <!-- আমার অবস্থানে ফিরে যাওয়ার রিফ্রেশ বাটন -->
+                  <button class="radar-my-location-btn" id="btnRefreshRadarToMyGps" title="আমার মূল অবস্থানে আবহাওয়া মানচিত্র ফিরিয়ে আনুন">
+                    <i class="fa-solid fa-arrows-rotate text-success"></i>
+                    <span>আমার অবস্থান রিফ্রেশ</span>
+                  </button>
                   <a href="https://www.windy.com/-Weather-radar-radar?radar,23.8,90.4,6" target="_blank" rel="noopener noreferrer" class="windy-link-btn" id="windyDirectLink" title="Windy.com এ সরাসরি লাইভ রাডার ও স্যাটেলাইট দেখুন">
                     <i class="fa-solid fa-wind"></i>
                     <span>Windy.com</span>
@@ -512,6 +517,11 @@
               </div>
 
               <div class="weather-map-stage-wrapper">
+                <!-- Floating Recenter/Refresh Pill for Weather Radar Map -->
+                <button class="floating-radar-recenter-btn" id="btnFloatingRadarRecenter" title="আমার মূল অবস্থানে ফিরে যান">
+                  <i class="fa-solid fa-location-crosshairs text-success"></i> <span>আমার অবস্থান রিফ্রেশ 🔄</span>
+                </button>
+
                 <!-- Live Interactive Weather Simulation Iframe (Default: rain / precipitation) -->
                 <iframe id="liveWeatherFrame" class="live-weather-iframe" 
                   src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=6&overlay=rain&product=ecmwf&level=surface&lat=23.8&lon=90.4&message=true&marker=true" 

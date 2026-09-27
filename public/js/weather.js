@@ -21,6 +21,8 @@ const WeatherApp = {
   radarMap: null,
   activeRadarLayer: 'rain', // 'rain', 'temp', 'wind'
   radarTileLayers: {},
+  isRadarMapUserInteracted: false,
+  hasInitialGpsWeatherLoaded: false,
 
   init() {
     this.startLiveClock();
@@ -40,8 +42,9 @@ const WeatherApp = {
     // Reverse geocode exact real location (রোড, মহল্লা, থানা/উপজেলা, জেলা)
     this.reverseGeocodeMyPosition(lat, lon);
 
-    // If currently on my GPS view, update display immediately
-    if (this.isViewingMyGps) {
+    // Initial load: view user's location weather
+    if (!this.hasInitialGpsWeatherLoaded) {
+      this.hasInitialGpsWeatherLoaded = true;
       this.fetchWeather(lat, lon, this.myGpsExactAddress, true);
     }
   },
@@ -285,6 +288,36 @@ const WeatherApp = {
         this.switchRadarLayer(layer);
       });
     });
+
+    // 6. Interactive Weather Radar Map Recenter to My Location Controls
+    const stageWrapper = document.querySelector('.weather-map-stage-wrapper');
+    if (stageWrapper) {
+      const markInteracted = () => {
+        this.isRadarMapUserInteracted = true;
+      };
+      stageWrapper.addEventListener('mouseenter', markInteracted);
+      stageWrapper.addEventListener('touchstart', markInteracted, { passive: true });
+      stageWrapper.addEventListener('pointerdown', markInteracted);
+    }
+
+    const resetRadarToUserLocation = () => {
+      this.isRadarMapUserInteracted = false;
+      this.updateSimulationFrame(this.myGpsLat, this.myGpsLon, this.activeRadarLayer || 'rain', true);
+      if (this.radarMap) {
+        this.radarMap.flyTo({ center: [this.myGpsLon, this.myGpsLat], zoom: 7.2, speed: 1.2 });
+      }
+      if (window.showToast) window.showToast('📍 আবহাওয়া মানচিত্র আপনার বর্তমান অবস্থানে ফিরিয়ে আনা হয়েছে');
+    };
+
+    const btnRadarRefresh = document.getElementById('btnRefreshRadarToMyGps');
+    if (btnRadarRefresh) {
+      btnRadarRefresh.addEventListener('click', resetRadarToUserLocation);
+    }
+
+    const btnFloatRadar = document.getElementById('btnFloatingRadarRecenter');
+    if (btnFloatRadar) {
+      btnFloatRadar.addEventListener('click', resetRadarToUserLocation);
+    }
   },
 
   async handleSearchLocation(query) {
@@ -563,8 +596,13 @@ const WeatherApp = {
     }
   },
 
-  // Update Simulation Iframe & Direct Links to match www.windy.com identically
-  updateSimulationFrame(lat, lon, layerType) {
+  // Update Simulation Iframe & Direct Links (never resets automatically if user is interacting/viewing elsewhere)
+  updateSimulationFrame(lat, lon, layerType, force = false) {
+    // If user has navigated or zoomed to explore other locations, DO NOT auto-reset unless forced
+    if (this.isRadarMapUserInteracted && !force) {
+      return;
+    }
+
     const iframe = document.getElementById('liveWeatherFrame');
     const zoomEarthLink = document.getElementById('zoomEarthLink');
     const windyDirectLink = document.getElementById('windyDirectLink');
@@ -832,7 +870,7 @@ const WeatherApp = {
     const lat = this.viewLat || 23.8;
     const lon = this.viewLon || 90.4;
 
-    this.updateSimulationFrame(lat, lon, layerType);
+    this.updateSimulationFrame(lat, lon, layerType, true);
 
     if (layerType === 'satellite') {
       if (statusText) statusText.innerText = '🛰️ লাইভ স্যাটেলাইট ভিউ: মহাকাশ থেকে সরাসরি পৃথিবীর মেঘমালা ও আবহাওয়ার দৃশ্য (www.windy.com অনুরূপ)';

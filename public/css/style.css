@@ -4958,6 +4958,58 @@ body.in-fullmap-mode .corner-tool-btn {
   transform: translateY(-1px);
 }
 
+/* Radar Map My Location Refresh Button */
+.radar-my-location-btn {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  color: #a7f3d0;
+  border-radius: 9999px;
+  padding: 5px 12px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.radar-my-location-btn:hover {
+  background: #059669;
+  color: #ffffff;
+  border-color: #10b981;
+  transform: translateY(-1px);
+}
+
+/* Floating Recenter Pill over Weather Radar Map */
+.floating-radar-recenter-btn {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1000;
+  background: rgba(13, 20, 34, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.2px solid rgba(16, 185, 129, 0.5);
+  color: #ffffff;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  transition: all 0.2s ease;
+}
+
+.floating-radar-recenter-btn:hover {
+  background: rgba(16, 185, 129, 0.85);
+  transform: translateY(-1px);
+}
+
 /* ==========================================================
    ENHANCED SEARCH PIN, TRAVEL DIRECTION & FULLSCREEN FIX
    ========================================================== */
