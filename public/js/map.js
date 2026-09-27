@@ -359,20 +359,53 @@ const MapModule = {
   },
 
   // ==========================================================
-  // REAL STREET VIEW 360 PANORAMA VIEWER
+  // REAL STREET VIEW 360 PANORAMA VIEWER WITH ROAD PICKER
   // ==========================================================
   setupStreetViewPanorama() {
     const btnOpenPanorama = document.getElementById('btnOpenStreetPanorama');
     const modal = document.getElementById('streetViewPanoramaModal');
     const btnClose1 = document.getElementById('btnCloseStreetViewModal');
     const btnClose2 = document.getElementById('btnCloseStreetViewModal2');
+    const btnPickAnother = document.getElementById('btnPickAnotherStreet');
     const iframe = document.getElementById('streetViewIframe');
     const loading = document.getElementById('svLoading');
     const titleEl = document.getElementById('svModalTitle');
+    const pickBanner = document.getElementById('streetViewPickBanner');
+    const btnCancelPick = document.getElementById('btnCancelStreetViewPick');
+    const clickHint = document.getElementById('mapClickHintBadge');
+
+    this.isStreetViewPickMode = false;
+
+    const startStreetViewMode = () => {
+      this.isStreetViewPickMode = true;
+      if (pickBanner) pickBanner.style.display = 'flex';
+      if (clickHint) clickHint.style.display = 'none';
+
+      // রাস্তা ও ম্যাপ পরিষ্কার দেখার জন্য সুন্দর জুমে নিয়ে যাওয়া
+      const targetCenter = this.lastDestination ? [this.lastDestination.lon, this.lastDestination.lat] : [this.currentLon, this.currentLat];
+      if (this.map.getZoom() < 16) {
+        this.map.flyTo({
+          center: targetCenter,
+          zoom: 16.5,
+          pitch: 20,
+          duration: 900
+        });
+      }
+
+      if (window.showToast) {
+        window.showToast('🚶 ম্যাপের যে রাস্তা দেখতে চান সেখানে জুম করে ক্লিক করুন');
+      }
+    };
+
+    const stopStreetViewMode = () => {
+      this.isStreetViewPickMode = false;
+      if (pickBanner) pickBanner.style.display = 'none';
+      if (clickHint) clickHint.style.display = 'block';
+    };
 
     const openPanorama = (lat, lon, locationName) => {
       if (!modal || !iframe) return;
-      if (titleEl) titleEl.innerText = `${locationName || 'রাস্তার'} ৩৬০° আসল স্ট্রিট ভিউ`;
+      if (titleEl) titleEl.innerText = `${locationName || 'নির্বাচিত রাস্তার'} ৩৬০° আসল স্ট্রিট ভিউ`;
       if (loading) loading.style.display = 'flex';
 
       // Embed Google Street View 360 Panorama
@@ -388,12 +421,18 @@ const MapModule = {
       }, 1500);
     };
 
+    this.openStreetViewAt = openPanorama;
+    this.stopStreetViewMode = stopStreetViewMode;
+
     if (btnOpenPanorama) {
       btnOpenPanorama.addEventListener('click', () => {
-        const targetLat = this.lastDestination ? this.lastDestination.lat : this.currentLat;
-        const targetLon = this.lastDestination ? this.lastDestination.lon : this.currentLon;
-        const targetName = this.lastDestination ? this.lastDestination.name : 'আপনার অবস্থান এলাকার';
-        openPanorama(targetLat, targetLon, targetName);
+        startStreetViewMode();
+      });
+    }
+
+    if (btnCancelPick) {
+      btnCancelPick.addEventListener('click', () => {
+        stopStreetViewMode();
       });
     }
 
@@ -404,13 +443,21 @@ const MapModule = {
 
     if (btnClose1) btnClose1.addEventListener('click', closeModal);
     if (btnClose2) btnClose2.addEventListener('click', closeModal);
+
+    if (btnPickAnother) {
+      btnPickAnother.addEventListener('click', () => {
+        closeModal();
+        startStreetViewMode();
+      });
+    }
   },
 
   // ==========================================================
-  // FULL MAP MODE, CLOSE BUTTONS & RECENTER
+  // FULL MAP MODE, CLOSE BUTTONS & RECENTER (100% DESKTOP & MOBILE)
   // ==========================================================
   setupFullMapAndLayerToggles() {
     const wrapper = document.getElementById('mapViewWrapper');
+    const locationTab = document.getElementById('location-tab');
     const btnFullMap = document.getElementById('btnToggleFullMap');
     const fullMapIcon = document.getElementById('fullMapIcon');
     const fullMapText = document.getElementById('fullMapText');
@@ -421,6 +468,8 @@ const MapModule = {
     const toggleFullMap = (enable) => {
       this.isFullMapMode = enable !== undefined ? enable : !this.isFullMapMode;
       if (this.isFullMapMode) {
+        // Move wrapper directly to body so it breaks out of desktop container max-width
+        document.body.appendChild(wrapper);
         wrapper.classList.remove('clean-map-view');
         wrapper.classList.add('fullscreen-map-mode');
         document.body.classList.add('in-fullmap-mode');
@@ -430,6 +479,9 @@ const MapModule = {
         if (btnFloatingClose) btnFloatingClose.style.display = 'inline-flex';
         if (window.showToast) window.showToast('ফুল ম্যাপ মোড চালু হয়েছে');
       } else {
+        if (locationTab && wrapper.parentElement !== locationTab) {
+          locationTab.insertBefore(wrapper, locationTab.firstChild);
+        }
         wrapper.classList.remove('fullscreen-map-mode');
         wrapper.classList.add('clean-map-view');
         document.body.classList.remove('in-fullmap-mode');
@@ -448,6 +500,26 @@ const MapModule = {
           this.recenter();
         }
       }, 50);
+      setTimeout(() => {
+        if (this.map) {
+          this.map.resize();
+          this.recenter();
+        }
+      }, 150);
+      setTimeout(() => {
+        if (this.map) this.map.resize();
+      }, 350);
+    };
+
+    if (btnFullMap) {
+      btnFullMap.addEventListener('click', () => toggleFullMap());
+    }
+
+    if (btnFloatingClose) {
+      btnFloatingClose.addEventListener('click', () => toggleFullMap(false));
+    }
+
+    if (btnStreetView) {
       setTimeout(() => {
         if (this.map) {
           this.map.resize();
@@ -515,14 +587,30 @@ const MapModule = {
   },
 
   // ==========================================================
-  // CLICK ON MAP TO SELECT LOCATION & ROUTE
+  // CLICK ON MAP TO SELECT LOCATION, ROUTE & STREET VIEW
   // ==========================================================
   setupMapClickToSelect() {
     this.map.on('click', async (e) => {
       const clickLat = e.lngLat.lat;
       const clickLon = e.lngLat.lng;
 
-      if (e.originalEvent.target.closest('.my-location-marker') || e.originalEvent.target.closest('.poi-marker-badge') || e.originalEvent.target.closest('.map-bottom-dock-bar')) {
+      if (e.originalEvent.target.closest('.my-location-marker') || e.originalEvent.target.closest('.poi-marker-badge') || e.originalEvent.target.closest('.map-bottom-dock-bar') || e.originalEvent.target.closest('.streetview-pick-banner') || e.originalEvent.target.closest('.map-corner-tools')) {
+        return;
+      }
+
+      // যদি স্ট্রিট ভিউ নির্বাচন মোড সক্রিয় থাকে (জুম করা নির্দিষ্ট রাস্তার স্ট্রিট ভিউ দেখানো)
+      if (this.isStreetViewPickMode) {
+        let roadName = 'নির্বাচিত রাস্তা';
+        try {
+          const res = await fetch(`/api/geocode/reverse?lat=${clickLat}&lon=${clickLon}`);
+          const data = await res.json();
+          const addr = data.address || {};
+          roadName = addr.road || addr.street || addr.suburb || 'নির্বাচিত রাস্তা';
+        } catch (err) {}
+
+        if (this.openStreetViewAt) {
+          this.openStreetViewAt(clickLat, clickLon, roadName);
+        }
         return;
       }
 

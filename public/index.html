@@ -152,8 +152,19 @@
             </button>
           </div>
 
+          <!-- Street View Pick Mode Banner (প্রথমে ম্যাপ ও রাস্তা দেখাবে, যে জায়গা জুম করা হবে সেখানে ক্লিক করলেই স্ট্রিট ভিউ আসবে) -->
+          <div class="streetview-pick-banner" id="streetViewPickBanner" style="display:none;">
+            <div class="sv-pick-info">
+              <i class="fa-solid fa-street-view text-warning fa-bounce"></i>
+              <span><strong>স্ট্রিট ভিউ সক্রিয়:</strong> যে রাস্তা দেখতে চান সেখানে ম্যাপ জুম করে ক্লিক/ট্যাপ করুন</span>
+            </div>
+            <button class="sv-pick-cancel-btn" id="btnCancelStreetViewPick" title="স্ট্রিট ভিউ মোড বন্ধ করুন">
+              <i class="fa-solid fa-xmark"></i> বন্ধ
+            </button>
+          </div>
+
           <!-- Click on Map Hint Badge -->
-          <div class="map-click-hint-badge">
+          <div class="map-click-hint-badge" id="mapClickHintBadge">
             <i class="fa-solid fa-hand-pointer"></i> ম্যাপে ক্লিক করে যেকোনো স্থান নির্বাচন ও রুট দেখুন
           </div>
 
@@ -711,7 +722,9 @@
           </div>
         </div>
         <div class="sv-modal-footer">
-          <span class="sv-hint"><i class="fa-solid fa-arrows-up-down-left-right"></i> স্ক্রিনে ড্র্যাগ করে চারপাশের ৩৬০° দৃশ্য দেখুন</span>
+          <button class="btn-primary-action sv-pick-other-btn" id="btnPickAnotherStreet">
+            <i class="fa-solid fa-map-location-dot"></i> <span>ম্যাপে অন্য রাস্তা দেখুন</span>
+          </button>
           <button class="btn-secondary-action" id="btnCloseStreetViewModal2">বন্ধ করুন</button>
         </div>
       </div>
