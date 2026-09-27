@@ -326,6 +326,10 @@ const MapModule = {
         homeCompassAnimIcon.style.transition = 'transform 0.4s ease';
       }
 
+      if (heading !== null && !isNaN(heading)) {
+        this.updateHomeCompass(heading);
+      }
+
       if (homeStatusEl) {
         if (speed < 7) {
           homeStatusEl.innerText = `হাঁটার গতি (${toBengaliDigits(speed)} কিমি/ঘ.)`;
@@ -703,8 +707,37 @@ const MapModule = {
         }
         if (heading !== null) {
           this.deviceHeading = Math.round(heading);
+          this.updateHomeCompass(this.deviceHeading);
         }
       }, true);
+    }
+  },
+
+  updateHomeCompass(heading) {
+    if (heading === null || isNaN(heading)) return;
+    const needle = document.getElementById('homeCompassNeedle');
+    const badge = document.getElementById('homeCompassHeadingBadge');
+    const animIcon = document.getElementById('homeCompassAnimIcon');
+    const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
+
+    const normalized = (Math.round(heading) % 360 + 360) % 360;
+    if (needle) {
+      needle.style.transform = `rotate(${normalized}deg)`;
+    }
+    if (animIcon) {
+      animIcon.style.transform = `rotate(${normalized - 45}deg)`;
+    }
+    if (badge) {
+      let dirName = 'উত্তর (N)';
+      if (normalized >= 22.5 && normalized < 67.5) dirName = 'উত্তর-পূর্ব (NE)';
+      else if (normalized >= 67.5 && normalized < 112.5) dirName = 'পূর্ব (E)';
+      else if (normalized >= 112.5 && normalized < 157.5) dirName = 'দক্ষিণ-পূর্ব (SE)';
+      else if (normalized >= 157.5 && normalized < 202.5) dirName = 'দক্ষিণ (S)';
+      else if (normalized >= 202.5 && normalized < 247.5) dirName = 'দক্ষিণ-পশ্চিম (SW)';
+      else if (normalized >= 247.5 && normalized < 292.5) dirName = 'পশ্চিম (W)';
+      else if (normalized >= 292.5 && normalized < 337.5) dirName = 'উত্তর-পশ্চিম (NW)';
+
+      badge.innerText = `${toBengaliDigits(normalized)}° ${dirName}`;
     }
   },
 

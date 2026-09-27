@@ -68,27 +68,56 @@
               </div>
             </div>
 
-            <!-- স্পিড মিটার (Speedometer) -->
-            <div class="home-speedometer-box">
-              <div class="speed-dial-wrap">
-                <div class="speed-icon-indicator">
-                  <i class="fa-solid fa-gauge-high"></i>
+            <!-- স্পিড মিটার ও দিক নির্দেশক কম্পাস ডুয়াল গ্রিড (Speedometer & Directional Compass) -->
+            <div class="home-sensors-grid">
+              
+              <!-- স্পিড মিটার (Speedometer) -->
+              <div class="home-speedometer-box">
+                <div class="sensor-card-title">
+                  <i class="fa-solid fa-gauge-high text-sky"></i>
+                  <span>চলার গতি (Speed)</span>
                 </div>
-                <div class="speed-values">
-                  <div class="speed-val-row">
-                    <span class="speed-num" id="homeCurrentSpeed">০</span>
-                    <span class="speed-unit">কিমি/ঘণ্টা</span>
+                <div class="speed-dial-wrap">
+                  <div class="speed-values">
+                    <div class="speed-val-row">
+                      <span class="speed-num" id="homeCurrentSpeed">০</span>
+                      <span class="speed-unit">কিমি/ঘণ্টা</span>
+                    </div>
                   </div>
-                  <span class="speed-label">চলার গতি (Speedometer)</span>
                 </div>
+                <div class="speed-state-tag" id="homeSpeedStatus">স্থির অবস্থায় আছেন</div>
               </div>
-              <div class="speed-state-tag" id="homeSpeedStatus">স্থির অবস্থায় আছেন</div>
+
+              <!-- দিক নির্দেশক কম্পাস (Directional Compass) -->
+              <div class="home-compass-box" id="homeCompassContainer">
+                <div class="sensor-card-title">
+                  <i class="fa-solid fa-compass text-danger"></i>
+                  <span>দিক নির্দেশক কম্পাস</span>
+                </div>
+                <div class="compass-dial-wrap">
+                  <div class="compass-dial-plate" id="homeCompassDialPlate">
+                    <!-- Cardinal Points -->
+                    <span class="c-point point-n">উ (N)</span>
+                    <span class="c-point point-e">পূ (E)</span>
+                    <span class="c-point point-s">দ (S)</span>
+                    <span class="c-point point-w">প (W)</span>
+                    <!-- Dynamic Rotating Needle -->
+                    <div class="compass-needle-arrow" id="homeCompassNeedle">
+                      <div class="needle-north"></div>
+                      <div class="needle-center-pivot"></div>
+                      <div class="needle-south"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="compass-heading-badge" id="homeCompassHeadingBadge">০° উত্তর (N)</div>
+              </div>
+
             </div>
 
             <!-- তার নিচে কোন দিকে যাচ্ছেন তা দেখাবে -->
             <div class="home-direction-box">
               <div class="h-dir-header">
-                <i class="fa-solid fa-compass" id="homeCompassAnimIcon"></i>
+                <i class="fa-solid fa-location-arrow" id="homeCompassAnimIcon"></i>
                 <span class="h-dir-label">কোন দিকে যাচ্ছেন:</span>
               </div>
               <div class="h-dir-value" id="homeCurrentHeadingText">স্থির (উত্তর দিক)</div>
