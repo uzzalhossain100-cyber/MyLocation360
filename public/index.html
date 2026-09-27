@@ -332,105 +332,113 @@
             <!-- Current Location Header Display -->
             <div class="weather-hero-card">
               
-              <!-- Date, Day & Real-time Live Clock (Timezone-Aware) -->
-              <div class="weather-datetime-banner">
-                <div class="date-col">
-                  <i class="fa-regular fa-calendar-days"></i>
-                  <span class="day-name" id="cwDayName">শনিবার</span>,
-                  <span class="date-full" id="cwDateFull">২৬ সেপ্টেম্বর ২০২৬</span>
-                </div>
-                <div class="time-col">
-                  <i class="fa-regular fa-clock"></i>
-                  <span class="live-clock" id="cwLiveClock">--:--:--</span>
-                </div>
-              </div>
-
-              <!-- Main Temperature & Condition Display -->
-              <div class="weather-main-stat-row">
-                <div class="temp-big-display">
-                  <span class="temp-number" id="cwTemp">৩১</span>
-                  <span class="temp-deg">°C</span>
-                </div>
-                
-                <div class="condition-display-badge">
-                  <span class="condition-icon-big" id="cwConditionIcon">☀️</span>
-                  <div class="condition-text-wrap">
-                    <span class="condition-name" id="cwConditionName">রোদ্রোজ্জ্বল</span>
-                    <span class="feels-like-text">অনুভূত তাপমাত্রা: <span id="cwFeelsLike">৩৪</span>°C</span>
+              <div class="weather-hero-card-layout">
+                <!-- Left Summary Column: Date, Temp, Metrics -->
+                <div class="weather-hero-summary-col">
+                  <!-- Date, Day & Real-time Live Clock (Timezone-Aware) -->
+                  <div class="weather-datetime-banner">
+                    <div class="date-col">
+                      <i class="fa-regular fa-calendar-days"></i>
+                      <span class="day-name" id="cwDayName">শনিবার</span>,
+                      <span class="date-full" id="cwDateFull">২৬ সেপ্টেম্বর ২০২৬</span>
+                    </div>
+                    <div class="time-col">
+                      <i class="fa-regular fa-clock"></i>
+                      <span class="live-clock" id="cwLiveClock">--:--:--</span>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              <!-- Weather Metrics Grid (Wind, Rain %, Humidity, and MIN/MAX TEMPERATURE) -->
-              <div class="weather-metrics-grid">
-                
-                <div class="metric-item rain-chance-item">
-                  <div class="metric-icon"><i class="fa-solid fa-cloud-showers-heavy"></i></div>
-                  <div class="metric-info">
-                    <span class="metric-label">বৃষ্টির সম্ভাবনা</span>
-                    <span class="metric-val" id="cwRainChance">২০%</span>
+                  <!-- Main Temperature & Condition Display -->
+                  <div class="weather-main-stat-row">
+                    <div class="temp-big-display">
+                      <span class="temp-number" id="cwTemp">৩১</span>
+                      <span class="temp-deg">°C</span>
+                    </div>
+                    
+                    <div class="condition-display-badge">
+                      <span class="condition-icon-big" id="cwConditionIcon">☀️</span>
+                      <div class="condition-text-wrap">
+                        <span class="condition-name" id="cwConditionName">রোদ্রোজ্জ্বল</span>
+                        <span class="feels-like-text">অনুভূত: <span id="cwFeelsLike">৩৪</span>°C</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div class="metric-item wind-item">
-                  <div class="metric-icon" id="cwWindIconWrap"><i class="fa-solid fa-wind"></i></div>
-                  <div class="metric-info">
-                    <span class="metric-label">বাতাসের গতি ও দিকপ্রবাহ</span>
-                    <span class="metric-val" id="cwWindSpeed">১২ কিমি/ঘণ্টা</span>
-                    <span class="metric-sub-val" id="cwWindDirection">দক্ষিণ-পশ্চিম থেকে উত্তর-পূর্বে ↗️</span>
-                  </div>
-                </div>
+                  <!-- Weather Metrics Grid (Wind, Rain %, Humidity, and MIN/MAX TEMPERATURE) -->
+                  <div class="weather-metrics-grid">
+                    
+                    <div class="metric-item rain-chance-item">
+                      <div class="metric-icon"><i class="fa-solid fa-cloud-showers-heavy"></i></div>
+                      <div class="metric-info">
+                        <span class="metric-label">বৃষ্টির সম্ভাবনা</span>
+                        <span class="metric-val" id="cwRainChance">২০%</span>
+                      </div>
+                    </div>
 
-                <div class="metric-item humidity-item">
-                  <div class="metric-icon"><i class="fa-solid fa-droplet"></i></div>
-                  <div class="metric-info">
-                    <span class="metric-label">আর্দ্রতা</span>
-                    <span class="metric-val" id="cwHumidity">৬৫%</span>
-                  </div>
-                </div>
+                    <div class="metric-item wind-item">
+                      <div class="metric-icon" id="cwWindIconWrap"><i class="fa-solid fa-wind"></i></div>
+                      <div class="metric-info">
+                        <span class="metric-label">বাতাসের গতি ও প্রবাহ</span>
+                        <span class="metric-val" id="cwWindSpeed">১২ কিমি/ঘণ্টা</span>
+                        <span class="metric-sub-val" id="cwWindDirection">দক্ষিণ-পশ্চিম ↗️</span>
+                      </div>
+                    </div>
 
-                <!-- MINIMUM / MAXIMUM TEMPERATURE (সর্বনিম্ন ও সর্বোচ্চ তাপমাত্রা) -->
-                <div class="metric-item minmax-temp-item">
-                  <div class="metric-icon"><i class="fa-solid fa-temperature-arrow-up text-warning"></i></div>
-                  <div class="metric-info">
-                    <span class="metric-label">সর্বনিম্ন / সর্বোচ্চ</span>
-                    <span class="metric-val" id="cwMinMaxTemp">২৩° / ৩৪° সে.</span>
-                  </div>
-                </div>
+                    <div class="metric-item humidity-item">
+                      <div class="metric-icon"><i class="fa-solid fa-droplet"></i></div>
+                      <div class="metric-info">
+                        <span class="metric-label">আর্দ্রতা</span>
+                        <span class="metric-val" id="cwHumidity">৬৫%</span>
+                      </div>
+                    </div>
 
-              </div>
+                    <!-- MINIMUM / MAXIMUM TEMPERATURE (সর্বনিম্ন ও সর্বোচ্চ তাপমাত্রা) -->
+                    <div class="metric-item minmax-temp-item">
+                      <div class="metric-icon"><i class="fa-solid fa-temperature-arrow-up text-warning"></i></div>
+                      <div class="metric-info">
+                        <span class="metric-label">সর্বনিম্ন / সর্বোচ্চ</span>
+                        <span class="metric-val" id="cwMinMaxTemp">২৩° / ৩৪° সে.</span>
+                      </div>
+                    </div>
 
-              <!-- DYNAMIC LIVE WEATHER ANIMATION SCENE -->
-              <div class="weather-animation-card">
-                <div class="anim-card-header">
-                  <div class="anim-title">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span>নির্বাচিত এলাকার জীবন্ত আবহাওয়ার দৃশ্য</span>
-                  </div>
-                  <span class="anim-state-badge" id="cwAnimBadge">রোদ্রোজ্জ্বল দৃশ্য</span>
-                </div>
-
-                <!-- The Interactive Canvas Container -->
-                <div class="animation-stage-container" id="cwAnimationStage">
-                  <canvas id="cwAnimCanvas" class="weather-canvas"></canvas>
-                  
-                  <!-- Overlaid Scene Elements -->
-                  <div class="scene-overlay" id="cwSceneOverlay">
-                    <div class="sun-glow" id="cwSunGlow"></div>
-                    <div class="cloud-layer layer-1" id="cwCloudLayer1"></div>
-                    <div class="cloud-layer layer-2" id="cwCloudLayer2"></div>
-                    <div class="rain-layer" id="cwRainLayer"></div>
-                    <div class="lightning-flash" id="cwLightning"></div>
                   </div>
                 </div>
 
-                <!-- Live Astrological & Solar Trajectory Status Bar (No artificial scene preview) -->
-                <div class="sky-celestial-info-bar" id="skyCelestialInfoBar">
-                  <div class="celestial-status-badge" id="celestialStatusBadge">
-                    <i class="fa-solid fa-sun text-warning" id="celestialStatusIcon"></i>
-                    <span id="celestialStatusText">সূর্যের গতিপথ ও রোদের তীব্রতা হিসাব হচ্ছে...</span>
+                <!-- Right Living Scene Column: DYNAMIC LIVE WEATHER ANIMATION SCENE -->
+                <div class="weather-hero-anim-col">
+                  <div class="weather-animation-card">
+                    <div class="anim-card-header">
+                      <div class="anim-title">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>নির্বাচিত এলাকার জীবন্ত আবহাওয়ার দৃশ্য</span>
+                      </div>
+                      <span class="anim-state-badge" id="cwAnimBadge">রোদ্রোজ্জ্বল দৃশ্য</span>
+                    </div>
+
+                    <!-- The Interactive Canvas Container -->
+                    <div class="animation-stage-container" id="cwAnimationStage">
+                      <canvas id="cwAnimCanvas" class="weather-canvas"></canvas>
+                      
+                      <!-- Overlaid Scene Elements -->
+                      <div class="scene-overlay" id="cwSceneOverlay">
+                        <div class="sun-glow" id="cwSunGlow"></div>
+                        <div class="cloud-layer layer-1" id="cwCloudLayer1"></div>
+                        <div class="cloud-layer layer-2" id="cwCloudLayer2"></div>
+                        <div class="rain-layer" id="cwRainLayer"></div>
+                        <div class="lightning-flash" id="cwLightning"></div>
+                      </div>
+                    </div>
+
+                    <!-- Live Astrological & Solar Trajectory Status Bar -->
+                    <div class="sky-celestial-info-bar" id="skyCelestialInfoBar">
+                      <div class="celestial-status-badge" id="celestialStatusBadge">
+                        <i class="fa-solid fa-sun text-warning" id="celestialStatusIcon"></i>
+                        <span id="celestialStatusText">সূর্যের গতিপথ ও রোদের তীব্রতা হিসাব হচ্ছে...</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
+
               </div>
 
             </div>
@@ -474,9 +482,9 @@
               </div>
 
               <div class="weather-map-stage-wrapper">
-                <!-- Live Interactive Weather Simulation Iframe -->
+                <!-- Live Interactive Weather Simulation Iframe (Default: rain / precipitation) -->
                 <iframe id="liveWeatherFrame" class="live-weather-iframe" 
-                  src="https://embed.windy.com/embed.html?lat=23.8&lon=90.4&zoom=6&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1" 
+                  src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=6&overlay=rain&product=ecmwf&level=surface&lat=23.8&lon=90.4&message=true&marker=true" 
                   frameborder="0" allowfullscreen></iframe>
 
                 <!-- Right-side Zoom Earth Style Layer Switcher (স্যাটেলাইট, রাডার, বাতাসের গতি, তাপমাত্রা, বৃষ্টিপাত) -->
@@ -489,7 +497,7 @@
                     <i class="fa-solid fa-tower-broadcast"></i>
                     <span>রাডার</span>
                   </button>
-                  <button class="w-layer-btn active" data-layer="wind" id="btnLayerWind" title="বাতাসের গতি ও দিকপ্রবাহ">
+                  <button class="w-layer-btn" data-layer="wind" id="btnLayerWind" title="বাতাসের গতি ও দিকপ্রবাহ">
                     <i class="fa-solid fa-wind"></i>
                     <span>বাতাসের গতি</span>
                   </button>
@@ -497,7 +505,7 @@
                     <i class="fa-solid fa-temperature-half"></i>
                     <span>তাপমাত্রা</span>
                   </button>
-                  <button class="w-layer-btn" data-layer="rain" id="btnLayerRain" title="বৃষ্টিপাত ও মেঘের পরিস্থিতি">
+                  <button class="w-layer-btn active" data-layer="rain" id="btnLayerRain" title="বৃষ্টিপাত ও মেঘের পরিস্থিতি">
                     <i class="fa-solid fa-cloud-showers-heavy"></i>
                     <span>বৃষ্টিপাত</span>
                   </button>
@@ -506,7 +514,7 @@
                 <!-- Bottom Status Pill showing Active Mode & Layer Info -->
                 <div class="radar-layer-status-pill" id="radarLayerStatusPill">
                   <i class="fa-solid fa-circle-info text-info"></i>
-                  <span id="radarStatusText">💨 বাতাসের গতি: বাতাস কোন দিক থেকে কোন দিকে প্রবাহিত হচ্ছে তার লাইভ অ্যানিমেশন দেখানো হচ্ছে</span>
+                  <span id="radarStatusText">🌧️ বৃষ্টিপাত পরিস্থিতি: বর্তমান বৃষ্টি ও মেঘের ঘনত্ব ও বৃষ্টিপাতের পূর্বাভাস দৃশ্যমান হচ্ছে</span>
                 </div>
               </div>
             </div>

@@ -25,6 +25,12 @@ class WeatherSceneRenderer {
     // Solar & Lunar metrics
     this.sunProgress = 0.5; // 0.0 (sunrise) to 1.0 (sunset)
     this.solarIntensity = 0.85; // 0.0 (dim) to 1.0 (blazing)
+    this.sunriseStr = 'ভোর ৫:৪৮ AM';
+    this.sunsetStr = 'সন্ধ্যা ৫:৫০ PM';
+    this.sunriseDecimal = 5.8;
+    this.sunsetDecimal = 17.83;
+    this.locationTz = 'auto';
+    this.currentLocalTimeStr = '';
     this.moonData = this.getMoonPhaseInfo();
 
     if (this.canvas) {
@@ -34,6 +40,41 @@ class WeatherSceneRenderer {
       this.updateSunProgressFromTime();
       this.animate();
     }
+  }
+
+  // Set Area Specific Astronomical Sunrise, Sunset and Timezone
+  setCelestialTimes(sunriseIso, sunsetIso, tz = 'auto') {
+    const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
+    const pad = (n) => (n < 10 ? '0' + n : n);
+
+    let riseHour = 5.8;
+    let setHour = 17.83;
+    let riseStr = 'ভোর ৫:৪৮ AM';
+    let setStr = 'সন্ধ্যা ৫:৫০ PM';
+
+    if (sunriseIso) {
+      const d = new Date(sunriseIso);
+      const h = d.getHours();
+      const m = d.getMinutes();
+      riseHour = h + m / 60;
+      riseStr = `ভোর ${toBengaliDigits(h % 12 || 12)}:${toBengaliDigits(pad(m))} AM`;
+    }
+
+    if (sunsetIso) {
+      const d = new Date(sunsetIso);
+      const h = d.getHours();
+      const m = d.getMinutes();
+      setHour = h + m / 60;
+      setStr = `সন্ধ্যা ${toBengaliDigits(h % 12 || 12)}:${toBengaliDigits(pad(m))} PM`;
+    }
+
+    this.sunriseStr = riseStr;
+    this.sunsetStr = setStr;
+    this.sunriseDecimal = riseHour;
+    this.sunsetDecimal = setHour;
+    this.locationTz = tz;
+
+    this.updateSunProgressFromTime();
   }
 
   resize() {
@@ -94,21 +135,30 @@ class WeatherSceneRenderer {
   // Calculate Sun Position along the Arc from Local Time
   updateSunProgressFromTime() {
     const now = new Date();
-    const hours = now.getHours() + now.getMinutes() / 60;
-    const sunrise = 5.8; // ~5:48 AM
-    const sunset = 18.2; // ~6:12 PM
-
-    if (hours >= sunrise && hours <= sunset) {
-      this.sunProgress = (hours - sunrise) / (sunset - sunrise);
-    } else {
-      this.sunProgress = 0.5; // default noon when simulating
+    let target = now;
+    if (this.locationTz && this.locationTz !== 'auto') {
+      try {
+        const invdate = new Date(now.toLocaleString('en-US', { timeZone: this.locationTz }));
+        if (!isNaN(invdate.getTime())) target = invdate;
+      } catch (e) {}
     }
 
-    // Solar Intensity based on distance from solar noon (~12:00 PM)
-    const distanceFromNoon = Math.abs(this.sunProgress - 0.5) * 2; // 0 at noon, 1 at dawn/dusk
-    let baseIntensity = 1.0 - (distanceFromNoon * 0.65); // 1.0 at noon, ~0.35 at dawn/dusk
+    const currentHours = target.getHours() + target.getMinutes() / 60;
+    const rise = this.sunriseDecimal || 5.8;
+    const set = this.sunsetDecimal || 17.83;
 
-    // If cloudy, rainy or overcast, intensity is dimmed
+    if (currentHours >= rise && currentHours <= set) {
+      this.sunProgress = (currentHours - rise) / (set - rise);
+    } else if (currentHours < rise) {
+      this.sunProgress = 0.02; // Just before sunrise
+    } else {
+      this.sunProgress = 0.98; // Just after sunset
+    }
+
+    // Solar Intensity based on distance from peak solar noon
+    const distanceFromPeak = Math.abs(this.sunProgress - 0.5) * 2;
+    let baseIntensity = 1.0 - (distanceFromPeak * 0.65);
+
     if (this.currentScene === 'partly-cloudy-day') {
       baseIntensity *= 0.75;
     } else if (this.currentScene === 'cloudy' || this.currentScene === 'fog') {
@@ -118,21 +168,28 @@ class WeatherSceneRenderer {
     }
 
     this.solarIntensity = Math.max(0.15, Math.min(1.0, baseIntensity));
-    this.updateStatusText();
+    this.updateStatusText(target);
   }
 
-  updateStatusText() {
+  updateStatusText(targetDate = new Date()) {
     const statusTextEl = document.getElementById('celestialStatusText');
     const statusIconEl = document.getElementById('celestialStatusIcon');
     if (!statusTextEl) return;
 
     const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
+    const pad = (n) => (n < 10 ? '0' + n : n);
+
+    let h = targetDate.getHours();
+    let m = targetDate.getMinutes();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    const localTimeFormatted = `${toBengaliDigits(h)}:${toBengaliDigits(pad(m))} ${ampm}`;
 
     if (this.currentScene.includes('night')) {
       const moon = this.moonData || this.getMoonPhaseInfo();
       if (statusIconEl) statusIconEl.className = 'fa-solid fa-moon text-info';
       if (moon.type === 'new') {
-        statusTextEl.innerText = `রাতের আকাশ: ${moon.name} | আকাশে কোনো চাঁদ দৃশ্যমান নেই`;
+        statusTextEl.innerText = `রাতের আকাশ: ${moon.name} | আকাশে কোনো চাঁদ দৃশ্যমান নয়`;
       } else {
         statusTextEl.innerText = `রাতের আকাশ: ${moon.name} | চাঁদের দৃশ্যমানতা: ${toBengaliDigits(moon.illumination)}%`;
       }
@@ -155,7 +212,7 @@ class WeatherSceneRenderer {
         posDesc = 'বিকাল/সন্ধ্যা (পশ্চিম দিগন্তমুখী)';
       }
 
-      statusTextEl.innerText = `সূর্যের অবস্থান: ${posDesc} | রোদের প্রখরতা: ${desc} (${toBengaliDigits(intPercent)}%)`;
+      statusTextEl.innerText = `সূর্যের অবস্থান: ${posDesc} (${localTimeFormatted}) | রোদের প্রখরতা: ${desc} (${toBengaliDigits(intPercent)}%)`;
     }
   }
 
@@ -382,32 +439,38 @@ class WeatherSceneRenderer {
     const h = this.height;
 
     // 1. Draw Celestial Sun Trajectory Arc (সকাল থেকে সন্ধ্যা পর্যন্ত কার্ভ রেখা)
-    const arcStartX = 45;
-    const arcEndX = w - 45;
-    const arcBaseY = h - 25;
-    const arcApexY = 48; // Apex height near noon
+    const arcStartX = Math.max(25, Math.min(50, Math.round(w * 0.08)));
+    const arcEndX = w - arcStartX;
+    const arcBaseY = h - 24;
+    const arcApexY = Math.max(30, Math.round(h * 0.22)); // Apex height near noon
 
     ctx.save();
     ctx.setLineDash([4, 4]);
-    ctx.strokeStyle = 'rgba(253, 224, 71, 0.4)';
-    ctx.lineWidth = 1.6;
+    ctx.strokeStyle = 'rgba(253, 224, 71, 0.45)';
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
     ctx.moveTo(arcStartX, arcBaseY);
-    ctx.quadraticCurveTo(w / 2, arcApexY - 30, arcEndX, arcBaseY);
+    ctx.quadraticCurveTo(w / 2, arcApexY - 15, arcEndX, arcBaseY);
     ctx.stroke();
     ctx.restore();
 
-    // Horizon Endpoints (পূর্ব ও পশ্চিম দিগন্ত সূচক)
-    ctx.fillStyle = 'rgba(254, 240, 138, 0.7)';
-    ctx.font = '10px Hind Siliguri, sans-serif';
-    ctx.fillText('🌅 পূর্ব (সকাল)', arcStartX - 10, arcBaseY + 16);
-    ctx.fillText('🌇 পশ্চিম (সন্ধ্যা)', arcEndX - 45, arcBaseY + 16);
+    // Horizon Endpoints with actual Sunrise & Sunset times
+    ctx.save();
+    ctx.fillStyle = 'rgba(254, 240, 138, 0.95)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+    ctx.shadowBlur = 4;
+    ctx.font = 'bold 10px Hind Siliguri, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`🌅 ${this.sunriseStr || 'সূর্যোদয় ৫:৪৮ AM'}`, 8, arcBaseY + 18);
+    ctx.textAlign = 'right';
+    ctx.fillText(`🌇 ${this.sunsetStr || 'সূর্যাস্ত ৫:৫০ PM'}`, w - 8, arcBaseY + 18);
+    ctx.restore();
 
     // 2. Compute Sun Coordinates along the Curve
     const t = this.sunProgress; // 0.0 to 1.0
     // Quadratic bezier math: B(t) = (1-t)^2 P0 + 2(1-t)t P1 + t^2 P2
     const p0x = arcStartX, p0y = arcBaseY;
-    const p1x = w / 2, p1y = arcApexY - 30;
+    const p1x = w / 2, p1y = arcApexY - 15;
     const p2x = arcEndX, p2y = arcBaseY;
 
     const sunX = Math.round((1 - t) * (1 - t) * p0x + 2 * (1 - t) * t * p1x + t * t * p2x);
