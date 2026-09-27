@@ -29,6 +29,57 @@
 </head>
 <body class="theme-dark">
 
+  <!-- ================= INITIAL APP ENTRY: HOME WELCOME PORTAL ================= -->
+  <div class="home-portal-overlay" id="homePortalOverlay">
+    <div class="home-portal-card">
+      <div class="home-portal-brand">
+        <div class="home-logo-wrap">
+          <img src="/assets/icon-192.svg" alt="MyLocation360" class="home-brand-logo">
+        </div>
+        <h1 class="home-portal-title">MyLocation360</h1>
+        <p class="home-portal-subtitle">স্মার্ট জিপিএস দিকদর্শন ও লাইভ জীবন্ত আবহাওয়া প্ল্যাটফর্ম</p>
+      </div>
+
+      <div class="home-portal-prompt">
+        <span>প্রবেশ করতে ফিচার নির্বাচন করুন:</span>
+      </div>
+
+      <div class="home-portal-options-grid">
+        <!-- Option 1: My Location -->
+        <button class="portal-option-card opt-location" id="portalBtnLocation" type="button">
+          <div class="opt-icon-circle">
+            <i class="fa-solid fa-location-crosshairs"></i>
+          </div>
+          <div class="opt-content">
+            <h3 class="opt-title">মাই লোকেশন (MyLocation)</h3>
+            <p class="opt-desc">সঠিক জিপিএস অবস্থান, রিয়েল-টাইম কম্পাস, দ্রুততম পথ ও স্যাটেলাইট মানচিত্র</p>
+          </div>
+          <div class="opt-arrow">
+            <i class="fa-solid fa-circle-arrow-right"></i>
+          </div>
+        </button>
+
+        <!-- Option 2: Live Weather -->
+        <button class="portal-option-card opt-weather" id="portalBtnWeather" type="button">
+          <div class="opt-icon-circle">
+            <i class="fa-solid fa-cloud-sun"></i>
+          </div>
+          <div class="opt-content">
+            <h3 class="opt-title">লাইভ আবহাওয়া (Live Weather)</h3>
+            <p class="opt-desc">নির্বাচিত এলাকার জীবন্ত দৃশ্য, সৌরগতিপথ কার্ভে সূর্যের অবস্থান ও বৃষ্টিপাত মানচিত্র</p>
+          </div>
+          <div class="opt-arrow">
+            <i class="fa-solid fa-circle-arrow-right"></i>
+          </div>
+        </button>
+      </div>
+
+      <div class="home-portal-footer">
+        <span>স্মার্ট অবস্থান ট্র্যাকিং • বাস্তব সময়ের আবহাওয়া • ডপলার রাডার</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Main App Shell -->
   <div id="app" class="app-container">
     
@@ -37,7 +88,7 @@
       
       <!-- Top Row: Small Brand, MyLocation & Weather Tabs, and History Button in one slim row -->
       <div class="top-tabs-slim-row">
-        <div class="mini-brand-tag">
+        <div class="mini-brand-tag" id="btnOpenHomePortal" title="হোম পেজে ফিরে যান" style="cursor: pointer;">
           <img src="/assets/icon-192.svg" alt="360" class="mini-logo">
           <span class="mini-title">360</span>
         </div>
@@ -275,35 +326,33 @@
           <!-- MAIN COMPREHENSIVE WEATHER SUITE -->
           <div class="weather-section-block main-weather-block">
             
-            <!-- TOP BAR: MY EXACT LOCATION + INLINE LOCATION CHANGER & AUTO-RESET -->
+            <!-- TOP COMPACT BAR: LOCATION + SEARCH + REFRESH -->
             <div class="weather-top-control-card">
-              <div class="weather-header-row">
+              <div class="weather-header-compact-row">
                 <div class="exact-location-identity">
-                  <div class="loc-badge-row">
-                    <span class="live-gps-dot"></span>
-                    <span class="loc-badge-text" id="cwLocationBadgeText">বর্তমান জিপিএস লোকেশন</span>
+                  <div class="weather-exact-address-display">
+                    <i class="fa-solid fa-location-dot text-danger loc-pin-pulse"></i>
+                    <h2 class="current-weather-city" id="cwCityName">অবস্থান খোঁজা হচ্ছে...</h2>
                     <button class="reset-my-gps-btn" id="btnResetToMyGps" title="আমার মূল অবস্থানে ফিরে যান">
                       <i class="fa-solid fa-crosshairs"></i> <span>আমার অবস্থান</span>
                     </button>
-                  </div>
-                  <!-- Exact Location Address -->
-                  <div class="weather-exact-address-display">
-                    <i class="fa-solid fa-location-dot text-danger loc-pin-pulse"></i>
-                    <h2 class="current-weather-city" id="cwCityName">আপনার সঠিক অবস্থান খোঁজা হচ্ছে...</h2>
+                    <span class="loc-badge-text" id="cwLocationBadgeText" style="display:none;">বর্তমান জিপিএস লোকেশন</span>
                   </div>
                 </div>
 
-                <button class="refresh-weather-btn" id="btnRefreshCurrentWeather" title="আবহাওয়া রিফ্রেশ করুন">
-                  <i class="fa-solid fa-rotate"></i>
-                  <span>রিফ্রেশ</span>
-                </button>
+                <div class="weather-header-actions">
+                  <button class="refresh-weather-btn" id="btnRefreshCurrentWeather" title="আবহাওয়া রিফ্রেশ করুন">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>রিফ্রেশ</span>
+                  </button>
+                </div>
               </div>
 
-              <!-- Inline Location Search / Changer directly at the top -->
+              <!-- Slim Inline Search Field -->
               <div class="weather-inline-search-box">
                 <div class="w-search-input-pill">
                   <i class="fa-solid fa-magnifying-glass search-ico"></i>
-                  <input type="text" id="weatherLocationInput" placeholder="অন্যান্য শহরের আবহাওয়া দেখতে নাম লিখুন (যেমন: চট্টগ্রাম, কক্সবাজার, সিলেট, লন্ডন...)" autocomplete="off">
+                  <input type="text" id="weatherLocationInput" placeholder="শহর/স্থানের নাম লিখুন (চট্টগ্রাম, কক্সবাজার, সিলেট, লন্ডন...)" autocomplete="off">
                   <button class="w-search-clear-btn" id="btnWeatherSearchClear" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
                   <button class="w-search-submit-btn" id="btnChangeWeatherLocation" title="আবহাওয়া দেখুন">
                     <i class="fa-solid fa-arrow-right"></i>
@@ -316,7 +365,7 @@
 
               <!-- Quick Popular City Chips -->
               <div class="weather-quick-chips">
-                <span class="chips-title"><i class="fa-solid fa-fire text-warning"></i> জনপ্রিয়:</span>
+                <span class="chips-title"><i class="fa-solid fa-fire text-warning"></i> শহর:</span>
                 <button class="w-chip" data-city="ঢাকা" data-lat="23.8103" data-lon="90.4125">ঢাকা</button>
                 <button class="w-chip" data-city="চট্টগ্রাম" data-lat="22.3569" data-lon="91.7832">চট্টগ্রাম</button>
                 <button class="w-chip" data-city="কক্সবাজার" data-lat="21.4272" data-lon="92.0058">কক্সবাজার</button>

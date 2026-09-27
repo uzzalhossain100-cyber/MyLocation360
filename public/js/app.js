@@ -33,12 +33,54 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.MapModule) window.MapModule.init();
   if (window.WeatherApp) window.WeatherApp.init();
 
+  setupHomePortalWorkflow();
   setupTabNavigation();
   setupGeolocationWorkflow();
   setupHelpModal();
   setupLocationHistoryWorkflow();
   setupAppDownloadWorkflow();
 });
+
+/* ================= HOME WELCOME PORTAL WORKFLOW ================= */
+function setupHomePortalWorkflow() {
+  const portalOverlay = document.getElementById('homePortalOverlay');
+  const btnLocation = document.getElementById('portalBtnLocation');
+  const btnWeather = document.getElementById('portalBtnWeather');
+  const btnOpenPortal = document.getElementById('btnOpenHomePortal');
+
+  function openFeature(tabId) {
+    if (portalOverlay) {
+      portalOverlay.classList.add('portal-closing');
+      setTimeout(() => {
+        portalOverlay.style.display = 'none';
+        portalOverlay.classList.remove('portal-closing');
+      }, 250);
+    }
+    if (window.switchAppTab) {
+      window.switchAppTab(tabId);
+    }
+  }
+
+  if (btnLocation) {
+    btnLocation.addEventListener('click', () => {
+      openFeature('location-tab');
+    });
+  }
+
+  if (btnWeather) {
+    btnWeather.addEventListener('click', () => {
+      openFeature('weather-tab');
+    });
+  }
+
+  if (btnOpenPortal) {
+    btnOpenPortal.addEventListener('click', () => {
+      if (portalOverlay) {
+        portalOverlay.style.display = 'flex';
+      }
+    });
+  }
+}
 
 /* ================= TAB NAVIGATION ================= */
 function setupTabNavigation() {
@@ -98,6 +140,7 @@ function setupTabNavigation() {
         if (window.WeatherScenes) {
           if (window.WeatherScenes.currentLocationScene) {
             window.WeatherScenes.currentLocationScene.resize();
+            window.WeatherScenes.currentLocationScene.updateSunProgressFromTime();
           }
           if (window.WeatherScenes.otherLocationScene) {
             window.WeatherScenes.otherLocationScene.resize();
@@ -113,6 +156,8 @@ function setupTabNavigation() {
       }, 50);
     }
   }
+
+  window.switchAppTab = switchTab;
 
   // Direct explicit listeners for top buttons
   const btnLoc = document.getElementById('tabBtnLocation');
