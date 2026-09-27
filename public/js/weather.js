@@ -95,13 +95,47 @@ const WeatherApp = {
       });
     }
 
-    // 3. Inline Location Changer / Search Input
+    // 3. Inline Location Changer / Search Input with Instant & Live Auto-Suggest
     const inputLoc = document.getElementById('weatherLocationInput');
     const btnSearchLoc = document.getElementById('btnChangeWeatherLocation');
     const btnClearSearch = document.getElementById('btnWeatherSearchClear');
     const dropdown = document.getElementById('weatherSearchDropdown');
 
     let debounceTimer = null;
+
+    // Instant Popular Locations Dictionary for Zero-Lag Search Auto-Suggest
+    const instantPlaces = [
+      { name: 'ঢাকা', subdistrict: 'ঢাকা', district: 'ঢাকা বিভাগ', country: 'বাংলাদেশ', lat: '23.8103', lon: '90.4125' },
+      { name: 'চট্টগ্রাম', subdistrict: 'চট্টগ্রাম সদর', district: 'চট্টগ্রাম বিভাগ', country: 'বাংলাদেশ', lat: '22.3569', lon: '91.7832' },
+      { name: 'সিলেট', subdistrict: 'সিলেট সদর', district: 'সিলেট বিভাগ', country: 'বাংলাদেশ', lat: '24.8949', lon: '91.8687' },
+      { name: 'রাজশাহী', subdistrict: 'রাজশাহী সদর', district: 'রাজশাহী বিভাগ', country: 'বাংলাদেশ', lat: '24.3745', lon: '88.6042' },
+      { name: 'খুলনা', subdistrict: 'খুলনা সদর', district: 'খুলনা বিভাগ', country: 'বাংলাদেশ', lat: '22.8456', lon: '89.5403' },
+      { name: 'বরিশাল', subdistrict: 'বরিশাল সদর', district: 'বরিশাল বিভাগ', country: 'বাংলাদেশ', lat: '22.7010', lon: '90.3535' },
+      { name: 'রংপুর', subdistrict: 'রংপুর সদর', district: 'রংপুর বিভাগ', country: 'বাংলাদেশ', lat: '25.7439', lon: '89.2752' },
+      { name: 'ময়মনসিংহ', subdistrict: 'ময়মনসিংহ সদর', district: 'ময়মনসিংহ বিভাগ', country: 'বাংলাদেশ', lat: '24.7471', lon: '90.4203' },
+      { name: 'কক্সবাজার', subdistrict: 'কক্সবাজার সদর', district: 'চট্টগ্রাম বিভাগ', country: 'বাংলাদেশ', lat: '21.4272', lon: '92.0058' },
+      { name: 'কুমিল্লা', subdistrict: 'কুমিল্লা আদর্শ সদর', district: 'চট্টগ্রাম বিভাগ', country: 'বাংলাদেশ', lat: '23.4607', lon: '91.1809' },
+      { name: 'বগুড়া', subdistrict: 'বগুড়া সদর', district: 'রাজশাহী বিভাগ', country: 'বাংলাদেশ', lat: '24.8465', lon: '89.3770' },
+      { name: 'যশোর', subdistrict: 'যশোর সদর', district: 'খুলনা বিভাগ', country: 'বাংলাদেশ', lat: '23.1664', lon: '89.2081' },
+      { name: 'দিনাজপুর', subdistrict: 'দিনাজপুর সদর', district: 'রংপুর বিভাগ', country: 'বাংলাদেশ', lat: '25.6217', lon: '88.6355' },
+      { name: 'ফরিদপুর', subdistrict: 'ফরিদপুর সদর', district: 'ঢাকা বিভাগ', country: 'বাংলাদেশ', lat: '23.6071', lon: '89.8426' },
+      { name: 'টাঙ্গাইল', subdistrict: 'টাঙ্গাইল সদর', district: 'ঢাকা বিভাগ', country: 'বাংলাদেশ', lat: '24.2513', lon: '89.9167' },
+      { name: 'পাবনা', subdistrict: 'পাবনা সদর', district: 'রাজশাহী বিভাগ', country: 'বাংলাদেশ', lat: '24.0064', lon: '89.2372' },
+      { name: 'কুষ্টিয়া', subdistrict: 'কুষ্টিয়া সদর', district: 'খুলনা বিভাগ', country: 'বাংলাদেশ', lat: '23.9013', lon: '89.1205' },
+      { name: 'নোয়াখালী', subdistrict: 'নোয়াখালী সদর', district: 'চট্টগ্রাম বিভাগ', country: 'বাংলাদেশ', lat: '22.8696', lon: '91.0991' },
+      { name: 'গাজীপুর', subdistrict: 'গাজীপুর সদর', district: 'ঢাকা বিভাগ', country: 'বাংলাদেশ', lat: '23.9999', lon: '90.4203' },
+      { name: 'নারায়ণগঞ্জ', subdistrict: 'নারায়ণগঞ্জ সদর', district: 'ঢাকা বিভাগ', country: 'বাংলাদেশ', lat: '23.6238', lon: '90.5000' },
+      { name: 'চাঁদপুর', subdistrict: 'চাঁদপুর সদর', district: 'চট্টগ্রাম বিভাগ', country: 'বাংলাদেশ', lat: '23.2332', lon: '90.6713' },
+      { name: 'ফেনী', subdistrict: 'ফেনী সদর', district: 'চট্টগ্রাম বিভাগ', country: 'বাংলাদেশ', lat: '23.0159', lon: '91.3976' },
+      { name: 'ব্রাহ্মণবাড়িয়া', subdistrict: 'ব্রাহ্মণবাড়িয়া সদর', district: 'চট্টগ্রাম বিভাগ', country: 'বাংলাদেশ', lat: '23.9571', lon: '91.1119' },
+      { name: 'লন্ডন', subdistrict: 'London', district: 'England', country: 'United Kingdom', lat: '51.5072', lon: '-0.1276' },
+      { name: 'নিউ ইয়র্ক', subdistrict: 'New York', district: 'NY', country: 'USA', lat: '40.7128', lon: '-74.0060' },
+      { name: 'দুবাই', subdistrict: 'Dubai', district: 'Dubai', country: 'UAE', lat: '25.2048', lon: '55.2708' },
+      { name: 'মক্কা', subdistrict: 'Makkah', district: 'Makkah', country: 'সৌদি আরব', lat: '21.3891', lon: '39.8579' },
+      { name: 'মদিনা', subdistrict: 'Madinah', district: 'Madinah', country: 'সৌদি আরব', lat: '24.5247', lon: '39.5692' },
+      { name: 'কলকাতা', subdistrict: 'Kolkata', district: 'West Bengal', country: 'ভারত', lat: '22.5726', lon: '88.3639' },
+      { name: 'কুয়ালালামপুর', subdistrict: 'Kuala Lumpur', district: 'KL', country: 'মালয়েশিয়া', lat: '3.1390', lon: '101.6869' }
+    ];
 
     const hideDropdown = () => {
       if (dropdown) {
@@ -132,7 +166,8 @@ const WeatherApp = {
           </div>
         `;
 
-        row.addEventListener('click', () => {
+        row.addEventListener('click', (e) => {
+          e.stopPropagation();
           if (inputLoc) inputLoc.value = item.name;
           hideDropdown();
           const lat = parseFloat(item.lat);
@@ -151,25 +186,43 @@ const WeatherApp = {
 
     if (inputLoc) {
       inputLoc.addEventListener('input', () => {
-        const q = inputLoc.value.trim();
+        const q = inputLoc.value.trim().toLowerCase();
         if (btnClearSearch) btnClearSearch.style.display = q ? 'block' : 'none';
         if (debounceTimer) clearTimeout(debounceTimer);
-        if (!q || q.length < 2) {
+        
+        if (!q) {
           hideDropdown();
           return;
         }
 
+        // 1. Instant local match for instantaneous response
+        const instantMatches = instantPlaces.filter(p => 
+          p.name.toLowerCase().includes(q) || 
+          p.subdistrict.toLowerCase().includes(q) || 
+          p.district.toLowerCase().includes(q)
+        );
+        if (instantMatches.length > 0) {
+          renderSuggestions(instantMatches.slice(0, 6));
+        }
+
+        // 2. Fetch live full results from geocoding API
         debounceTimer = setTimeout(async () => {
           try {
             const res = await fetch(`/api/geocode/search?q=${encodeURIComponent(q)}`);
             if (res.ok) {
               const data = await res.json();
-              renderSuggestions(data);
+              if (Array.isArray(data) && data.length > 0) {
+                renderSuggestions(data);
+              } else if (instantMatches.length > 0) {
+                renderSuggestions(instantMatches);
+              }
             }
           } catch (e) {
-            console.warn('Weather auto-suggest error:', e);
+            if (instantMatches.length > 0) {
+              renderSuggestions(instantMatches);
+            }
           }
-        }, 280);
+        }, 220);
       });
 
       inputLoc.addEventListener('keypress', (e) => {

@@ -4103,6 +4103,8 @@ body.in-fullmap-mode .corner-tool-btn {
 
 /* Top Weather Control Card */
 .weather-top-control-card {
+  position: relative !important;
+  z-index: 5000 !important;
   background: var(--glass-surface);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
@@ -4111,6 +4113,7 @@ body.in-fullmap-mode .corner-tool-btn {
   box-shadow: var(--shadow-md);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  overflow: visible !important;
 }
 
 .weather-header-compact-row {
@@ -4361,18 +4364,20 @@ body.in-fullmap-mode .corner-tool-btn {
 }
 
 .weather-search-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  background: rgba(15, 23, 42, 0.98);
-  border: 1px solid rgba(56, 189, 248, 0.4);
-  border-radius: 14px;
-  max-height: 250px;
-  overflow-y: auto;
-  z-index: 2000;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8);
-  padding: 6px;
+  position: absolute !important;
+  top: calc(100% + 4px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  background: rgba(13, 20, 34, 0.98) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1.5px solid #38bdf8 !important;
+  border-radius: 14px !important;
+  max-height: 280px !important;
+  overflow-y: auto !important;
+  z-index: 9999999 !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85) !important;
+  padding: 6px !important;
 }
 
 /* Quick Popular City Chips */
