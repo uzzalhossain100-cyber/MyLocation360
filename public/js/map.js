@@ -468,8 +468,6 @@ const MapModule = {
     const toggleFullMap = (enable) => {
       this.isFullMapMode = enable !== undefined ? enable : !this.isFullMapMode;
       if (this.isFullMapMode) {
-        // Move wrapper directly to body so it breaks out of desktop container max-width
-        document.body.appendChild(wrapper);
         wrapper.classList.remove('clean-map-view');
         wrapper.classList.add('fullscreen-map-mode');
         document.body.classList.add('in-fullmap-mode');
@@ -479,9 +477,6 @@ const MapModule = {
         if (btnFloatingClose) btnFloatingClose.style.display = 'inline-flex';
         if (window.showToast) window.showToast('ফুল ম্যাপ মোড চালু হয়েছে');
       } else {
-        if (locationTab && wrapper.parentElement !== locationTab) {
-          locationTab.insertBefore(wrapper, locationTab.firstChild);
-        }
         wrapper.classList.remove('fullscreen-map-mode');
         wrapper.classList.add('clean-map-view');
         document.body.classList.remove('in-fullmap-mode');
