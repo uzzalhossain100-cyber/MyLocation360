@@ -512,11 +512,11 @@ const MapModule = {
       if (roadEl) roadEl.innerText = road;
       if (areaEl) areaEl.innerText = area || 'অবস্থান শনাক্ত হয়েছে';
 
-      const cityName = addr.city || addr.town || addr.county || 'ঢাকা';
-      if (window.WeatherApp) {
-        window.WeatherApp.currentCityName = `${cityName}, বাংলাদেশ`;
-        const cwCity = document.getElementById('cwCityName');
-        if (cwCity) cwCity.innerText = `${cityName}, বাংলাদেশ`;
+      const parts = [road !== 'প্রধান সড়ক' ? road : null, addr.suburb || addr.quarter, addr.city || addr.town || addr.county, addr.country || 'বাংলাদেশ'].filter(Boolean);
+      const exactAddress = parts.join(', ') || data.display_name || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+
+      if (window.WeatherApp && window.WeatherApp.setMyGpsLocation) {
+        window.WeatherApp.setMyGpsLocation(lat, lon, exactAddress);
       }
 
     } catch (err) {

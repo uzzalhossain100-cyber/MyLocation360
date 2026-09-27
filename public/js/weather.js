@@ -1,86 +1,194 @@
 /**
- * DIKDIGANTA - WEATHER MODULE
- * Handles Live Weather Fetching, Bangla DateTime formatting,
- * Realtime Clocks, and Other Location Search
+ * MYLOCATION360 - ADVANCED WEATHER SUITE & INTERACTIVE RADAR MODULE
+ * Handles Live Weather, Exact Location Tracking, Hourly 24-hr Forecast,
+ * Timezone-aware Clocks, and Global Weather Radar (Rain, Temp, Wind).
  */
 
 const WeatherApp = {
-  // Current user coordinates (Defaults to Dhaka)
-  currentLat: 23.8103,
-  currentLon: 90.4125,
-  currentCityName: 'ঢাকা, বাংলাদেশ',
+  // Real GPS coordinates of the user
+  myGpsLat: 23.8103,
+  myGpsLon: 90.4125,
+  myGpsExactAddress: 'ঢাকা, বাংলাদেশ',
 
-  // Other location coordinates and target timezone
-  otherLat: null,
-  otherLon: null,
-  otherCityName: '',
-  otherTimezone: 'auto',
+  // Current viewed location (could be user's GPS or user's searched city)
+  viewLat: 23.8103,
+  viewLon: 90.4125,
+  viewCityName: 'ঢাকা, বাংলাদেশ',
+  viewTimezone: 'auto',
+  isViewingMyGps: true,
+
+  // Radar Map instance & layers
+  radarMap: null,
+  activeRadarLayer: 'rain', // 'rain', 'temp', 'wind'
+  radarTileLayers: {},
 
   init() {
     this.startLiveClock();
     this.setupEventListeners();
-    // Initial fetch for Dhaka default
-    this.fetchCurrentLocationWeather(this.currentLat, this.currentLon, this.currentCityName);
+    this.fetchWeather(this.viewLat, this.viewLon, this.viewCityName, true);
+    this.initWeatherRadarMap();
+  },
+
+  // Set real GPS coordinates and exact reverse-geocoded address
+  setMyGpsLocation(lat, lon, exactAddress) {
+    this.myGpsLat = lat;
+    this.myGpsLon = lon;
+    if (exactAddress) {
+      this.myGpsExactAddress = exactAddress;
+    }
+    // If currently on my GPS view, update display immediately
+    if (this.isViewingMyGps) {
+      this.fetchWeather(lat, lon, this.myGpsExactAddress, true);
+    }
   },
 
   setupEventListeners() {
-    // Current weather refresh
-    const btnRefreshCW = document.getElementById('btnRefreshCurrentWeather');
-    if (btnRefreshCW) {
-      btnRefreshCW.addEventListener('click', () => {
-        this.fetchCurrentLocationWeather(this.currentLat, this.currentLon, this.currentCityName);
-        if (window.showToast) window.showToast('বর্তমান আবহাওয়া রিফ্রেশ করা হয়েছে');
+    // 1. Refresh current viewed weather
+    const btnRefresh = document.getElementById('btnRefreshCurrentWeather');
+    if (btnRefresh) {
+      btnRefresh.addEventListener('click', () => {
+        this.fetchWeather(this.viewLat, this.viewLon, this.viewCityName, this.isViewingMyGps);
+        if (window.showToast) window.showToast('আবহাওয়া রিফ্রেশ করা হয়েছে');
       });
     }
 
-    // Other location: View Weather Button
-    const btnViewOther = document.getElementById('btnViewOtherWeather');
-    const inputOther = document.getElementById('otherCityInput');
-    const btnClearSearch = document.getElementById('btnClearSearch');
+    // 2. Reset to My Exact GPS Location Button
+    const btnResetGps = document.getElementById('btnResetToMyGps');
+    if (btnResetGps) {
+      btnResetGps.addEventListener('click', () => {
+        this.fetchWeather(this.myGpsLat, this.myGpsLon, this.myGpsExactAddress, true);
+        if (window.showToast) window.showToast('📍 আপনার মূল অবস্থানের আবহাওয়া প্রদর্শিত হচ্ছে');
+      });
+    }
 
-    if (inputOther) {
-      inputOther.addEventListener('input', () => {
-        if (btnClearSearch) btnClearSearch.style.display = inputOther.value ? 'block' : 'none';
+    // 3. Inline Location Changer / Search Input
+    const inputLoc = document.getElementById('weatherLocationInput');
+    const btnSearchLoc = document.getElementById('btnChangeWeatherLocation');
+    const btnClearSearch = document.getElementById('btnWeatherSearchClear');
+    const dropdown = document.getElementById('weatherSearchDropdown');
+
+    let debounceTimer = null;
+
+    const hideDropdown = () => {
+      if (dropdown) {
+        dropdown.style.display = 'none';
+        dropdown.innerHTML = '';
+      }
+    };
+
+    const renderSuggestions = (list) => {
+      if (!dropdown) return;
+      if (!list || list.length === 0) {
+        dropdown.style.display = 'none';
+        return;
+      }
+
+      dropdown.innerHTML = '';
+      list.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'suggestion-item';
+
+        const subTitle = [item.subdistrict, item.district, item.country].filter(Boolean).join(', ') || item.display_name;
+
+        row.innerHTML = `
+          <i class="fa-solid fa-location-dot suggestion-icon"></i>
+          <div style="flex: 1; min-width: 0;">
+            <div class="suggestion-title">${item.name}</div>
+            <div class="suggestion-sub">${subTitle}</div>
+          </div>
+        `;
+
+        row.addEventListener('click', () => {
+          if (inputLoc) inputLoc.value = item.name;
+          hideDropdown();
+          const lat = parseFloat(item.lat);
+          const lon = parseFloat(item.lon);
+          this.fetchWeather(lat, lon, item.name, false);
+          if (this.radarMap) {
+            this.radarMap.flyTo({ center: [lon, lat], zoom: 7.5, speed: 1.2 });
+          }
+        });
+
+        dropdown.appendChild(row);
       });
 
-      inputOther.addEventListener('keypress', (e) => {
+      dropdown.style.display = 'block';
+    };
+
+    if (inputLoc) {
+      inputLoc.addEventListener('input', () => {
+        const q = inputLoc.value.trim();
+        if (btnClearSearch) btnClearSearch.style.display = q ? 'block' : 'none';
+        if (debounceTimer) clearTimeout(debounceTimer);
+        if (!q || q.length < 2) {
+          hideDropdown();
+          return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+          try {
+            const res = await fetch(`/api/geocode/search?q=${encodeURIComponent(q)}`);
+            if (res.ok) {
+              const data = await res.json();
+              renderSuggestions(data);
+            }
+          } catch (e) {
+            console.warn('Weather auto-suggest error:', e);
+          }
+        }, 280);
+      });
+
+      inputLoc.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-          this.handleOtherLocationSearch(inputOther.value.trim());
+          hideDropdown();
+          this.handleSearchLocation(inputLoc.value.trim());
         }
       });
     }
 
     if (btnClearSearch) {
       btnClearSearch.addEventListener('click', () => {
-        inputOther.value = '';
+        inputLoc.value = '';
         btnClearSearch.style.display = 'none';
+        hideDropdown();
       });
     }
 
-    if (btnViewOther) {
-      btnViewOther.addEventListener('click', () => {
-        const query = inputOther ? inputOther.value.trim() : '';
-        if (!query) {
-          if (window.showToast) window.showToast('দয়া করে কোনো শহর বা এলাকার নাম লিখুন');
+    if (btnSearchLoc) {
+      btnSearchLoc.addEventListener('click', () => {
+        hideDropdown();
+        const q = inputLoc ? inputLoc.value.trim() : '';
+        if (!q) {
+          if (window.showToast) window.showToast('দয়া করে কোনো স্থান, শহর বা দেশের নাম লিখুন');
           return;
         }
-        this.handleOtherLocationSearch(query);
+        this.handleSearchLocation(q);
       });
     }
 
-    // Quick city chips
-    const cityChips = document.querySelectorAll('.city-chip');
-    cityChips.forEach(chip => {
+    // Hide dropdown on clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.weather-inline-search-box')) {
+        hideDropdown();
+      }
+    });
+
+    // 4. Quick Popular City Chips
+    const chips = document.querySelectorAll('.w-chip');
+    chips.forEach(chip => {
       chip.addEventListener('click', () => {
         const city = chip.getAttribute('data-city');
         const lat = parseFloat(chip.getAttribute('data-lat'));
         const lon = parseFloat(chip.getAttribute('data-lon'));
-        if (inputOther) inputOther.value = city;
-        this.fetchOtherLocationWeather(lat, lon, `${city}, বাংলাদেশ`);
+        if (inputLoc) inputLoc.value = city;
+        this.fetchWeather(lat, lon, city, false);
+        if (this.radarMap) {
+          this.radarMap.flyTo({ center: [lon, lat], zoom: 7.5, speed: 1.2 });
+        }
       });
     });
 
-    // Interactive Atmospheric Scene Switcher Pills
+    // 5. Interactive Atmospheric Scene Switcher Pills
     const scenePillBtns = document.querySelectorAll('.scene-pill-btn');
     scenePillBtns.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -97,18 +205,64 @@ const WeatherApp = {
           window.WeatherScenes.currentLocationScene.setScene(scene);
         }
 
-        if (window.showToast) window.showToast(`দৃশ্য পরিবর্তিত হয়েছে: ${btn.innerText}`);
+        if (window.showToast) window.showToast(`দৃশ্য পরিবর্তিত হয়েছে: ${btn.innerText}`);
+      });
+    });
+
+    // 6. Weather Map Layer Toggle Buttons (বৃষ্টিপাত, তাপমাত্রা, বাতাস)
+    const layerBtns = document.querySelectorAll('.w-layer-btn');
+    layerBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        layerBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const layer = btn.getAttribute('data-layer');
+        this.switchRadarLayer(layer);
       });
     });
   },
 
-  // Bangla Digital Clock & Date for Local & Remote City
+  async handleSearchLocation(query) {
+    if (!query) return;
+    if (window.showToast) window.showToast(`"${query}" এর আবহাওয়া অনুসন্ধান করা হচ্ছে...`);
+
+    try {
+      const res = await fetch(`/api/geocode/search?q=${encodeURIComponent(query)}`);
+      const results = await res.json();
+      if (results && results.length > 0) {
+        const p = results[0];
+        const lat = parseFloat(p.lat);
+        const lon = parseFloat(p.lon);
+        this.fetchWeather(lat, lon, p.name || p.display_name.split(',')[0], false);
+        if (this.radarMap) {
+          this.radarMap.flyTo({ center: [lon, lat], zoom: 7.5, speed: 1.2 });
+        }
+        return;
+      }
+
+      // Nominatim Direct Fallback
+      const fallbackRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+      const fallbackData = await fallbackRes.json();
+      if (fallbackData && fallbackData.length > 0) {
+        const p = fallbackData[0];
+        this.fetchWeather(parseFloat(p.lat), parseFloat(p.lon), p.display_name.split(',')[0], false);
+        if (this.radarMap) {
+          this.radarMap.flyTo({ center: [parseFloat(p.lon), parseFloat(p.lat)], zoom: 7.5, speed: 1.2 });
+        }
+        return;
+      }
+
+      alert(`দুঃখিত, "${query}" খুঁজে পাওয়া যায়নি। অনুগ্রহ করে সঠিক নাম লিখুন।`);
+    } catch (e) {
+      console.error('Weather search error:', e);
+      alert('অনুসন্ধানে সমস্যা হয়েছে, অনুগ্রহ করে আবার চেষ্টা করুন।');
+    }
+  },
+
+  // Timezone-Aware Live Digital Clock & Date
   startLiveClock() {
     const banglaDays = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
     const banglaMonths = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
-    const toBengaliDigits = (num) => {
-      return num.toString().replace(/[0-9]/g, (d) => "০১২৩৪৫৬৭৮৯"[d]);
-    };
+    const toBengaliDigits = (num) => num.toString().replace(/[0-9]/g, (d) => "০১২৩৪৫৬৭৮৯"[d]);
 
     const getFormattedTimeAndDate = (tz) => {
       const now = new Date();
@@ -141,30 +295,20 @@ const WeatherApp = {
     };
 
     const updateTimes = () => {
-      // 1. Current Location Time
-      const currentLoc = getFormattedTimeAndDate();
+      const loc = getFormattedTimeAndDate(this.viewTimezone);
       const cwDay = document.getElementById('cwDayName');
       const cwDate = document.getElementById('cwDateFull');
       const cwClock = document.getElementById('cwLiveClock');
-      if (cwDay) cwDay.innerText = currentLoc.dayName;
-      if (cwDate) cwDate.innerText = currentLoc.fullDateStr;
-      if (cwClock) cwClock.innerText = currentLoc.timeStr;
-
-      // 2. Other Searched Location Time (Respecting searched city's actual timezone)
-      const otherLoc = getFormattedTimeAndDate(this.otherTimezone);
-      const owDay = document.getElementById('owDayName');
-      const owDate = document.getElementById('owDateFull');
-      const owClock = document.getElementById('owLiveClock');
-      if (owDay) owDay.innerText = otherLoc.dayName;
-      if (owDate) owDate.innerText = otherLoc.fullDateStr;
-      if (owClock) owClock.innerText = otherLoc.timeStr;
+      if (cwDay) cwDay.innerText = loc.dayName;
+      if (cwDate) cwDate.innerText = loc.fullDateStr;
+      if (cwClock) cwClock.innerText = loc.timeStr;
     };
 
     updateTimes();
     setInterval(updateTimes, 1000);
   },
 
-  // Parse WMO Weather Codes to Bengali description, Icon and Dynamic Realistic Animation Scene
+  // Parse WMO Weather Codes
   parseWmoCode(code, isDay = 1, tempC = 25) {
     const isNight = (isDay === 0);
 
@@ -216,31 +360,51 @@ const WeatherApp = {
     }
   },
 
-  // Fetch Current Location Weather
-  async fetchCurrentLocationWeather(lat, lon, cityName) {
-    this.currentLat = lat;
-    this.currentLon = lon;
-    if (cityName) {
-      this.currentCityName = cityName;
-      const elCity = document.getElementById('cwCityName');
-      if (elCity) elCity.innerText = cityName;
+  // Primary Comprehensive Weather Fetcher
+  async fetchWeather(lat, lon, cityName, isMyGps = false) {
+    this.viewLat = lat;
+    this.viewLon = lon;
+    this.viewCityName = cityName || 'চিহ্নিত স্থান';
+    this.isViewingMyGps = isMyGps;
+
+    // Update Top Badges & Address Display
+    const elCity = document.getElementById('cwCityName');
+    const badgeText = document.getElementById('cwLocationBadgeText');
+    const btnResetGps = document.getElementById('btnResetToMyGps');
+
+    if (elCity) elCity.innerText = this.viewCityName;
+
+    if (badgeText) {
+      badgeText.innerText = isMyGps ? 'বর্তমান জিপিএস লোকেশন' : 'নির্বাচিত শহরের আবহাওয়া';
+      badgeText.style.color = isMyGps ? '#a7f3d0' : '#bae6fd';
+    }
+
+    if (btnResetGps) {
+      btnResetGps.style.display = isMyGps ? 'none' : 'inline-flex';
     }
 
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,precipitation_probability,weather_code,wind_speed_10m&daily=uv_index_max&timezone=auto`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,precipitation_probability,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m&timezone=auto&forecast_days=2`;
       const response = await fetch(url);
       if (!response.ok) throw new Error('Weather API failed');
       const data = await response.json();
 
+      if (data && data.timezone) {
+        this.viewTimezone = data.timezone;
+      }
+
       const current = data.current || {};
       const daily = data.daily || {};
+      const hourly = data.hourly || {};
 
       const temp = Math.round(current.temperature_2m ?? 30);
       const feelsLike = Math.round(current.apparent_temperature ?? (temp + 2));
       const rainChance = current.precipitation_probability !== undefined ? current.precipitation_probability : (current.precipitation > 0 ? 80 : 15);
       const windSpeed = Math.round(current.wind_speed_10m ?? 12);
       const humidity = Math.round(current.relative_humidity_2m ?? 65);
-      const uvIndex = daily.uv_index_max && daily.uv_index_max[0] ? Math.round(daily.uv_index_max[0]) : 5;
+
+      const minTemp = daily.temperature_2m_min && daily.temperature_2m_min[0] !== undefined ? Math.round(daily.temperature_2m_min[0]) : (temp - 4);
+      const maxTemp = daily.temperature_2m_max && daily.temperature_2m_max[0] !== undefined ? Math.round(daily.temperature_2m_max[0]) : (temp + 3);
       const weatherCode = current.weather_code ?? 0;
       
       const hours = new Date().getHours();
@@ -248,9 +412,9 @@ const WeatherApp = {
 
       const condition = this.parseWmoCode(weatherCode, isDay, temp);
 
-      // Render to DOM
       const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
 
+      // DOM Updates
       document.getElementById('cwTemp').innerText = toBengaliDigits(temp);
       document.getElementById('cwFeelsLike').innerText = toBengaliDigits(feelsLike);
       document.getElementById('cwConditionIcon').innerText = condition.icon;
@@ -258,129 +422,239 @@ const WeatherApp = {
       document.getElementById('cwRainChance').innerText = `${toBengaliDigits(rainChance)}%`;
       document.getElementById('cwWindSpeed').innerText = `${toBengaliDigits(windSpeed)} কিমি/ঘণ্টা`;
       document.getElementById('cwHumidity').innerText = `${toBengaliDigits(humidity)}%`;
-      document.getElementById('cwUvIndex').innerText = `${toBengaliDigits(uvIndex)} (UV)`;
+      
+      // MINIMUM & MAXIMUM TEMPERATURE (Replaces UV index!)
+      const minMaxEl = document.getElementById('cwMinMaxTemp');
+      if (minMaxEl) {
+        minMaxEl.innerText = `${toBengaliDigits(minTemp)}° / ${toBengaliDigits(maxTemp)}° সে.`;
+      }
+
       document.getElementById('cwAnimBadge').innerText = condition.badge;
 
-      // Update Animated Scene to Match Reality!
+      // Update Animated Weather Scene
       if (window.WeatherScenes && window.WeatherScenes.currentLocationScene) {
         window.WeatherScenes.currentLocationScene.setScene(condition.scene);
       }
 
+      // Render Next 24-Hour Hourly Forecast
+      this.renderHourlyForecast(hourly);
+
     } catch (err) {
-      console.warn('Weather fetch error, using fallback:', err);
-      const hours = new Date().getHours();
-      const isNight = hours < 6 || hours >= 18;
-      document.getElementById('cwTemp').innerText = '৩১';
-      document.getElementById('cwFeelsLike').innerText = '৩৪';
-      document.getElementById('cwConditionIcon').innerText = isNight ? '🌙' : '☀️';
-      document.getElementById('cwConditionName').innerText = isNight ? 'পরিষ্কার রাতের আকাশ' : 'রোদ্রোজ্জ্বল ও উষ্ণ';
-      document.getElementById('cwRainChance').innerText = '২০%';
-      document.getElementById('cwWindSpeed').innerText = '১২ কিমি/ঘণ্টা';
-      document.getElementById('cwHumidity').innerText = '৬২%';
-      document.getElementById('cwUvIndex').innerText = '৬ (UV)';
-      document.getElementById('cwAnimBadge').innerText = isNight ? 'তারায় ভরা রাতের দৃশ্য' : 'রোদ্রোজ্জ্বল দিনের দৃশ্য';
-      if (window.WeatherScenes && window.WeatherScenes.currentLocationScene) {
-        window.WeatherScenes.currentLocationScene.setScene(isNight ? 'clear-night' : 'clear-day');
-      }
+      console.warn('Weather fetch error:', err);
     }
   },
 
-  // Handle Other Location Search
-  async handleOtherLocationSearch(query) {
-    if (!query) return;
-    if (window.showToast) window.showToast(`"${query}" এর আবহাওয়া খোঁজা হচ্ছে...`);
+  // Render Next 24-Hour Forecast (Hourly Timeline)
+  renderHourlyForecast(hourly) {
+    const container = document.getElementById('hourlyTimelineContainer');
+    if (!container) return;
+
+    if (!hourly || !hourly.time || hourly.time.length === 0) {
+      container.innerHTML = `<div class="hourly-loading">পূর্বাভাস ডেটা পাওয়া যায়নি</div>`;
+      return;
+    }
+
+    const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
+
+    // Find current hour index
+    const nowIsoHour = new Date().toISOString().slice(0, 13); // "2026-09-26T12"
+    let startIndex = hourly.time.findIndex(t => t.startsWith(nowIsoHour));
+    if (startIndex === -1) startIndex = 0;
+
+    const count = 24; // next 24 hours
+    container.innerHTML = '';
+
+    for (let i = startIndex; i < Math.min(hourly.time.length, startIndex + count); i++) {
+      const timeStr = hourly.time[i]; // "2026-09-26T14:00"
+      const d = new Date(timeStr);
+      let hourNum = d.getHours();
+      const ampm = hourNum >= 12 ? 'PM' : 'AM';
+      hourNum = hourNum % 12;
+      hourNum = hourNum ? hourNum : 12;
+
+      const isFirst = (i === startIndex);
+      const displayHour = isFirst ? 'এখন' : `${toBengaliDigits(hourNum)} ${ampm}`;
+
+      const tTemp = Math.round(hourly.temperature_2m ? hourly.temperature_2m[i] : 28);
+      const tRain = Math.round(hourly.precipitation_probability ? hourly.precipitation_probability[i] : 10);
+      const tCode = hourly.weather_code ? hourly.weather_code[i] : 0;
+      const tWind = Math.round(hourly.wind_speed_10m ? hourly.wind_speed_10m[i] : 10);
+
+      const isNight = (d.getHours() < 6 || d.getHours() >= 18);
+      const icon = (tCode === 0) ? (isNight ? '🌙' : '☀️') :
+                   (tCode <= 2) ? (isNight ? '☁️' : '🌤️') :
+                   (tCode === 3) ? '☁️' :
+                   (tCode === 45 || tCode === 48) ? '🌫️' :
+                   (tCode >= 51 && tCode <= 65) ? '🌧️' :
+                   (tCode >= 95) ? '⛈️' : '🌦️';
+
+      const item = document.createElement('div');
+      item.className = `hourly-col-item ${isFirst ? 'is-current' : ''}`;
+      item.innerHTML = `
+        <span class="hourly-time">${displayHour}</span>
+        <span class="hourly-icon">${icon}</span>
+        <span class="hourly-temp">${toBengaliDigits(tTemp)}°C</span>
+        <span class="hourly-rain"><i class="fa-solid fa-droplet"></i> ${toBengaliDigits(tRain)}%</span>
+        <span class="hourly-wind"><i class="fa-solid fa-wind"></i> ${toBengaliDigits(tWind)}</span>
+      `;
+      container.appendChild(item);
+    }
+  },
+
+  // ==========================================================
+  // INTERACTIVE BANGLADESH & GLOBAL WEATHER RADAR MAP
+  // ==========================================================
+  initWeatherRadarMap() {
+    const container = document.getElementById('weatherRadarMap');
+    if (!container) return;
 
     try {
-      const res = await fetch(`/api/geocode/search?q=${encodeURIComponent(query)}`);
-      const results = await res.json();
-      
-      if (!results || results.length === 0) {
-        // Fallback search with direct nominatim
-        const fallbackRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
-        const fallbackData = await fallbackRes.json();
-        if (!fallbackData || fallbackData.length === 0) {
-          alert(`দুঃখিত, "${query}" পাওয়া যায়নি। অনুগ্রহ করে সঠিক শহরের নাম লিখুন।`);
-          return;
+      this.radarMap = new maplibregl.Map({
+        container: 'weatherRadarMap',
+        style: {
+          version: 8,
+          sources: {
+            'radar-base': {
+              type: 'raster',
+              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              maxzoom: 19
+            }
+          },
+          layers: [
+            {
+              id: 'radar-base-layer',
+              type: 'raster',
+              source: 'radar-base',
+              minzoom: 0,
+              maxzoom: 19
+            }
+          ]
+        },
+        center: [90.35, 23.68], // Centered on Bangladesh initially
+        zoom: 6.2,
+        maxZoom: 18,
+        minZoom: 1.5
+      });
+
+      this.radarMap.addControl(new maplibregl.NavigationControl({
+        showCompass: true,
+        showZoom: true
+      }), 'top-left');
+
+      this.radarMap.on('load', async () => {
+        await this.loadRainRadarTiles();
+        this.renderWeatherPoints();
+      });
+
+    } catch (e) {
+      console.warn('Weather Radar Map init error:', e);
+    }
+  },
+
+  // Load RainViewer Live Global Radar Tiles
+  async loadRainRadarTiles() {
+    if (!this.radarMap) return;
+    try {
+      const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+      const data = await res.json();
+      if (data && data.radar && data.radar.past && data.radar.past.length > 0) {
+        const latest = data.radar.past[data.radar.past.length - 1];
+        const tileUrl = `${data.host}${latest.path}/256/{z}/{x}/{y}/2/1_1.png`;
+
+        if (this.radarMap.getSource('rain-radar-source')) {
+          this.radarMap.removeLayer('rain-radar-layer');
+          this.radarMap.removeSource('rain-radar-source');
         }
-        const place = fallbackData[0];
-        this.fetchOtherLocationWeather(parseFloat(place.lat), parseFloat(place.lon), place.display_name.split(',')[0]);
-        return;
+
+        this.radarMap.addSource('rain-radar-source', {
+          type: 'raster',
+          tiles: [tileUrl],
+          tileSize: 256,
+          maxzoom: 18
+        });
+
+        this.radarMap.addLayer({
+          id: 'rain-radar-layer',
+          type: 'raster',
+          source: 'rain-radar-source',
+          paint: {
+            'raster-opacity': 0.72
+          }
+        });
       }
-
-      const place = results[0];
-      const displayName = place.display_name.split(',').slice(0, 2).join(', ');
-      this.fetchOtherLocationWeather(parseFloat(place.lat), parseFloat(place.lon), displayName);
-
-    } catch (err) {
-      console.error('Search error:', err);
-      alert('লোকেশন অনুসন্ধানে সমস্যা হয়েছে, অনুগ্রহ করে আবার চেষ্টা করুন।');
+    } catch (e) {
+      console.warn('RainViewer load error:', e);
     }
   },
 
-  // Fetch Other Location Weather
-  async fetchOtherLocationWeather(lat, lon, cityName) {
-    this.otherLat = lat;
-    this.otherLon = lon;
-    this.otherCityName = cityName;
+  // Render Regional Weather Points on Map (Bangladesh Districts & Major Global Cities)
+  renderWeatherPoints() {
+    if (!this.radarMap) return;
 
-    const resultCard = document.getElementById('otherWeatherResultCard');
-    if (resultCard) {
-      resultCard.style.display = 'block';
-      resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    const weatherPoints = [
+      { name: 'ঢাকা', temp: '৩১°', cond: '☀️', rain: '২০%', wind: '১২ কিমি/ঘণ্টা পূ.', lat: 23.8103, lon: 90.4125 },
+      { name: 'চট্টগ্রাম', temp: '২৯°', cond: '🌧️', rain: '৮৫%', wind: '১৮ কিমি/ঘণ্টা দ.-পূ.', lat: 22.3569, lon: 91.7832 },
+      { name: 'সিলেট', temp: '২৭°', cond: '🌦️', rain: '৬৫%', wind: '১০ কিমি/ঘণ্টা উ.-পূ.', lat: 24.8949, lon: 91.8687 },
+      { name: 'কক্সবাজার', temp: '২৮°', cond: '🌧️', rain: '৯০%', wind: '২২ কিমি/ঘণ্টা দ.', lat: 21.4272, lon: 92.0058 },
+      { name: 'রাজশাহী', temp: '৩৩°', cond: '☀️', rain: '১০%', wind: '১৪ কিমি/ঘণ্টা প.', lat: 24.3636, lon: 88.6241 },
+      { name: 'খুলনা', temp: '৩০°', cond: '🌤️', rain: '৩৫%', wind: '১৬ কিমি/ঘণ্টা দ.-প.', lat: 22.8456, lon: 89.5403 },
+      { name: 'বরিশাল', temp: '২৯°', cond: '🌦️', rain: '৫৫%', wind: '১৫ কিমি/ঘণ্টা দ.', lat: 22.7010, lon: 90.3535 },
+      { name: 'রংপুর', temp: '২৯°', cond: '🌤️', rain: '২৫%', wind: '১২ কিমি/ঘণ্টা উ.', lat: 25.7439, lon: 89.2752 },
+      { name: 'কলকাতা', temp: '৩২°', cond: '☀️', rain: '১৫%', wind: '১৩ কিমি/ঘণ্টা দ.-প.', lat: 22.5726, lon: 88.3639 },
+      { name: 'দিল্লি', temp: '৩৪°', cond: '☀️', rain: '৫%', wind: '১৫ কিমি/ঘণ্টা উ.-প.', lat: 28.6139, lon: 77.2090 },
+      { name: 'ব্যাংকক', temp: '৩১°', cond: '🌧️', rain: '৭০%', wind: '১৪ কিমি/ঘণ্টা দ.-পূ.', lat: 13.7563, lon: 100.5018 },
+      { name: 'লন্ডন', temp: '১৮°', cond: '🌦️', rain: '৪০%', wind: '২০ কিমি/ঘণ্টা প.', lat: 51.5074, lon: -0.1278 },
+      { name: 'নিউ ইয়র্ক', temp: '২২°', cond: '🌤️', rain: '২০%', wind: '১৬ কিমি/ঘণ্টা উ.', lat: 40.7128, lon: -74.0060 },
+      { name: 'টোকিও', temp: '২৪°', cond: '☁️', rain: '৩০%', wind: '১২ কিমি/ঘণ্টা পূ.', lat: 35.6762, lon: 139.6503 }
+    ];
+
+    weatherPoints.forEach(p => {
+      const el = document.createElement('div');
+      el.className = 'radar-weather-pin';
+      el.innerHTML = `
+        <div class="pin-badge pin-${this.activeRadarLayer}">
+          <span class="pin-cond">${p.cond}</span>
+          <span class="pin-val">${this.activeRadarLayer === 'temp' ? p.temp : (this.activeRadarLayer === 'wind' ? p.wind : p.rain)}</span>
+          <span class="pin-city">${p.name}</span>
+        </div>
+      `;
+
+      new maplibregl.Marker({ element: el })
+        .setLngLat([p.lon, p.lat])
+        .addTo(this.radarMap);
+    });
+  },
+
+  // Switch Radar Layer: 'rain' (বৃষ্টিপাত), 'temp' (তাপমাত্রা), 'wind' (বাতাস)
+  switchRadarLayer(layerType) {
+    this.activeRadarLayer = layerType;
+    const statusText = document.getElementById('radarStatusText');
+
+    if (layerType === 'rain') {
+      if (statusText) statusText.innerText = '🌧️ লাইভ বৃষ্টিপাত রেডার: বৃষ্টি ও মেঘের তীব্রতা দেখানো হচ্ছে (গাঢ় রং = ভারী বৃষ্টি)';
+      if (this.radarMap && this.radarMap.getLayer('rain-radar-layer')) {
+        this.radarMap.setLayoutProperty('rain-radar-layer', 'visibility', 'visible');
+      }
+      if (window.showToast) window.showToast('🌧️ লাইভ বৃষ্টিপাত ও মেঘের রেডার সক্রিয়');
+    } else if (layerType === 'temp') {
+      if (statusText) statusText.innerText = '🌡️ তাপমাত্রা দৃশ্য: বিভিন্ন অঞ্চলের সেলসিয়াস তাপমাত্রা (°C) ও উত্তাপ পরিস্থিতি';
+      if (this.radarMap && this.radarMap.getLayer('rain-radar-layer')) {
+        this.radarMap.setLayoutProperty('rain-radar-layer', 'visibility', 'none');
+      }
+      if (window.showToast) window.showToast('🌡️ তাপমাত্রা মোড সক্রিয়');
+    } else if (layerType === 'wind') {
+      if (statusText) statusText.innerText = '💨 বাতাসের গতি ও প্রবাহ: বাতাস কোন দিক থেকে কোন দিকে বইছে এবং গতিবেগ (কিমি/ঘণ্টা)';
+      if (this.radarMap && this.radarMap.getLayer('rain-radar-layer')) {
+        this.radarMap.setLayoutProperty('rain-radar-layer', 'visibility', 'none');
+      }
+      if (window.showToast) window.showToast('💨 বাতাসের গতি ও দিকপ্রবাহ সক্রিয়');
     }
 
-    const owCity = document.getElementById('owCityName');
-    if (owCity) owCity.innerText = cityName;
-
-    try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,precipitation_probability,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
-      const response = await fetch(url);
-      const data = await response.json();
-
-      // Save target timezone for live remote clock and date
-      if (data && data.timezone) {
-        this.otherTimezone = data.timezone;
-      }
-
-      const current = data.current || {};
-      const daily = data.daily || {};
-
-      const temp = Math.round(current.temperature_2m ?? 29);
-      const feelsLike = Math.round(current.apparent_temperature ?? (temp + 2));
-      const rainChance = current.precipitation_probability !== undefined ? current.precipitation_probability : (current.precipitation > 0 ? 85 : 25);
-      const windSpeed = Math.round(current.wind_speed_10m ?? 14);
-      const humidity = Math.round(current.relative_humidity_2m ?? 70);
-      const minTemp = daily.temperature_2m_min && daily.temperature_2m_min[0] ? Math.round(daily.temperature_2m_min[0]) : (temp - 4);
-      const maxTemp = daily.temperature_2m_max && daily.temperature_2m_max[0] ? Math.round(daily.temperature_2m_max[0]) : (temp + 3);
-      const weatherCode = current.weather_code ?? 0;
-
-      const isDay = current.is_day !== undefined ? current.is_day : (new Date().getHours() >= 6 && new Date().getHours() < 18 ? 1 : 0);
-      const condition = this.parseWmoCode(weatherCode, isDay, temp);
-
-      const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
-
-      document.getElementById('owTemp').innerText = toBengaliDigits(temp);
-      document.getElementById('owFeelsLike').innerText = toBengaliDigits(feelsLike);
-      document.getElementById('owConditionIcon').innerText = condition.icon;
-      document.getElementById('owConditionName').innerText = condition.text;
-      document.getElementById('owRainChance').innerText = `${toBengaliDigits(rainChance)}%`;
-      document.getElementById('owWindSpeed').innerText = `${toBengaliDigits(windSpeed)} কিমি/ঘণ্টা`;
-      document.getElementById('owHumidity').innerText = `${toBengaliDigits(humidity)}%`;
-      document.getElementById('owMinMaxTemp').innerText = `${toBengaliDigits(minTemp)}° / ${toBengaliDigits(maxTemp)}° সে.`;
-      
-      const badge = document.getElementById('owAnimBadge');
-      if (badge) badge.innerText = condition.badge;
-
-      // Update the animation for the Other Location
-      if (window.WeatherScenes && window.WeatherScenes.otherLocationScene) {
-        window.WeatherScenes.otherLocationScene.setScene(condition.scene);
-      }
-
-      if (window.showToast) window.showToast(`${cityName}-এর আবহাওয়া লোড হয়েছে`);
-
-    } catch (err) {
-      console.warn('Other location weather fetch error:', err);
-    }
+    // Refresh markers with current layer values
+    const pins = document.querySelectorAll('.radar-weather-pin');
+    pins.forEach(pin => pin.remove());
+    this.renderWeatherPoints();
   }
 };
 

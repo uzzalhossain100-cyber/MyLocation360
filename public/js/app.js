@@ -106,6 +106,9 @@ function setupTabNavigation() {
         // Guarantee current weather is rendered
         if (window.WeatherApp) {
           window.WeatherApp.startLiveClock();
+          if (window.WeatherApp.radarMap) {
+            window.WeatherApp.radarMap.resize();
+          }
         }
       }, 50);
     }
@@ -405,8 +408,8 @@ function setupGeolocationWorkflow() {
           window.MapModule.recenter();
         }
 
-        if (window.WeatherApp) {
-          window.WeatherApp.fetchCurrentLocationWeather(latitude, longitude);
+        if (window.WeatherApp && window.WeatherApp.setMyGpsLocation) {
+          window.WeatherApp.setMyGpsLocation(latitude, longitude);
         }
 
         window.showToast('📍 আপনার বর্তমান অবস্থান শনাক্ত হয়েছে!');
