@@ -768,7 +768,7 @@ const MapModule = {
         const query = input.value.trim();
         updateClearBtnVisibility();
         if (debounceTimer) clearTimeout(debounceTimer);
-        if (!query || query.length < 2) {
+        if (!query || query.length < 1) {
           hideSuggestions();
           return;
         }
@@ -783,7 +783,7 @@ const MapModule = {
           } catch (e) {
             console.warn('Live suggest error', e);
           }
-        }, 280);
+        }, 220);
       });
 
       input.addEventListener('keypress', (e) => {

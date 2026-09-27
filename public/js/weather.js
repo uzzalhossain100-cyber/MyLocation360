@@ -302,9 +302,15 @@ const WeatherApp = {
 
     const resetRadarToUserLocation = () => {
       this.isRadarMapUserInteracted = false;
-      this.updateSimulationFrame(this.myGpsLat, this.myGpsLon, this.activeRadarLayer || 'rain', true);
+      this.draggedLat = null;
+      this.draggedLon = null;
       if (this.radarMap) {
-        this.radarMap.flyTo({ center: [this.myGpsLon, this.myGpsLat], zoom: 7.2, speed: 1.2 });
+        this.radarMap.flyTo({ center: [this.myGpsLon || 90.41, this.myGpsLat || 23.81], zoom: 7.2, speed: 1.2 });
+      }
+      this.fetchWeather(this.myGpsLat || 23.8103, this.myGpsLon || 90.4125, this.myGpsExactAddress, true);
+      const statusText = document.getElementById('radarStatusText');
+      if (statusText) {
+        statusText.innerText = '📍 আপনার বর্তমান জিপিএস অবস্থানের আবহাওয়া ও মানচিত্র প্রদর্শিত হচ্ছে';
       }
       if (window.showToast) window.showToast('📍 আবহাওয়া মানচিত্র আপনার বর্তমান অবস্থানে ফিরিয়ে আনা হয়েছে');
     };
@@ -507,8 +513,23 @@ const WeatherApp = {
 
     if (elCity) elCity.innerText = this.viewCityName;
 
+    // If city name is not provided (e.g. user dragged the weather map to a new location), reverse-geocode it
+    if (!cityName) {
+      fetch(`/api/geocode/reverse?lat=${lat}&lon=${lon}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.display_name) {
+            const parts = data.display_name.split(',').map(s => s.trim());
+            const shortName = parts.slice(0, 2).join(', ');
+            this.viewCityName = shortName || parts[0];
+            if (elCity) elCity.innerText = this.viewCityName;
+          }
+        })
+        .catch(() => {});
+    }
+
     if (badgeText) {
-      badgeText.innerText = isMyGps ? 'বর্তমান জিপিএস লোকেশন' : 'নির্বাচিত শহরের আবহাওয়া';
+      badgeText.innerText = isMyGps ? 'বর্তমান জিপিএস লোকেশন' : 'মানচিত্রের নির্বাচিত স্থান';
       badgeText.style.color = isMyGps ? '#a7f3d0' : '#bae6fd';
     }
 
@@ -751,24 +772,40 @@ const WeatherApp = {
         style: {
           version: 8,
           sources: {
-            'radar-base': {
+            'radar-osm': {
               type: 'raster',
               tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              maxzoom: 19
+            },
+            'radar-satellite': {
+              type: 'raster',
+              tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
               tileSize: 256,
               maxzoom: 19
             }
           },
           layers: [
             {
-              id: 'radar-base-layer',
+              id: 'radar-osm-layer',
               type: 'raster',
-              source: 'radar-base',
+              source: 'radar-osm',
               minzoom: 0,
-              maxzoom: 19
+              maxzoom: 19,
+              paint: { 'raster-opacity': 1 }
+            },
+            {
+              id: 'radar-satellite-layer',
+              type: 'raster',
+              source: 'radar-satellite',
+              minzoom: 0,
+              maxzoom: 19,
+              layout: { 'visibility': 'none' },
+              paint: { 'raster-opacity': 1 }
             }
           ]
         },
-        center: [90.35, 23.68], // Centered on Bangladesh initially
+        center: [this.myGpsLon || 90.35, this.myGpsLat || 23.68],
         zoom: 6.2,
         maxZoom: 18,
         minZoom: 1.5
@@ -782,10 +819,62 @@ const WeatherApp = {
       this.radarMap.on('load', async () => {
         await this.loadRainRadarTiles();
         this.renderWeatherPoints();
+        // apply initial active layer
+        this.applyRadarMapLayers(this.activeRadarLayer || 'rain');
+      });
+
+      // Track Map Dragging / Panning to New Location
+      this.radarMap.on('movestart', () => {
+        this.isRadarMapUserInteracted = true;
+      });
+
+      this.radarMap.on('moveend', () => {
+        const center = this.radarMap.getCenter();
+        this.draggedLat = center.lat;
+        this.draggedLon = center.lng;
+        this.isRadarMapUserInteracted = true;
+
+        const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
+        const statusText = document.getElementById('radarStatusText');
+        if (statusText) {
+          statusText.innerHTML = `📍 মানচিত্র স্থান: <b>${toBengaliDigits(center.lat.toFixed(2))}°N, ${toBengaliDigits(center.lng.toFixed(2))}°E</b> • অন্য যে কোন বাটনে চাপ দিলে এই স্থানের আবহাওয়া দৃশ্যমান হবে (কোনো রিফ্রেশ হবে না)`;
+        }
       });
 
     } catch (e) {
       console.warn('Weather Radar Map init error:', e);
+    }
+  },
+
+  // Apply map layer visibilities without changing map center/zoom
+  applyRadarMapLayers(layerType) {
+    if (!this.radarMap || !this.radarMap.isStyleLoaded()) return;
+
+    try {
+      if (layerType === 'satellite') {
+        if (this.radarMap.getLayer('radar-satellite-layer')) {
+          this.radarMap.setLayoutProperty('radar-satellite-layer', 'visibility', 'visible');
+        }
+        if (this.radarMap.getLayer('radar-osm-layer')) {
+          this.radarMap.setLayoutProperty('radar-osm-layer', 'visibility', 'none');
+        }
+        if (this.radarMap.getLayer('rain-radar-layer')) {
+          this.radarMap.setPaintProperty('rain-radar-layer', 'raster-opacity', 0.45);
+        }
+      } else {
+        if (this.radarMap.getLayer('radar-satellite-layer')) {
+          this.radarMap.setLayoutProperty('radar-satellite-layer', 'visibility', 'none');
+        }
+        if (this.radarMap.getLayer('radar-osm-layer')) {
+          this.radarMap.setLayoutProperty('radar-osm-layer', 'visibility', 'visible');
+        }
+        if (this.radarMap.getLayer('rain-radar-layer')) {
+          const rainOpacity = (layerType === 'rain' || layerType === 'radar') ? 0.78 : 0.25;
+          this.radarMap.setPaintProperty('rain-radar-layer', 'raster-opacity', rainOpacity);
+        }
+      }
+    } catch (err) {
+      console.warn('Apply layers error:', err);
     }
   },
 
@@ -816,7 +905,7 @@ const WeatherApp = {
           type: 'raster',
           source: 'rain-radar-source',
           paint: {
-            'raster-opacity': 0.72
+            'raster-opacity': 0.78
           }
         });
       }
@@ -857,6 +946,11 @@ const WeatherApp = {
         </div>
       `;
 
+      el.addEventListener('click', () => {
+        this.fetchWeather(p.lat, p.lon, p.name, false);
+        if (window.showToast) window.showToast(`📍 ${p.name}-এর আবহাওয়া লোড করা হয়েছে`);
+      });
+
       new maplibregl.Marker({ element: el })
         .setLngLat([p.lon, p.lat])
         .addTo(this.radarMap);
@@ -864,26 +958,44 @@ const WeatherApp = {
   },
 
   // Switch Radar Layer: 'satellite', 'radar', 'wind', 'temp', 'rain'
-  switchRadarLayer(layerType) {
+  // CRITICAL USER REQUIREMENT: After dragging to another place, clicking ANY layer button 
+  // inspects and shows that newly dragged location's weather and state without resetting/refreshing!
+  async switchRadarLayer(layerType) {
     this.activeRadarLayer = layerType;
     const statusText = document.getElementById('radarStatusText');
-    const lat = this.viewLat || 23.8;
-    const lon = this.viewLon || 90.4;
 
-    this.updateSimulationFrame(lat, lon, layerType, true);
+    // Apply layers to MapLibre instance without resetting map center
+    this.applyRadarMapLayers(layerType);
+
+    // Check if user has dragged/panned to a new location on the map
+    let targetLat = this.viewLat || 23.8;
+    let targetLon = this.viewLon || 90.4;
+
+    if (this.isRadarMapUserInteracted && this.draggedLat && this.draggedLon) {
+      targetLat = this.draggedLat;
+      targetLon = this.draggedLon;
+
+      // Show toast acknowledging location weather inspection
+      if (window.showToast) {
+        window.showToast('📍 মানচিত্রের নতুন টেনে আনা স্থানের আবহাওয়া ও অবস্থা প্রদর্শিত হচ্ছে');
+      }
+
+      // Fetch and display weather for dragged location without resetting map or page
+      await this.fetchWeather(targetLat, targetLon, null, false);
+    }
 
     if (layerType === 'satellite') {
-      if (statusText) statusText.innerText = '🛰️ লাইভ স্যাটেলাইট ভিউ: মহাকাশ থেকে সরাসরি পৃথিবীর মেঘমালা ও আবহাওয়ার দৃশ্য (www.windy.com অনুরূপ)';
+      if (statusText) statusText.innerText = '🛰️ লাইভ স্যাটেলাইট ভিউ: মহাকাশ থেকে সরাসরি পৃথিবীর মেঘমালা ও আবহাওয়ার দৃশ্য';
       if (window.showToast) window.showToast('🛰️ লাইভ স্যাটেলাইট দৃশ্য সক্রিয়');
     } else if (layerType === 'radar') {
-      if (statusText) statusText.innerText = '📡 ডপলার আবহাওয়া রাডার: সরাসরি বৃষ্টিপাত ও মেঘের ঘূর্ণি পরিস্থিতি (www.windy.com অনুরূপ)';
+      if (statusText) statusText.innerText = '📡 ডপলার আবহাওয়া রাডার: সরাসরি বৃষ্টিপাত ও মেঘের ঘূর্ণি পরিস্থিতি';
       if (window.showToast) window.showToast('📡 লাইভ ডপলার রাডার সক্রিয়');
     } else if (layerType === 'wind') {
-      if (statusText) statusText.innerText = '💨 বাতাসের গতি: বাতাস কোন দিক থেকে কোন দিকে প্রবাহিত হচ্ছে তার লাইভ ঘূর্ণায়মান অ্যানিমেশন';
+      if (statusText) statusText.innerText = '💨 বাতাসের গতি: বাতাস কোন দিক থেকে কোন দিকে প্রবাহিত হচ্ছে তার লাইভ দিকপ্রবাহ';
       if (window.showToast) window.showToast('💨 বাতাসের গতি ও দিকপ্রবাহ সক্রিয়');
     } else if (layerType === 'temp') {
       if (statusText) statusText.innerText = '🌡️ তাপমাত্রা মানচিত্র: বিভিন্ন অঞ্চলের সেলসিয়াস তাপমাত্রা (°C) ও উত্তাপ পরিস্থিতি';
-      if (window.showToast) window.showToast('🌡️ তাপমাত্রা হিটম্যাপ সক্রিয়');
+      if (window.showToast) window.showToast('🌡️ তাপমাত্রা পরিস্থিতি সক্রিয়');
     } else if (layerType === 'rain') {
       if (statusText) statusText.innerText = '🌧️ বৃষ্টিপাত পরিস্থিতি: বর্তমান বৃষ্টি ও মেঘের ঘনত্ব ও বৃষ্টিপাতের পূর্বাভাস';
       if (window.showToast) window.showToast('🌧️ বৃষ্টিপাত পরিস্থিতি সক্রিয়');
