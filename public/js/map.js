@@ -147,20 +147,13 @@ const MapModule = {
     this.map.on('load', () => {
       this.createUserMarker();
       this.updateLocationInfo(this.currentLat, this.currentLon);
-      this.fetchNearbyPlaces('all');
+      this.map.resize();
+      setTimeout(() => this.map.resize(), 150);
     });
 
     // Pause auto-follow when user drags manually
     this.map.on('dragstart', () => {
       this.isAutoFollow = false;
-    });
-
-    // Auto-update nearby POIs and place names on zoom & pan
-    this.map.on('moveend', () => {
-      if (this.map.getZoom() >= 14.5) {
-        const center = this.map.getCenter();
-        this.fetchNearbyPlacesForCenter(center.lat, center.lng);
-      }
     });
 
     this.map.on('rotate', () => {
@@ -1274,119 +1267,20 @@ const MapModule = {
   },
 
   fetchNearbyPlacesForCenter(lat, lon) {
-    // Only refresh if distance changed significantly
-    if (this._lastPoiLat && Math.hypot(lat - this._lastPoiLat, lon - this._lastPoiLon) < 0.005) {
-      return;
-    }
-    this._lastPoiLat = lat;
-    this._lastPoiLon = lon;
-    this.fetchNearbyPlaces('all');
+    // Disabled: Only user searched locations should be highlighted on the map
+    return;
   },
 
   async fetchNearbyPlaces(type = 'all') {
-    const listEl = document.getElementById('nearbyPlacesList');
-    if (listEl) {
-      listEl.innerHTML = '<div class="poi-placeholder"><i class="fa-solid fa-spinner fa-spin"></i> স্থাপনা লোড হচ্ছে...</div>';
-    }
-
+    // Disabled: No default POI markers (like DMCH, Baitul Mukarram) should clutter the map
     this.poiMarkers.forEach(m => m.remove());
     this.poiMarkers = [];
-
-    const typeConfigs = {
-      hospital: { label: 'হাসপাতাল', icon: 'fa-hospital', color: '#ef4444' },
-      mosque: { label: 'মসজিদ', icon: 'fa-mosque', color: '#10b981' },
-      restaurant: { label: 'রেস্তোরাঁ', icon: 'fa-utensils', color: '#f59e0b' },
-      school: { label: 'শিক্ষা প্রতিষ্ঠান', icon: 'fa-graduation-cap', color: '#8b5cf6' },
-      atm: { label: 'এটিএম/ব্যাংক', icon: 'fa-money-bill-wave', color: '#06b6d4' },
-      fuel: { label: 'জ্বালানি স্টেশন', icon: 'fa-gas-pump', color: '#ec4899' },
-      default: { label: 'পরিচিত স্থাপনা', icon: 'fa-location-dot', color: '#38bdf8' }
-    };
-
-    try {
-      const res = await fetch(`/api/nearby?lat=${this.currentLat}&lon=${this.currentLon}&type=${type === 'all' ? '' : type}`);
-      const places = await res.json();
-
-      if (!places || places.length === 0) {
-        this.renderSimulatedPOI(type);
-        return;
-      }
-
-      listEl.innerHTML = '';
-      places.slice(0, 8).forEach(place => {
-        const name = place.display_name.split(',')[0];
-        const categoryKey = type !== 'all' ? type : 'default';
-        const cfg = typeConfigs[categoryKey] || typeConfigs.default;
-
-        const item = document.createElement('div');
-        item.className = 'poi-item';
-        item.innerHTML = `
-          <div class="poi-name"><i class="fa-solid ${cfg.icon}" style="color:${cfg.color}; margin-right:6px;"></i> ${name}</div>
-          <span class="poi-type-tag">${cfg.label}</span>
-        `;
-        item.addEventListener('click', () => {
-          this.map.flyTo({ center: [parseFloat(place.lon), parseFloat(place.lat)], zoom: 17 });
-        });
-        listEl.appendChild(item);
-
-        const badge = document.createElement('div');
-        badge.className = 'poi-marker-badge';
-        badge.style.borderColor = cfg.color;
-        badge.innerHTML = `<i class="fa-solid ${cfg.icon}"></i> ${name.substring(0, 16)}`;
-
-        const marker = new maplibregl.Marker({ element: badge })
-          .setLngLat([parseFloat(place.lon), parseFloat(place.lat)])
-          .addTo(this.map);
-
-        this.poiMarkers.push(marker);
-      });
-
-    } catch (err) {
-      this.renderSimulatedPOI(type);
-    }
   },
 
   renderSimulatedPOI(filterType) {
-    const listEl = document.getElementById('nearbyPlacesList');
-    if (!listEl) return;
-    listEl.innerHTML = '';
-
-    const defaultPOIs = [
-      { name: 'ঢাকা মেডিকেল কলেজ ও হাসপাতাল', type: 'hospital', icon: 'fa-hospital', color: '#ef4444', dlat: 0.003, dlon: 0.002 },
-      { name: 'বায়তুল মোকাররম জাতীয় মসজিদ', type: 'mosque', icon: 'fa-mosque', color: '#10b981', dlat: -0.002, dlon: 0.003 },
-      { name: 'ঢাকা বিশ্ববিদ্যালয় ক্যাম্পাস', type: 'school', icon: 'fa-graduation-cap', color: '#8b5cf6', dlat: 0.004, dlon: -0.003 },
-      { name: 'কস্তুরী রেস্তোরাঁ ও কাবাব', type: 'restaurant', icon: 'fa-utensils', color: '#f59e0b', dlat: -0.003, dlon: -0.002 },
-      { name: 'ডাচ বাংলা ব্যাংক এটিএম বুথ', type: 'atm', icon: 'fa-money-bill-wave', color: '#06b6d4', dlat: 0.001, dlon: -0.002 },
-      { name: 'পদ্মা ফুয়েল ও সিএনজি ফিলিং', type: 'fuel', icon: 'fa-gas-pump', color: '#ec4899', dlat: -0.004, dlon: 0.002 }
-    ];
-
-    const filtered = filterType === 'all' ? defaultPOIs : defaultPOIs.filter(p => p.type === filterType);
-
-    filtered.forEach(p => {
-      const item = document.createElement('div');
-      item.className = 'poi-item';
-      item.innerHTML = `
-        <div class="poi-name"><i class="fa-solid ${p.icon}" style="color:${p.color}; margin-right:6px;"></i> ${p.name}</div>
-        <span class="poi-type-tag">${p.type}</span>
-      `;
-      const pLat = this.currentLat + p.dlat;
-      const pLon = this.currentLon + p.dlon;
-
-      item.addEventListener('click', () => {
-        this.map.flyTo({ center: [pLon, pLat], zoom: 17 });
-      });
-      listEl.appendChild(item);
-
-      const badge = document.createElement('div');
-      badge.className = 'poi-marker-badge';
-      badge.style.borderColor = p.color;
-      badge.innerHTML = `<i class="fa-solid ${p.icon}" style="color:${p.color};"></i> ${p.name.substring(0, 16)}`;
-
-      const marker = new maplibregl.Marker({ element: badge })
-        .setLngLat([pLon, pLat])
-        .addTo(this.map);
-
-      this.poiMarkers.push(marker);
-    });
+    // Disabled: No default POI markers should be placed on the map
+    this.poiMarkers.forEach(m => m.remove());
+    this.poiMarkers = [];
   }
 };
 

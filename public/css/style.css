@@ -3195,16 +3195,18 @@ body {
 #location-tab {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 46px);
+  height: calc(100vh - 44px);
+  height: calc(100dvh - 44px);
+  max-height: calc(100dvh - 44px);
+  overflow: hidden;
   padding: 0;
 }
 
 .map-view-wrapper.clean-map-view {
   flex: 1 1 auto;
   width: 100%;
-  height: calc(100vh - 195px);
-  min-height: 380px;
-  max-height: none;
+  height: auto;
+  min-height: 240px;
   position: relative;
   border-radius: 0;
   border-bottom: 1px solid rgba(56, 189, 248, 0.2);
@@ -3212,18 +3214,17 @@ body {
 
 @media (min-width: 900px) {
   .map-view-wrapper.clean-map-view {
-    height: calc(100vh - 175px);
-    min-height: 520px;
+    min-height: 380px;
   }
 }
 
 .map-bottom-controls-hub {
   flex: 0 0 auto;
   background: linear-gradient(180deg, #0b1329 0%, #080d1a 100%);
-  padding: 6px 10px 8px 10px;
+  padding: 5px 8px 6px 8px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
   z-index: 100;
