@@ -24,13 +24,15 @@ class WeatherSceneRenderer {
     
     // Solar & Lunar metrics
     this.sunProgress = 0.5; // 0.0 (sunrise) to 1.0 (sunset)
+    this.moonProgress = 0.5; // 0.0 (sunset) to 1.0 (next sunrise)
     this.solarIntensity = 0.85; // 0.0 (dim) to 1.0 (blazing)
-    this.sunriseStr = 'ভোর ৫:৪৮ AM';
-    this.sunsetStr = 'সন্ধ্যা ৫:৫০ PM';
+    this.sunriseStr = '৫:৪৮ AM';
+    this.sunsetStr = '৫:৫০ PM';
     this.sunriseDecimal = 5.8;
     this.sunsetDecimal = 17.83;
     this.locationTz = 'auto';
     this.currentLocalTimeStr = '';
+    this.isDaytimeNow = true;
     this.moonData = this.getMoonPhaseInfo();
 
     if (this.canvas) {
@@ -174,7 +176,7 @@ class WeatherSceneRenderer {
     const rise = this.sunriseDecimal || 5.8;
     const set = this.sunsetDecimal || 17.83;
 
-    // Calculate progression from sunrise (0.0) to sunset (1.0)
+    // Calculate Daytime progression from sunrise (0.0) to sunset (1.0)
     if (localHours >= rise && localHours <= set) {
       this.sunProgress = (localHours - rise) / (set - rise);
       this.isDaytimeNow = true;
@@ -187,9 +189,19 @@ class WeatherSceneRenderer {
       this.sunProgress = 1.0;
       this.isDaytimeNow = false;
     }
-
-    // Keep within bounds [0.0, 1.0]
     this.sunProgress = Math.max(0.0, Math.min(1.0, this.sunProgress));
+
+    // Calculate Nighttime Moon progression from sunset (0.0) to next sunrise (1.0)
+    const nightDuration = (24 - set) + rise; // Total hours of night
+    let nightElapsed = 0;
+    if (localHours >= set) {
+      nightElapsed = localHours - set;
+    } else if (localHours <= rise) {
+      nightElapsed = (24 - set) + localHours;
+    } else {
+      nightElapsed = nightDuration * 0.5; // Daytime fallback
+    }
+    this.moonProgress = Math.max(0.0, Math.min(1.0, nightElapsed / Math.max(1, nightDuration)));
 
     // Solar Intensity based on distance from peak solar noon
     const distanceFromPeak = Math.abs(this.sunProgress - 0.5) * 2;
@@ -647,95 +659,199 @@ class WeatherSceneRenderer {
       ctx.shadowBlur = 0;
     });
 
-    // 2. Render Authentic Moon according to Lunar Phase
-    // If New Moon (অমাবস্যা) -> Moon is dark/invisible, only stars are present!
-    if (moon.type !== 'new') {
-      const moonX = w - 85;
-      const moonY = 55;
-      const moonR = 24;
+    const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
 
-      // Soft Moon Halo proportional to illumination
-      if (moon.illumination > 15) {
-        const haloScale = moon.illumination / 100;
-        const haloGrad = ctx.createRadialGradient(moonX, moonY, moonR * 0.6, moonX, moonY, moonR * (1.6 + haloScale * 1.6));
-        haloGrad.addColorStop(0, `rgba(224, 242, 254, ${0.15 + haloScale * 0.3})`);
-        haloGrad.addColorStop(0.5, `rgba(186, 230, 253, ${0.05 + haloScale * 0.12})`);
-        haloGrad.addColorStop(1, 'rgba(186, 230, 253, 0)');
-        ctx.beginPath();
-        ctx.arc(moonX, moonY, moonR * (1.6 + haloScale * 1.6), 0, Math.PI * 2);
-        ctx.fillStyle = haloGrad;
-        ctx.fill();
-      }
+    // 2. Draw Nocturnal Lunar Trajectory Arc (রাতের চন্দ্র গতিপথের কার্ভ)
+    const sideMargin = Math.max(65, Math.min(95, Math.round(w * 0.18)));
+    const arcStartX = sideMargin;
+    const arcEndX = w - sideMargin;
+    const arcBaseY = h - 22;
+    const arcApexY = Math.max(26, Math.round(h * 0.20));
 
-      // Procedural Moon Phase Drawing
-      ctx.save();
-      const moonAlpha = mode === 'cloudy' ? 0.72 : 1.0;
-      ctx.globalAlpha = moonAlpha;
+    ctx.save();
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = 'rgba(186, 230, 253, 0.45)';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(arcStartX, arcBaseY);
+    ctx.quadraticCurveTo(w / 2, arcApexY - 10, arcEndX, arcBaseY);
+    ctx.stroke();
+    ctx.restore();
 
-      if (moon.type === 'full') {
-        // Full Moon: Completely illuminated sphere
-        ctx.beginPath();
-        ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
-        ctx.fillStyle = '#f8fafc';
-        ctx.shadowColor = '#bae6fd';
-        ctx.shadowBlur = 18;
-        ctx.fill();
-        ctx.shadowBlur = 0;
+    // Endpoints Dots on Lunar Curve
+    ctx.save();
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(arcStartX, arcBaseY, 3.5, 0, Math.PI * 2);
+    ctx.arc(arcEndX, arcBaseY, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
 
-        // Subtle crater marks
-        ctx.fillStyle = 'rgba(203, 213, 225, 0.45)';
-        ctx.beginPath();
-        ctx.arc(moonX - 6, moonY - 5, 4.5, 0, Math.PI * 2);
-        ctx.arc(moonX + 7, moonY + 5, 6, 0, Math.PI * 2);
-        ctx.arc(moonX - 3, moonY + 9, 3.5, 0, Math.PI * 2);
-        ctx.fill();
+    // Curve Both Sides: Left side Sunset, Right side Sunrise
+    ctx.save();
+    ctx.font = 'bold 10px Hind Siliguri, sans-serif';
 
-      } else if (moon.type === 'waxing-crescent' || moon.type === 'waning-crescent') {
-        // Crescent Moon: Slender silver crescent (বাঁকা চাঁদ)
-        ctx.beginPath();
-        ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.5)'; // Dark unlit silhouette
-        ctx.fill();
+    // Left Side Sunset (Beginning of night) Time Pill
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+    ctx.lineWidth = 1;
+    const leftText = `🌇 সূর্যাস্ত ${this.sunsetStr || '৫:৫০ PM'}`;
+    const leftWidth = ctx.measureText(leftText).width + 10;
+    const leftX = Math.max(4, arcStartX - leftWidth - 6);
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(leftX, arcBaseY - 10, leftWidth, 20, 6);
+    else ctx.rect(leftX, arcBaseY - 10, leftWidth, 20);
+    ctx.fill();
+    ctx.stroke();
 
-        // Lit Crescent Curve
-        ctx.beginPath();
-        const offset = moon.type === 'waxing-crescent' ? 7 : -7;
-        ctx.arc(moonX, moonY, moonR, -Math.PI / 2, Math.PI / 2, moon.type === 'waxing-crescent');
-        ctx.quadraticCurveTo(moonX + offset, moonY, moonX, moonY - moonR);
-        ctx.closePath();
-        ctx.fillStyle = '#f8fafc';
-        ctx.shadowColor = '#bae6fd';
-        ctx.shadowBlur = 14;
-        ctx.fill();
-        ctx.shadowBlur = 0;
+    ctx.fillStyle = '#bae6fd';
+    ctx.textAlign = 'left';
+    ctx.fillText(leftText, leftX + 5, arcBaseY + 4);
 
-      } else if (moon.type === 'first-quarter' || moon.type === 'last-quarter') {
-        // Half Moon (অর্ধচন্দ্র)
-        ctx.beginPath();
-        const isFirst = moon.type === 'first-quarter';
-        ctx.arc(moonX, moonY, moonR, -Math.PI / 2, Math.PI / 2, !isFirst);
-        ctx.closePath();
-        ctx.fillStyle = '#f8fafc';
-        ctx.shadowColor = '#bae6fd';
-        ctx.shadowBlur = 14;
-        ctx.fill();
-        ctx.shadowBlur = 0;
+    // Right Side Sunrise (End of night) Time Pill
+    const rightText = `🌅 সূর্যোদয় ${this.sunriseStr || '৫:৪৮ AM'}`;
+    const rightWidth = ctx.measureText(rightText).width + 10;
+    const rightX = Math.min(w - rightWidth - 4, arcEndX + 6);
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(rightX, arcBaseY - 10, rightWidth, 20, 6);
+    else ctx.rect(rightX, arcBaseY - 10, rightWidth, 20);
+    ctx.fill();
+    ctx.stroke();
 
-      } else {
-        // Gibbous Moon (কুঁজো চাঁদ - প্রায় পূর্ণ)
-        ctx.beginPath();
-        ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
-        ctx.fillStyle = '#f8fafc';
-        ctx.shadowColor = '#bae6fd';
-        ctx.shadowBlur = 16;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-      }
+    ctx.fillStyle = '#bae6fd';
+    ctx.textAlign = 'left';
+    ctx.fillText(rightText, rightX + 5, arcBaseY + 4);
+    ctx.restore();
 
-      ctx.restore();
+    // 3. Compute Moon Position along the Nocturnal Arc from Local Night Progression
+    const t = this.moonProgress !== undefined ? this.moonProgress : 0.5; // 0.0 to 1.0
+    const p0x = arcStartX, p0y = arcBaseY;
+    const p1x = w / 2, p1y = arcApexY - 10;
+    const p2x = arcEndX, p2y = arcBaseY;
+
+    const moonX = Math.round((1 - t) * (1 - t) * p0x + 2 * (1 - t) * t * p1x + t * t * p2x);
+    const moonY = Math.round((1 - t) * (1 - t) * p0y + 2 * (1 - t) * t * p1y + t * t * p2y);
+    const moonR = Math.max(16, Math.min(22, Math.round(w * 0.045)));
+
+    // 4. Render Authentic Moon according to Lunar Phase along the Arc
+    // Soft Moon Halo proportional to illumination
+    if (moon.illumination > 10) {
+      const haloScale = moon.illumination / 100;
+      const haloGrad = ctx.createRadialGradient(moonX, moonY, moonR * 0.5, moonX, moonY, moonR * (1.8 + haloScale * 1.5));
+      haloGrad.addColorStop(0, `rgba(224, 242, 254, ${0.18 + haloScale * 0.35})`);
+      haloGrad.addColorStop(0.5, `rgba(186, 230, 253, ${0.06 + haloScale * 0.15})`);
+      haloGrad.addColorStop(1, 'rgba(186, 230, 253, 0)');
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR * (1.8 + haloScale * 1.5), 0, Math.PI * 2);
+      ctx.fillStyle = haloGrad;
+      ctx.fill();
     }
 
-    // 3. Clouds in Night Sky
+    // Procedural Moon Phase Drawing
+    ctx.save();
+    const moonAlpha = mode === 'cloudy' ? 0.72 : 1.0;
+    ctx.globalAlpha = moonAlpha;
+
+    if (moon.type === 'new') {
+      // New Moon (অমাবস্যা) - Dark disc with subtle starry outline
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+      ctx.strokeStyle = 'rgba(186, 230, 253, 0.35)';
+      ctx.lineWidth = 1.2;
+      ctx.fill();
+      ctx.stroke();
+    } else if (moon.type === 'full') {
+      // Full Moon: Completely illuminated sphere
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.fillStyle = '#f8fafc';
+      ctx.shadowColor = '#bae6fd';
+      ctx.shadowBlur = 18;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Subtle crater marks
+      ctx.fillStyle = 'rgba(203, 213, 225, 0.45)';
+      ctx.beginPath();
+      ctx.arc(moonX - 5, moonY - 4, 3.5, 0, Math.PI * 2);
+      ctx.arc(moonX + 6, moonY + 4, 4.5, 0, Math.PI * 2);
+      ctx.arc(moonX - 2, moonY + 7, 2.8, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (moon.type === 'waxing-crescent' || moon.type === 'waning-crescent') {
+      // Crescent Moon: Slender silver crescent (বাঁকা চাঁদ)
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.65)'; // Dark unlit silhouette
+      ctx.fill();
+
+      // Lit Crescent Curve
+      ctx.beginPath();
+      const offset = moon.type === 'waxing-crescent' ? 6 : -6;
+      ctx.arc(moonX, moonY, moonR, -Math.PI / 2, Math.PI / 2, moon.type === 'waxing-crescent');
+      ctx.quadraticCurveTo(moonX + offset, moonY, moonX, moonY - moonR);
+      ctx.closePath();
+      ctx.fillStyle = '#f8fafc';
+      ctx.shadowColor = '#bae6fd';
+      ctx.shadowBlur = 14;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    } else if (moon.type === 'first-quarter' || moon.type === 'last-quarter') {
+      // Half Moon (অর্ধচন্দ্র)
+      ctx.beginPath();
+      const isFirst = moon.type === 'first-quarter';
+      ctx.arc(moonX, moonY, moonR, -Math.PI / 2, Math.PI / 2, !isFirst);
+      ctx.closePath();
+      ctx.fillStyle = '#f8fafc';
+      ctx.shadowColor = '#bae6fd';
+      ctx.shadowBlur = 14;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    } else {
+      // Gibbous Moon (কুঁজো চাঁদ - প্রায় পূর্ণ)
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.fillStyle = '#f8fafc';
+      ctx.shadowColor = '#bae6fd';
+      ctx.shadowBlur = 16;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Small unlit shadow edge
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, -Math.PI / 2, Math.PI / 2, false);
+      ctx.quadraticCurveTo(moonX - 4, moonY, moonX, moonY - moonR);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.4)';
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // 5. Illumination Badge under the Moon on the Arc
+    ctx.save();
+    ctx.font = 'bold 9.5px Hind Siliguri, sans-serif';
+    const moonBadgeText = `🌙 দৃশ্যমানতা: ${toBengaliDigits(moon.illumination)}%`;
+    const mbWidth = ctx.measureText(moonBadgeText).width + 8;
+    const mbX = Math.max(4, Math.min(w - mbWidth - 4, moonX - mbWidth / 2));
+    const mbY = Math.min(h - 14, moonY + moonR + 6);
+
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.78)';
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(mbX, mbY - 8, mbWidth, 16, 5);
+    else ctx.rect(mbX, mbY - 8, mbWidth, 16);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#e0f2fe';
+    ctx.textAlign = 'left';
+    ctx.fillText(moonBadgeText, mbX + 4, mbY + 4);
+    ctx.restore();
+
+    // 6. Clouds in Night Sky
     if (mode === 'partly-cloudy') {
       this.drawPuffClouds('rgba(203, 213, 225, 0.42)', 0.55);
     } else if (mode === 'cloudy') {
@@ -749,20 +865,8 @@ class WeatherSceneRenderer {
     const w = this.width;
     const h = this.height;
 
-    const moon = this.moonData || this.getMoonPhaseInfo();
-    if (moon.type !== 'new') {
-      const moonX = w - 85;
-      const moonY = 55;
-      const moonGlow = ctx.createRadialGradient(moonX, moonY, 10, moonX, moonY, 70);
-      moonGlow.addColorStop(0, 'rgba(186, 230, 253, 0.22)');
-      moonGlow.addColorStop(1, 'rgba(15, 23, 42, 0)');
-      ctx.beginPath();
-      ctx.arc(moonX, moonY, 70, 0, Math.PI * 2);
-      ctx.fillStyle = moonGlow;
-      ctx.fill();
-    }
-
-    this.drawNightOvercastClouds(0.5);
+    // Render Night Celestial Arc & Moon position under overcast rain
+    this.renderNightScene('cloudy');
 
     ctx.strokeStyle = '#bfdbfe';
     ctx.lineCap = 'round';
@@ -847,6 +951,12 @@ class WeatherSceneRenderer {
     const ctx = this.ctx;
     const w = this.width;
     const h = this.height;
+
+    if (isNight) {
+      this.renderNightScene('cloudy');
+    } else {
+      this.renderSunnyScene(false);
+    }
 
     const glowGrad = ctx.createRadialGradient(w * 0.5, h * 0.3, 10, w * 0.5, h * 0.3, 120);
     glowGrad.addColorStop(0, isNight ? 'rgba(186, 230, 253, 0.2)' : 'rgba(241, 245, 249, 0.25)');
