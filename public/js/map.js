@@ -507,35 +507,25 @@ const MapModule = {
     };
 
     if (btnFullMap) {
-      btnFullMap.addEventListener('click', () => toggleFullMap());
+      btnFullMap.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleFullMap();
+      });
     }
 
     if (btnFloatingClose) {
-      btnFloatingClose.addEventListener('click', () => toggleFullMap(false));
+      btnFloatingClose.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleFullMap(false);
+      });
     }
 
     if (btnStreetView) {
-      setTimeout(() => {
-        if (this.map) {
-          this.map.resize();
-          this.recenter();
-        }
-      }, 150);
-      setTimeout(() => {
-        if (this.map) this.map.resize();
-      }, 350);
-    };
-
-    if (btnFullMap) {
-      btnFullMap.addEventListener('click', () => toggleFullMap());
-    }
-
-    if (btnFloatingClose) {
-      btnFloatingClose.addEventListener('click', () => toggleFullMap(false));
-    }
-
-    if (btnStreetView) {
-      btnStreetView.addEventListener('click', () => {
+      btnStreetView.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         this.isSatelliteMode = !this.isSatelliteMode;
         if (this.isSatelliteMode) {
           this.map.setLayoutProperty('osm-tiles-layer', 'visibility', 'none');
