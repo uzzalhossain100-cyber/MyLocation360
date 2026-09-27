@@ -436,6 +436,17 @@ const WeatherApp = {
         window.WeatherScenes.currentLocationScene.setScene(condition.scene);
       }
 
+      // Update Live Interactive Simulation Frame location
+      const iframe = document.getElementById('liveWeatherFrame');
+      if (iframe) {
+        iframe.src = `https://embed.windy.com/embed.html?lat=${lat}&lon=${lon}&zoom=6&level=surface&overlay=${this.activeRadarLayer || 'wind'}&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
+      }
+
+      const zoomEarthLink = document.querySelector('.zoom-earth-link-btn');
+      if (zoomEarthLink) {
+        zoomEarthLink.href = `https://zoom.earth/maps/wind-speed/#view=${lat},${lon},6z/model=icon`;
+      }
+
       // Render Next 24-Hour Hourly Forecast
       this.renderHourlyForecast(hourly);
 
@@ -626,35 +637,51 @@ const WeatherApp = {
     });
   },
 
-  // Switch Radar Layer: 'rain' (বৃষ্টিপাত), 'temp' (তাপমাত্রা), 'wind' (বাতাস)
+  // Switch Radar Layer: 'satellite', 'radar', 'wind', 'temp', 'rain'
   switchRadarLayer(layerType) {
     this.activeRadarLayer = layerType;
     const statusText = document.getElementById('radarStatusText');
+    const iframe = document.getElementById('liveWeatherFrame');
+    const zoomEarthLink = document.querySelector('.zoom-earth-link-btn');
 
-    if (layerType === 'rain') {
-      if (statusText) statusText.innerText = '🌧️ লাইভ বৃষ্টিপাত রেডার: বৃষ্টি ও মেঘের তীব্রতা দেখানো হচ্ছে (গাঢ় রং = ভারী বৃষ্টি)';
-      if (this.radarMap && this.radarMap.getLayer('rain-radar-layer')) {
-        this.radarMap.setLayoutProperty('rain-radar-layer', 'visibility', 'visible');
-      }
-      if (window.showToast) window.showToast('🌧️ লাইভ বৃষ্টিপাত ও মেঘের রেডার সক্রিয়');
-    } else if (layerType === 'temp') {
-      if (statusText) statusText.innerText = '🌡️ তাপমাত্রা দৃশ্য: বিভিন্ন অঞ্চলের সেলসিয়াস তাপমাত্রা (°C) ও উত্তাপ পরিস্থিতি';
-      if (this.radarMap && this.radarMap.getLayer('rain-radar-layer')) {
-        this.radarMap.setLayoutProperty('rain-radar-layer', 'visibility', 'none');
-      }
-      if (window.showToast) window.showToast('🌡️ তাপমাত্রা মোড সক্রিয়');
-    } else if (layerType === 'wind') {
-      if (statusText) statusText.innerText = '💨 বাতাসের গতি ও প্রবাহ: বাতাস কোন দিক থেকে কোন দিকে বইছে এবং গতিবেগ (কিমি/ঘণ্টা)';
-      if (this.radarMap && this.radarMap.getLayer('rain-radar-layer')) {
-        this.radarMap.setLayoutProperty('rain-radar-layer', 'visibility', 'none');
-      }
-      if (window.showToast) window.showToast('💨 বাতাসের গতি ও দিকপ্রবাহ সক্রিয়');
+    const lat = this.viewLat || 23.8;
+    const lon = this.viewLon || 90.4;
+
+    // Update Iframe Simulation Source
+    if (iframe) {
+      const overlayKey = layerType === 'satellite' ? 'satellite' :
+                         layerType === 'radar' ? 'radar' :
+                         layerType === 'wind' ? 'wind' :
+                         layerType === 'temp' ? 'temp' : 'rain';
+
+      iframe.src = `https://embed.windy.com/embed.html?lat=${lat}&lon=${lon}&zoom=6&level=surface&overlay=${overlayKey}&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
     }
 
-    // Refresh markers with current layer values
-    const pins = document.querySelectorAll('.radar-weather-pin');
-    pins.forEach(pin => pin.remove());
-    this.renderWeatherPoints();
+    // Update Zoom Earth external link
+    if (zoomEarthLink) {
+      const zoomPath = layerType === 'satellite' ? 'satellite' :
+                       layerType === 'wind' ? 'wind-speed' :
+                       layerType === 'temp' ? 'temperature' :
+                       layerType === 'rain' ? 'precipitation' : 'radar';
+      zoomEarthLink.href = `https://zoom.earth/maps/${zoomPath}/#view=${lat},${lon},6z/model=icon`;
+    }
+
+    if (layerType === 'satellite') {
+      if (statusText) statusText.innerText = '🛰️ লাইভ স্যাটেলাইট ভিউ: মহাকাশ থেকে সরাসরি পৃথিবীর মেঘমালা ও আবহাওয়ার দৃশ্য';
+      if (window.showToast) window.showToast('🛰️ লাইভ স্যাটেলাইট দৃশ্য সক্রিয়');
+    } else if (layerType === 'radar') {
+      if (statusText) statusText.innerText = '📡 আবহাওয়া রাডার: ডপলার রাডারে সরাসরি বৃষ্টি ও মেঘের ঘূর্ণি পরিস্থিতি';
+      if (window.showToast) window.showToast('📡 লাইভ আবহাওয়া রাডার সক্রিয়');
+    } else if (layerType === 'wind') {
+      if (statusText) statusText.innerText = '💨 বাতাসের গতি: বাতাস কোন দিক থেকে কোন দিকে প্রবাহিত হচ্ছে তার লাইভ অ্যানিমেশন';
+      if (window.showToast) window.showToast('💨 বাতাসের গতি ও দিকপ্রবাহ সক্রিয়');
+    } else if (layerType === 'temp') {
+      if (statusText) statusText.innerText = '🌡️ তাপমাত্রা মানচিত্র: বিভিন্ন অঞ্চলের সেলসিয়াস তাপমাত্রা (°C) ও উত্তাপ পরিস্থিতি';
+      if (window.showToast) window.showToast('🌡️ তাপমাত্রা হিটম্যাপ সক্রিয়');
+    } else if (layerType === 'rain') {
+      if (statusText) statusText.innerText = '🌧️ বৃষ্টিপাত পরিস্থিতি: বর্তমান বৃষ্টি ও মেঘের ঘনত্ব ও বৃষ্টিপাতের পূর্বাভাস';
+      if (window.showToast) window.showToast('🌧️ বৃষ্টিপাত পরিস্থিতি সক্রিয়');
+    }
   }
 };
 

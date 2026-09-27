@@ -3896,3 +3896,129 @@ body.in-fullmap-mode .corner-tool-btn {
   border-left: 1px solid rgba(255, 255, 255, 0.2);
   padding-left: 5px;
 }
+
+/* ==========================================================
+   ZOOM EARTH STYLE WEATHER SIMULATION IFRAME & CONTROLS
+   ========================================================== */
+
+.radar-map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.zoom-earth-link-btn {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  border-radius: 9999px;
+  padding: 5px 12px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.zoom-earth-link-btn:hover {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.weather-map-stage-wrapper {
+  position: relative;
+  width: 100%;
+  height: 440px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  background: #0f172a;
+}
+
+@media (max-width: 640px) {
+  .weather-map-stage-wrapper {
+    height: 380px;
+  }
+}
+
+.live-weather-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* Layer controls on right side */
+.weather-map-layer-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.w-layer-btn {
+  background: rgba(13, 20, 34, 0.94);
+  border: 1.2px solid rgba(56, 189, 248, 0.35);
+  color: #e2e8f0;
+  border-radius: 10px;
+  padding: 6px 11px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+}
+
+.w-layer-btn:hover {
+  background: rgba(2, 132, 199, 0.35);
+  color: #ffffff;
+  border-color: #38bdf8;
+  transform: translateX(-2px);
+}
+
+.w-layer-btn.active {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
+  border-color: #38bdf8;
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.6);
+}
+
+.radar-layer-status-pill {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  max-width: 520px;
+  background: rgba(13, 20, 34, 0.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 9999px;
+  padding: 5px 12px;
+  font-size: 0.73rem;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  pointer-events: none;
+  line-height: 1.25;
+}

@@ -453,42 +453,56 @@
               </div>
             </div>
 
-            <!-- INTERACTIVE BANGLADESH & GLOBAL WEATHER RADAR MAP (ইন্টারেক্টিভ আবহাওয়া মানচিত্র) -->
+            <!-- INTERACTIVE BANGLADESH & GLOBAL WEATHER RADAR MAP (ZOOM EARTH / WINDY ENGINE) -->
             <div class="weather-radar-map-card">
               <div class="radar-map-header">
                 <div class="r-title-wrap">
                   <div class="r-title">
                     <i class="fa-solid fa-earth-asia text-primary"></i>
-                    <span>লাইভ আবহাওয়া মানচিত্র (বাংলাদেশ ও বিশ্ব)</span>
+                    <span>লাইভ আবহাওয়া মানচিত্র (Zoom Earth অনুরূপ)</span>
                   </div>
-                  <span class="r-subtitle">ম্যাপটি জুম ও প্যান করে যেকোনো স্থান ও দেশের আবহাওয়া দেখুন</span>
+                  <span class="r-subtitle">বাতাসের ঘূর্ণি, স্যাটেলাইট মেঘ, রাডার বৃষ্টি ও তাপমাত্রার জীবন্ত দৃশ্য</span>
                 </div>
+                <a href="https://zoom.earth/maps/wind-speed/#view=23.8,90.4,6z/model=icon" target="_blank" rel="noopener noreferrer" class="zoom-earth-link-btn" title="Zoom Earth ওয়েবসাইটে ফুলস্ক্রিন দেখুন">
+                  <i class="fa-solid fa-up-right-from-square"></i>
+                  <span>Zoom Earth</span>
+                </a>
               </div>
 
               <div class="weather-map-stage-wrapper">
-                <!-- MapLibre Weather Radar Canvas -->
-                <div id="weatherRadarMap" class="weather-radar-canvas"></div>
+                <!-- Live Interactive Weather Simulation Iframe -->
+                <iframe id="liveWeatherFrame" class="live-weather-iframe" 
+                  src="https://embed.windy.com/embed.html?lat=23.8&lon=90.4&zoom=6&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1" 
+                  frameborder="0" allowfullscreen></iframe>
 
-                <!-- Right-side layer control panel: বৃষ্টিপাত, তাপমাত্রা, বাতাস -->
+                <!-- Right-side Zoom Earth Style Layer Switcher (স্যাটেলাইট, রাডার, বাতাসের গতি, তাপমাত্রা, বৃষ্টিপাত) -->
                 <div class="weather-map-layer-controls">
-                  <button class="w-layer-btn active" data-layer="rain" id="btnLayerRain" title="লাইভ বৃষ্টিপাত ও মেঘের রেডার দেখুন">
-                    <i class="fa-solid fa-cloud-showers-heavy"></i>
-                    <span>বৃষ্টিপাত</span>
+                  <button class="w-layer-btn" data-layer="satellite" id="btnLayerSatellite" title="লাইভ মহাকাশ স্যাটেলাইট দৃশ্য">
+                    <i class="fa-solid fa-satellite"></i>
+                    <span>স্যাটেলাইট</span>
                   </button>
-                  <button class="w-layer-btn" data-layer="temp" id="btnLayerTemp" title="তাপমাত্রার পরিস্থিতি ও হিটম্যাপ দেখুন">
+                  <button class="w-layer-btn" data-layer="radar" id="btnLayerRadar" title="ডপলার আবহাওয়া রাডার">
+                    <i class="fa-solid fa-tower-broadcast"></i>
+                    <span>রাডার</span>
+                  </button>
+                  <button class="w-layer-btn active" data-layer="wind" id="btnLayerWind" title="বাতাসের গতি ও দিকপ্রবাহ">
+                    <i class="fa-solid fa-wind"></i>
+                    <span>বাতাসের গতি</span>
+                  </button>
+                  <button class="w-layer-btn" data-layer="temp" id="btnLayerTemp" title="তাপমাত্রার পরিস্থিতি ও হিটম্যাপ">
                     <i class="fa-solid fa-temperature-half"></i>
                     <span>তাপমাত্রা</span>
                   </button>
-                  <button class="w-layer-btn" data-layer="wind" id="btnLayerWind" title="বাতাসের প্রবাহ ও গতিবেগ দেখুন">
-                    <i class="fa-solid fa-wind"></i>
-                    <span>বাতাস</span>
+                  <button class="w-layer-btn" data-layer="rain" id="btnLayerRain" title="বৃষ্টিপাত ও মেঘের পরিস্থিতি">
+                    <i class="fa-solid fa-cloud-showers-heavy"></i>
+                    <span>বৃষ্টিপাত</span>
                   </button>
                 </div>
 
-                <!-- Bottom Status Pill showing Active Mode -->
+                <!-- Bottom Status Pill showing Active Mode & Layer Info -->
                 <div class="radar-layer-status-pill" id="radarLayerStatusPill">
                   <i class="fa-solid fa-circle-info text-info"></i>
-                  <span id="radarStatusText">🌧️ লাইভ বৃষ্টিপাত রেডার: বৃষ্টি ও মেঘের তীব্রতা দেখানো হচ্ছে</span>
+                  <span id="radarStatusText">💨 বাতাসের গতি: বাতাস কোন দিক থেকে কোন দিকে প্রবাহিত হচ্ছে তার লাইভ অ্যানিমেশন দেখানো হচ্ছে</span>
                 </div>
               </div>
             </div>
