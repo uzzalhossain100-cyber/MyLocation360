@@ -618,6 +618,21 @@ const WeatherApp = {
 
       document.getElementById('cwAnimBadge').innerText = condition.badge;
 
+      // Update Initial Home Portal Weather Summary Card
+      const hTempEl = document.getElementById('homeCurrentTemp');
+      const hCondIcon = document.getElementById('homeCurrentConditionIcon');
+      const hCondText = document.getElementById('homeCurrentConditionText');
+      const hRainEl = document.getElementById('homeCurrentRain');
+      const hWindEl = document.getElementById('homeCurrentWind');
+      const hHumidEl = document.getElementById('homeCurrentHumidity');
+
+      if (hTempEl) hTempEl.innerText = `${toBengaliDigits(temp)}°`;
+      if (hCondIcon) hCondIcon.innerText = condition.icon;
+      if (hCondText) hCondText.innerText = condition.text;
+      if (hRainEl) hRainEl.innerText = `${toBengaliDigits(rainChance)}%`;
+      if (hWindEl) hWindEl.innerText = `${toBengaliDigits(windSpeed)} কিমি/ঘ.`;
+      if (hHumidEl) hHumidEl.innerText = `${toBengaliDigits(humidity)}%`;
+
       // Update Animated Weather Scene with Actual Sunrise/Sunset and Local Time
       if (window.WeatherScenes && window.WeatherScenes.currentLocationScene) {
         if (daily.sunrise && daily.sunrise[0] && daily.sunset && daily.sunset[0]) {

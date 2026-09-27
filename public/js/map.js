@@ -690,9 +690,18 @@ const MapModule = {
         window.WeatherApp.setMyGpsLocation(lat, lon, exactAddress);
       }
 
+      // Update Home Portal Initial Summary Elements
+      const homeAddrEl = document.getElementById('homeCurrentAddress');
+      const homeCoordsEl = document.getElementById('homeCurrentCoords');
+      const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
+      if (homeAddrEl) homeAddrEl.innerText = exactAddress;
+      if (homeCoordsEl) homeCoordsEl.innerText = `${toBengaliDigits(lat.toFixed(4))}° উ., ${toBengaliDigits(lon.toFixed(4))}° পূ.`;
+
     } catch (err) {
       if (roadEl) roadEl.innerText = 'মিরপুর রোড / বীর উত্তম সি আর দত্ত রোড';
       if (areaEl) areaEl.innerText = 'ধানমন্ডি, ঢাকা, বাংলাদেশ';
+      const homeAddrEl = document.getElementById('homeCurrentAddress');
+      if (homeAddrEl) homeAddrEl.innerText = 'ধানমন্ডি, ঢাকা, বাংলাদেশ';
     }
   },
 

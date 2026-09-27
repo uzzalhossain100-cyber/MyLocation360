@@ -29,54 +29,142 @@
 </head>
 <body class="theme-dark">
 
-  <!-- ================= INITIAL APP ENTRY: HOME WELCOME PORTAL ================= -->
+  <!-- ================= INITIAL APP ENTRY: BEAUTIFUL DUAL SPLIT HOME PORTAL ================= -->
   <div class="home-portal-overlay" id="homePortalOverlay">
     <div class="home-portal-card">
+      
+      <!-- Brand & Welcome Header -->
       <div class="home-portal-brand">
         <div class="home-logo-wrap">
           <img src="/assets/icon-192.svg" alt="MyLocation360" class="home-brand-logo">
         </div>
         <h1 class="home-portal-title">MyLocation360</h1>
-        <p class="home-portal-subtitle">স্মার্ট জিপিএস দিকদর্শন ও লাইভ জীবন্ত আবহাওয়া প্ল্যাটফর্ম</p>
+        <p class="home-portal-subtitle">স্মার্ট জিপিএস অবস্থান ও লাইভ আবহাওয়া ড্যাশবোর্ড</p>
       </div>
 
-      <div class="home-portal-prompt">
-        <span>প্রবেশ করতে ফিচার নির্বাচন করুন:</span>
+      <!-- Quick Dual Split Section (দু ভাগে বিভক্ত হোম ড্যাশবোর্ড) -->
+      <div class="home-dual-split-grid">
+        
+        <!-- PART 1 (LEFT / SIDE 1): MY LOCATION (আমার বর্তমান লোকেশন) -->
+        <div class="home-split-card card-my-location" id="portalBtnLocation" role="button" tabindex="0">
+          <div class="split-card-header">
+            <div class="split-icon-badge badge-loc">
+              <i class="fa-solid fa-location-crosshairs"></i>
+            </div>
+            <div class="split-header-text">
+              <h3 class="split-title">মাই লোকেশন</h3>
+              <span class="split-subtitle">আমার বর্তমান অবস্থান</span>
+            </div>
+            <span class="live-pulse-pill"><span class="pulse-dot"></span> লাইভ জিপিএস</span>
+          </div>
+
+          <div class="split-card-body">
+            <div class="home-info-row">
+              <i class="fa-solid fa-map-pin text-primary"></i>
+              <div class="info-content">
+                <span class="info-label">বর্তমান ঠিকানা:</span>
+                <span class="info-val-strong" id="homeCurrentAddress">শনাক্ত করা হচ্ছে...</span>
+              </div>
+            </div>
+
+            <div class="home-info-row">
+              <i class="fa-solid fa-compass text-info"></i>
+              <div class="info-content">
+                <span class="info-label">স্থানাঙ্ক ও দিক:</span>
+                <span class="info-val-sub" id="homeCurrentCoords">২৩.৮১০৩° উ., ৯০.৪১২৫° পূ.</span>
+              </div>
+            </div>
+
+            <div class="home-feature-tags">
+              <span class="h-tag"><i class="fa-solid fa-satellite"></i> স্যাটেলাইট ভিউ</span>
+              <span class="h-tag"><i class="fa-solid fa-street-view"></i> ৩৬০° স্ট্রিট ভিউ</span>
+              <span class="h-tag"><i class="fa-solid fa-route"></i> রুট নেভিগেশন</span>
+            </div>
+          </div>
+
+          <!-- Click Action Trigger -->
+          <div class="split-card-action">
+            <button type="button" class="btn-portal-action action-loc">
+              <span>বিস্তারিত দেখতে ক্লিক করুন</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- PART 2 (RIGHT / SIDE 2): LIVE WEATHER (আমার লোকেশনের সংক্ষিপ্ত আবহাওয়া) -->
+        <div class="home-split-card card-live-weather" id="portalBtnWeather" role="button" tabindex="0">
+          <div class="split-card-header">
+            <div class="split-icon-badge badge-weather">
+              <i class="fa-solid fa-cloud-sun"></i>
+            </div>
+            <div class="split-header-text">
+              <h3 class="split-title">লাইভ আবহাওয়া</h3>
+              <span class="split-subtitle">আমার লোকেশনের সংক্ষিপ্ত আবহাওয়া</span>
+            </div>
+            <span class="live-pulse-pill pill-sky"><span class="pulse-dot dot-sky"></span> রিয়েল-টাইম</span>
+          </div>
+
+          <div class="split-card-body">
+            <!-- Main Live Temp & Condition -->
+            <div class="home-weather-hero">
+              <div class="h-temp-wrap">
+                <span class="h-temp-num" id="homeCurrentTemp">৩১°</span>
+                <span class="h-temp-unit">C</span>
+              </div>
+              <div class="h-cond-wrap">
+                <span class="h-cond-icon" id="homeCurrentConditionIcon">☀️</span>
+                <span class="h-cond-name" id="homeCurrentConditionText">পরিষ্কার আকাশ</span>
+              </div>
+            </div>
+
+            <!-- Mini Metrics Row -->
+            <div class="home-weather-metrics-grid">
+              <div class="h-metric-item">
+                <i class="fa-solid fa-cloud-rain text-primary"></i>
+                <div>
+                  <span class="m-label">বৃষ্টিপাত</span>
+                  <span class="m-val" id="homeCurrentRain">১৫%</span>
+                </div>
+              </div>
+              <div class="h-metric-item">
+                <i class="fa-solid fa-wind text-sky"></i>
+                <div>
+                  <span class="m-label">বাতাসের গতি</span>
+                  <span class="m-val" id="homeCurrentWind">১২ কিমি/ঘ.</span>
+                </div>
+              </div>
+              <div class="h-metric-item">
+                <i class="fa-solid fa-droplet text-teal"></i>
+                <div>
+                  <span class="m-label">আর্দ্রতা</span>
+                  <span class="m-val" id="homeCurrentHumidity">৬৫%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="home-feature-tags">
+              <span class="h-tag"><i class="fa-solid fa-wind"></i> Windy.com লাইভ</span>
+              <span class="h-tag"><i class="fa-solid fa-tower-broadcast"></i> ডপলার রাডার</span>
+              <span class="h-tag"><i class="fa-solid fa-clock"></i> ২৪ ঘণ্টার পূর্বাভাস</span>
+            </div>
+          </div>
+
+          <!-- Click Action Trigger -->
+          <div class="split-card-action">
+            <button type="button" class="btn-portal-action action-weather">
+              <span>বিস্তারিত দেখতে ক্লিক করুন</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
       </div>
 
-      <div class="home-portal-options-grid">
-        <!-- Option 1: My Location -->
-        <button class="portal-option-card opt-location" id="portalBtnLocation" type="button">
-          <div class="opt-icon-circle">
-            <i class="fa-solid fa-location-crosshairs"></i>
-          </div>
-          <div class="opt-content">
-            <h3 class="opt-title">মাই লোকেশন (MyLocation)</h3>
-            <p class="opt-desc">সঠিক জিপিএস অবস্থান, রিয়েল-টাইম কম্পাস, দ্রুততম পথ ও স্যাটেলাইট মানচিত্র</p>
-          </div>
-          <div class="opt-arrow">
-            <i class="fa-solid fa-circle-arrow-right"></i>
-          </div>
-        </button>
-
-        <!-- Option 2: Live Weather -->
-        <button class="portal-option-card opt-weather" id="portalBtnWeather" type="button">
-          <div class="opt-icon-circle">
-            <i class="fa-solid fa-cloud-sun"></i>
-          </div>
-          <div class="opt-content">
-            <h3 class="opt-title">লাইভ আবহাওয়া (Live Weather)</h3>
-            <p class="opt-desc">নির্বাচিত এলাকার জীবন্ত দৃশ্য, সৌরগতিপথ কার্ভে সূর্যের অবস্থান ও বৃষ্টিপাত মানচিত্র</p>
-          </div>
-          <div class="opt-arrow">
-            <i class="fa-solid fa-circle-arrow-right"></i>
-          </div>
-        </button>
-      </div>
-
+      <!-- Footer Info Bar -->
       <div class="home-portal-footer">
-        <span>স্মার্ট অবস্থান ট্র্যাকিং • বাস্তব সময়ের আবহাওয়া • ডপলার রাডার</span>
+        <span>স্মার্ট অবস্থান ট্র্যাকিং • বাস্তব সময়ের আবহাওয়া • ডপলার রাডার ও ৩৬০° ভিউ</span>
       </div>
+
     </div>
   </div>
 
