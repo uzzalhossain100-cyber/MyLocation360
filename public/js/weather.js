@@ -431,7 +431,7 @@ const WeatherApp = {
     }
 
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto&forecast_days=2`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto&forecast_days=3`;
       const response = await fetch(url);
       if (!response.ok) throw new Error('Weather API failed');
       const data = await response.json();
@@ -502,8 +502,8 @@ const WeatherApp = {
       // Update Live Interactive Simulation Frame with Windy.com identical specs (Default: rain)
       this.updateSimulationFrame(lat, lon, this.activeRadarLayer || 'rain');
 
-      // Render Next 24-Hour Hourly Forecast
-      this.renderHourlyForecast(hourly);
+      // Render Next 24-Hour Hourly Forecast strictly starting from CURRENT hour
+      this.renderHourlyForecast(hourly, current.time);
 
     } catch (err) {
       console.warn('Weather fetch error:', err);
@@ -560,8 +560,8 @@ const WeatherApp = {
     }
   },
 
-  // Render Next 24-Hour Forecast (Hourly Timeline)
-  renderHourlyForecast(hourly) {
+  // Render Next 24-Hour Forecast (Hourly Timeline strictly starting from CURRENT hour)
+  renderHourlyForecast(hourly, currentLocalTimeStr) {
     const container = document.getElementById('hourlyTimelineContainer');
     if (!container) return;
 
@@ -572,31 +572,61 @@ const WeatherApp = {
 
     const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
 
-    // Find current hour index
-    const nowIsoHour = new Date().toISOString().slice(0, 13); // "2026-09-26T12"
-    let startIndex = hourly.time.findIndex(t => t.startsWith(nowIsoHour));
-    if (startIndex === -1) startIndex = 0;
+    // Determine current local hour in "YYYY-MM-DDTHH" format
+    let currentHourPrefix = '';
+    if (currentLocalTimeStr && typeof currentLocalTimeStr === 'string') {
+      currentHourPrefix = currentLocalTimeStr.slice(0, 13); // e.g. "2026-09-27T14"
+    } else {
+      try {
+        const nowObj = this.viewTimezone 
+          ? new Date(new Date().toLocaleString('en-US', { timeZone: this.viewTimezone }))
+          : new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        currentHourPrefix = `${nowObj.getFullYear()}-${pad(nowObj.getMonth() + 1)}-${pad(nowObj.getDate())}T${pad(nowObj.getHours())}`;
+      } catch (e) {
+        const nowObj = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        currentHourPrefix = `${nowObj.getFullYear()}-${pad(nowObj.getMonth() + 1)}-${pad(nowObj.getDate())}T${pad(nowObj.getHours())}`;
+      }
+    }
 
-    const count = 24; // next 24 hours
+    // Find the exact index for current hour in hourly.time
+    let startIndex = hourly.time.findIndex(t => t.startsWith(currentHourPrefix));
+    
+    // If exact hour match not found, find the first entry that is greater than or equal to currentHourPrefix
+    if (startIndex === -1) {
+      startIndex = hourly.time.findIndex(t => t >= currentHourPrefix);
+    }
+
+    // Safety fallback: ensure startIndex is at least 0
+    if (startIndex === -1) {
+      startIndex = 0;
+    }
+
+    const count = 24; // Strictly next 24 hours
     container.innerHTML = '';
 
-    for (let i = startIndex; i < Math.min(hourly.time.length, startIndex + count); i++) {
-      const timeStr = hourly.time[i]; // "2026-09-26T14:00"
-      const d = new Date(timeStr);
-      let hourNum = d.getHours();
+    const endIndex = Math.min(hourly.time.length, startIndex + count);
+    for (let i = startIndex; i < endIndex; i++) {
+      const timeStr = hourly.time[i]; // "2026-09-27T14:00"
+      
+      // Extract hour directly from string to prevent timezone distortion
+      const timePart = timeStr.split('T')[1] || '12:00';
+      const hourNum = parseInt(timePart.split(':')[0], 10);
+      
       const ampm = hourNum >= 12 ? 'PM' : 'AM';
-      hourNum = hourNum % 12;
-      hourNum = hourNum ? hourNum : 12;
+      let hour12 = hourNum % 12;
+      hour12 = hour12 ? hour12 : 12;
 
       const isFirst = (i === startIndex);
-      const displayHour = isFirst ? 'এখন' : `${toBengaliDigits(hourNum)} ${ampm}`;
+      const displayHour = isFirst ? 'এখন' : `${toBengaliDigits(hour12)} ${ampm}`;
 
       const tTemp = Math.round(hourly.temperature_2m ? hourly.temperature_2m[i] : 28);
       const tRain = Math.round(hourly.precipitation_probability ? hourly.precipitation_probability[i] : 10);
       const tCode = hourly.weather_code ? hourly.weather_code[i] : 0;
       const tWind = Math.round(hourly.wind_speed_10m ? hourly.wind_speed_10m[i] : 10);
 
-      const isNight = (d.getHours() < 6 || d.getHours() >= 18);
+      const isNight = (hourNum < 6 || hourNum >= 18);
       const icon = (tCode === 0) ? (isNight ? '🌙' : '☀️') :
                    (tCode <= 2) ? (isNight ? '☁️' : '🌤️') :
                    (tCode === 3) ? '☁️' :
