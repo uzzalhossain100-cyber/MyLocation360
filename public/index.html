@@ -152,15 +152,20 @@
             </button>
           </div>
 
-          <!-- Street View Pick Mode Banner (প্রথমে ম্যাপ ও রাস্তা দেখাবে, যে জায়গা জুম করা হবে সেখানে ক্লিক করলেই স্ট্রিট ভিউ আসবে) -->
+          <!-- Street View Pick Mode Banner (মোবাইল ও ডেসকটপ উভয়েই সহজ রাস্তা নির্বাচন) -->
           <div class="streetview-pick-banner" id="streetViewPickBanner" style="display:none;">
             <div class="sv-pick-info">
               <i class="fa-solid fa-street-view text-warning fa-bounce"></i>
-              <span><strong>স্ট্রিট ভিউ সক্রিয়:</strong> যে রাস্তা দেখতে চান সেখানে ম্যাপ জুম করে ক্লিক/ট্যাপ করুন</span>
+              <span>যে রাস্তা দেখতে চান সেখানে জুম করে ম্যাপে ট্যাপ করুন</span>
             </div>
-            <button class="sv-pick-cancel-btn" id="btnCancelStreetViewPick" title="স্ট্রিট ভিউ মোড বন্ধ করুন">
-              <i class="fa-solid fa-xmark"></i> বন্ধ
-            </button>
+            <div class="sv-banner-actions">
+              <button class="sv-pick-center-btn" id="btnConfirmCenterStreetView" title="বর্তমান ম্যাপের কেন্দ্রের স্ট্রিট ভিউ দেখুন">
+                <i class="fa-solid fa-crosshairs text-success"></i> <span>এই রাস্তার ভিউ</span>
+              </button>
+              <button class="sv-pick-cancel-btn" id="btnCancelStreetViewPick" title="স্ট্রিট ভিউ মোড বন্ধ করুন">
+                <i class="fa-solid fa-xmark"></i> বন্ধ
+              </button>
+            </div>
           </div>
 
           <!-- Click on Map Hint Badge -->
@@ -720,6 +725,11 @@
           <div class="streetview-loading-overlay" id="svLoading">
             <i class="fa-solid fa-spinner fa-spin"></i> রাস্তার ভিউ লোড হচ্ছে...
           </div>
+        </div>
+        <div class="sv-modal-actions-bar" style="margin-bottom: 8px;">
+          <a id="btnOpenNativeGoogleMaps" href="#" target="_blank" rel="noopener noreferrer" class="btn-native-maps">
+            <i class="fa-solid fa-compass"></i> <span>গুগল ম্যাপসে ৩৬০° লাইভ ভিউ খুলুন</span>
+          </a>
         </div>
         <div class="sv-modal-footer">
           <button class="btn-primary-action sv-pick-other-btn" id="btnPickAnotherStreet">

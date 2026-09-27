@@ -411,6 +411,13 @@ const MapModule = {
       // Embed Google Street View 360 Panorama
       const svUrl = `https://maps.google.com/maps?q=&layer=c&cbll=${lat},${lon}&cbp=11,0,0,0,0&output=svembed`;
       iframe.src = svUrl;
+
+      // Update mobile deep link for full 360 gyro camera viewer in Google Maps
+      const btnNativeMaps = document.getElementById('btnOpenNativeGoogleMaps');
+      if (btnNativeMaps) {
+        btnNativeMaps.href = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lon}`;
+      }
+
       modal.style.display = 'flex';
 
       iframe.onload = () => {
@@ -418,11 +425,21 @@ const MapModule = {
       };
       setTimeout(() => {
         if (loading) loading.style.display = 'none';
-      }, 1500);
+      }, 2000);
     };
 
     this.openStreetViewAt = openPanorama;
     this.stopStreetViewMode = stopStreetViewMode;
+
+    const btnConfirmCenter = document.getElementById('btnConfirmCenterStreetView');
+    if (btnConfirmCenter) {
+      btnConfirmCenter.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const center = this.map.getCenter();
+        openPanorama(center.lat, center.lng, 'ম্যাপ কেন্দ্রের রাস্তা');
+      });
+    }
 
     if (btnOpenPanorama) {
       btnOpenPanorama.addEventListener('click', () => {
