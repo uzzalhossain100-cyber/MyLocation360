@@ -281,6 +281,14 @@ const MapModule = {
     if (dashSpeedEl) dashSpeedEl.innerText = toBengaliDigits(speed);
     if (fmSpeedEl) fmSpeedEl.innerText = toBengaliDigits(speed);
 
+    // Update Initial Dual Split Home Portal Speedometer & Direction Elements
+    const homeSpeedEl = document.getElementById('homeCurrentSpeed');
+    const homeStatusEl = document.getElementById('homeSpeedStatus');
+    const homeDirEl = document.getElementById('homeCurrentHeadingText');
+    const homeCompassAnimIcon = document.getElementById('homeCompassAnimIcon');
+
+    if (homeSpeedEl) homeSpeedEl.innerText = toBengaliDigits(speed);
+
     if (speed === 0) {
       if (statusEl) {
         statusEl.innerText = 'স্থির অবস্থায় আছেন';
@@ -291,6 +299,15 @@ const MapModule = {
         dirIndicatorText.style.color = '#94a3b8';
       }
       if (dockSubDir) dockSubDir.innerText = 'স্থির';
+
+      if (homeStatusEl) {
+        homeStatusEl.innerText = 'স্থির অবস্থায় আছেন';
+        homeStatusEl.style.color = '#94a3b8';
+      }
+      if (homeDirEl) {
+        homeDirEl.innerText = 'স্থির (উত্তর দিক)';
+        homeDirEl.style.color = '#94a3b8';
+      }
     } else {
       const dirInfo = this.getHeadingDirectionInfo(heading);
       if (dirIndicatorText) {
@@ -298,6 +315,29 @@ const MapModule = {
         dirIndicatorText.style.color = '#38bdf8';
       }
       if (dockSubDir) dockSubDir.innerText = dirInfo.short;
+
+      if (homeDirEl) {
+        homeDirEl.innerText = dirInfo.text.replace('আপনি ', '').replace(' চলছেন', 'ে চলছেন');
+        homeDirEl.style.color = '#38bdf8';
+      }
+
+      if (homeCompassAnimIcon && heading !== null && !isNaN(heading)) {
+        homeCompassAnimIcon.style.transform = `rotate(${heading}deg)`;
+        homeCompassAnimIcon.style.transition = 'transform 0.4s ease';
+      }
+
+      if (homeStatusEl) {
+        if (speed < 7) {
+          homeStatusEl.innerText = `হাঁটার গতি (${toBengaliDigits(speed)} কিমি/ঘ.)`;
+          homeStatusEl.style.color = '#38bdf8';
+        } else if (speed < 25) {
+          homeStatusEl.innerText = `যানবাহনে গতি (${toBengaliDigits(speed)} কিমি/ঘ.)`;
+          homeStatusEl.style.color = '#34d399';
+        } else {
+          homeStatusEl.innerText = `দ্রুত গতি (${toBengaliDigits(speed)} কিমি/ঘ.)`;
+          homeStatusEl.style.color = '#f59e0b';
+        }
+      }
 
       if (statusEl) {
         if (speed < 7) {
@@ -693,15 +733,19 @@ const MapModule = {
       // Update Home Portal Initial Summary Elements
       const homeAddrEl = document.getElementById('homeCurrentAddress');
       const homeCoordsEl = document.getElementById('homeCurrentCoords');
+      const homeWeatherLocEl = document.getElementById('homeWeatherAreaName');
       const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
       if (homeAddrEl) homeAddrEl.innerText = exactAddress;
       if (homeCoordsEl) homeCoordsEl.innerText = `${toBengaliDigits(lat.toFixed(4))}° উ., ${toBengaliDigits(lon.toFixed(4))}° পূ.`;
+      if (homeWeatherLocEl) homeWeatherLocEl.innerText = area || exactAddress || 'ঢাকা, বাংলাদেশ';
 
     } catch (err) {
       if (roadEl) roadEl.innerText = 'মিরপুর রোড / বীর উত্তম সি আর দত্ত রোড';
       if (areaEl) areaEl.innerText = 'ধানমন্ডি, ঢাকা, বাংলাদেশ';
       const homeAddrEl = document.getElementById('homeCurrentAddress');
       if (homeAddrEl) homeAddrEl.innerText = 'ধানমন্ডি, ঢাকা, বাংলাদেশ';
+      const homeWeatherLocEl = document.getElementById('homeWeatherAreaName');
+      if (homeWeatherLocEl) homeWeatherLocEl.innerText = 'ধানমন্ডি, ঢাকা';
     }
   },
 

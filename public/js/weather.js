@@ -622,16 +622,40 @@ const WeatherApp = {
       const hTempEl = document.getElementById('homeCurrentTemp');
       const hCondIcon = document.getElementById('homeCurrentConditionIcon');
       const hCondText = document.getElementById('homeCurrentConditionText');
-      const hRainEl = document.getElementById('homeCurrentRain');
-      const hWindEl = document.getElementById('homeCurrentWind');
-      const hHumidEl = document.getElementById('homeCurrentHumidity');
+      const hDateEl = document.getElementById('homeCurrentDate');
+      const hSceneSummary = document.getElementById('homeSceneSummary');
+      const homeSkyVisual = document.getElementById('homeSkyVisual');
+      const homeRainVisual = document.getElementById('homeRainVisual');
 
       if (hTempEl) hTempEl.innerText = `${toBengaliDigits(temp)}°`;
       if (hCondIcon) hCondIcon.innerText = condition.icon;
       if (hCondText) hCondText.innerText = condition.text;
-      if (hRainEl) hRainEl.innerText = `${toBengaliDigits(rainChance)}%`;
-      if (hWindEl) hWindEl.innerText = `${toBengaliDigits(windSpeed)} কিমি/ঘ.`;
-      if (hHumidEl) hHumidEl.innerText = `${toBengaliDigits(humidity)}%`;
+      if (hSceneSummary) hSceneSummary.innerText = condition.text;
+
+      // Update Bengali Day and Date
+      if (hDateEl) {
+        const now = new Date();
+        const bDays = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
+        const bMonths = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
+        const dayName = bDays[now.getDay()];
+        const dateNum = toBengaliDigits(now.getDate());
+        const monthName = bMonths[now.getMonth()];
+        const yearNum = toBengaliDigits(now.getFullYear());
+        hDateEl.innerText = `${dayName}, ${dateNum} ${monthName} ${yearNum}`;
+      }
+
+      // Update Live Interactive Animated Weather Scene (জীবন্ত দৃশ্য)
+      if (homeSkyVisual) {
+        if (!isDay) {
+          homeSkyVisual.className = 'home-scene-sky theme-night';
+        } else if (condition.text.includes('বৃষ্টি') || condition.text.includes('ঝড়') || condition.text.includes('বজ্রপাত')) {
+          homeSkyVisual.className = 'home-scene-sky theme-rain';
+          if (homeRainVisual) homeRainVisual.style.display = 'block';
+        } else {
+          homeSkyVisual.className = 'home-scene-sky';
+          if (homeRainVisual) homeRainVisual.style.display = 'none';
+        }
+      }
 
       // Update Animated Weather Scene with Actual Sunrise/Sunset and Local Time
       if (window.WeatherScenes && window.WeatherScenes.currentLocationScene) {

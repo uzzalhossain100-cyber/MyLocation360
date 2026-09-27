@@ -53,32 +53,45 @@
             </div>
             <div class="split-header-text">
               <h3 class="split-title">মাই লোকেশন</h3>
-              <span class="split-subtitle">আমার বর্তমান অবস্থান</span>
+              <span class="split-subtitle">আমার বর্তমান অবস্থান ও স্পিড মিটার</span>
             </div>
             <span class="live-pulse-pill"><span class="pulse-dot"></span> লাইভ জিপিএস</span>
           </div>
 
           <div class="split-card-body">
+            <!-- বর্তমান ঠিকানা -->
             <div class="home-info-row">
-              <i class="fa-solid fa-map-pin text-primary"></i>
+              <i class="fa-solid fa-map-location-dot text-primary"></i>
               <div class="info-content">
                 <span class="info-label">বর্তমান ঠিকানা:</span>
-                <span class="info-val-strong" id="homeCurrentAddress">শনাক্ত করা হচ্ছে...</span>
+                <span class="info-val-strong" id="homeCurrentAddress">ধানমন্ডি, ঢাকা, বাংলাদেশ</span>
               </div>
             </div>
 
-            <div class="home-info-row">
-              <i class="fa-solid fa-compass text-info"></i>
-              <div class="info-content">
-                <span class="info-label">স্থানাঙ্ক ও দিক:</span>
-                <span class="info-val-sub" id="homeCurrentCoords">২৩.৮১০৩° উ., ৯০.৪১২৫° পূ.</span>
+            <!-- স্পিড মিটার (Speedometer) -->
+            <div class="home-speedometer-box">
+              <div class="speed-dial-wrap">
+                <div class="speed-icon-indicator">
+                  <i class="fa-solid fa-gauge-high"></i>
+                </div>
+                <div class="speed-values">
+                  <div class="speed-val-row">
+                    <span class="speed-num" id="homeCurrentSpeed">০</span>
+                    <span class="speed-unit">কিমি/ঘণ্টা</span>
+                  </div>
+                  <span class="speed-label">চলার গতি (Speedometer)</span>
+                </div>
               </div>
+              <div class="speed-state-tag" id="homeSpeedStatus">স্থির অবস্থায় আছেন</div>
             </div>
 
-            <div class="home-feature-tags">
-              <span class="h-tag"><i class="fa-solid fa-satellite"></i> স্যাটেলাইট ভিউ</span>
-              <span class="h-tag"><i class="fa-solid fa-street-view"></i> ৩৬০° স্ট্রিট ভিউ</span>
-              <span class="h-tag"><i class="fa-solid fa-route"></i> রুট নেভিগেশন</span>
+            <!-- তার নিচে কোন দিকে যাচ্ছেন তা দেখাবে -->
+            <div class="home-direction-box">
+              <div class="h-dir-header">
+                <i class="fa-solid fa-compass" id="homeCompassAnimIcon"></i>
+                <span class="h-dir-label">কোন দিকে যাচ্ছেন:</span>
+              </div>
+              <div class="h-dir-value" id="homeCurrentHeadingText">স্থির (উত্তর দিক)</div>
             </div>
           </div>
 
@@ -105,47 +118,44 @@
           </div>
 
           <div class="split-card-body">
-            <!-- Main Live Temp & Condition -->
-            <div class="home-weather-hero">
-              <div class="h-temp-wrap">
+            <!-- বার ও তারিখ এবং বর্তমান লোকেশন নাম -->
+            <div class="home-meta-bar">
+              <div class="home-date-chip">
+                <i class="fa-regular fa-calendar-days text-amber"></i>
+                <span id="homeCurrentDate">তারিখ লোড হচ্ছে...</span>
+              </div>
+              <div class="home-loc-chip">
+                <i class="fa-solid fa-location-dot text-sky"></i>
+                <span id="homeWeatherAreaName">ঢাকা, বাংলাদেশ</span>
+              </div>
+            </div>
+
+            <!-- তাপমাত্রা -->
+            <div class="home-weather-temp-row">
+              <div class="h-temp-display">
                 <span class="h-temp-num" id="homeCurrentTemp">৩১°</span>
                 <span class="h-temp-unit">C</span>
               </div>
-              <div class="h-cond-wrap">
+              <div class="h-cond-badge" id="homeCurrentConditionBadge">
                 <span class="h-cond-icon" id="homeCurrentConditionIcon">☀️</span>
-                <span class="h-cond-name" id="homeCurrentConditionText">পরিষ্কার আকাশ</span>
+                <span class="h-cond-text" id="homeCurrentConditionText">পরিষ্কার আকাশ</span>
               </div>
             </div>
 
-            <!-- Mini Metrics Row -->
-            <div class="home-weather-metrics-grid">
-              <div class="h-metric-item">
-                <i class="fa-solid fa-cloud-rain text-primary"></i>
-                <div>
-                  <span class="m-label">বৃষ্টিপাত</span>
-                  <span class="m-val" id="homeCurrentRain">১৫%</span>
+            <!-- বর্তমান লোকেশনের জীবন্ত দৃশ্য (Live Visual Weather Scene) -->
+            <div class="home-live-scene-card" id="homeLiveSceneContainer">
+              <div class="home-scene-sky" id="homeSkyVisual">
+                <div class="home-celestial-body" id="homeCelestialBody"></div>
+                <div class="home-cloud-layer">
+                  <div class="home-cloud c1"></div>
+                  <div class="home-cloud c2"></div>
+                </div>
+                <div class="home-rain-layer" id="homeRainVisual" style="display: none;"></div>
+                <div class="home-scene-caption">
+                  <span class="scene-badge"><i class="fa-solid fa-eye"></i> বর্তমান লোকেশনের জীবন্ত দৃশ্য</span>
+                  <span class="scene-summary-text" id="homeSceneSummary">রোদ ঝলমলে আকাশ</span>
                 </div>
               </div>
-              <div class="h-metric-item">
-                <i class="fa-solid fa-wind text-sky"></i>
-                <div>
-                  <span class="m-label">বাতাসের গতি</span>
-                  <span class="m-val" id="homeCurrentWind">১২ কিমি/ঘ.</span>
-                </div>
-              </div>
-              <div class="h-metric-item">
-                <i class="fa-solid fa-droplet text-teal"></i>
-                <div>
-                  <span class="m-label">আর্দ্রতা</span>
-                  <span class="m-val" id="homeCurrentHumidity">৬৫%</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="home-feature-tags">
-              <span class="h-tag"><i class="fa-solid fa-wind"></i> Windy.com লাইভ</span>
-              <span class="h-tag"><i class="fa-solid fa-tower-broadcast"></i> ডপলার রাডার</span>
-              <span class="h-tag"><i class="fa-solid fa-clock"></i> ২৪ ঘণ্টার পূর্বাভাস</span>
             </div>
           </div>
 

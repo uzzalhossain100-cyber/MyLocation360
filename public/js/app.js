@@ -49,6 +49,20 @@ function setupHomePortalWorkflow() {
   const btnOpenPortal = document.getElementById('btnOpenHomePortal');
   const btnBottomHome = document.getElementById('bottomNavBtnHome');
 
+  // Immediately render current Bengali Date & Day
+  const hDateEl = document.getElementById('homeCurrentDate');
+  if (hDateEl) {
+    const now = new Date();
+    const bDays = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
+    const bMonths = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
+    const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
+    const dayName = bDays[now.getDay()];
+    const dateNum = toBengaliDigits(now.getDate());
+    const monthName = bMonths[now.getMonth()];
+    const yearNum = toBengaliDigits(now.getFullYear());
+    hDateEl.innerText = `${dayName}, ${dateNum} ${monthName} ${yearNum}`;
+  }
+
   function openFeature(tabId) {
     if (portalOverlay) {
       portalOverlay.classList.add('portal-closing');
