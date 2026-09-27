@@ -730,17 +730,56 @@ const MapModule = {
         const row = document.createElement('div');
         row.className = 'suggestion-item';
 
-        const iconClass = item.type === 'station' ? 'fa-train-subway' :
-                          item.type === 'hospital' ? 'fa-hospital' :
-                          item.type === 'school' ? 'fa-school' :
-                          item.type === 'city' || item.type === 'administrative' ? 'fa-city' : 'fa-location-dot';
+        let iconClass = 'fa-location-dot';
+        let typeBadge = '';
+
+        if (item.type === 'university' || item.type === 'college') {
+          iconClass = 'fa-graduation-cap';
+          typeBadge = '<span class="sugg-badge sugg-edu">প্রতিষ্ঠান</span>';
+        } else if (item.type === 'school') {
+          iconClass = 'fa-school';
+          typeBadge = '<span class="sugg-badge sugg-edu">বিদ্যালয়</span>';
+        } else if (item.type === 'hospital' || item.type === 'clinic') {
+          iconClass = 'fa-hospital';
+          typeBadge = '<span class="sugg-badge sugg-hosp">হাসপাতাল</span>';
+        } else if (item.type === 'monument' || item.type === 'historic' || item.type === 'museum') {
+          iconClass = 'fa-landmark';
+          typeBadge = '<span class="sugg-badge sugg-land">স্থাপনা</span>';
+        } else if (item.type === 'mall' || item.type === 'commercial' || item.type === 'shop') {
+          iconClass = 'fa-cart-shopping';
+          typeBadge = '<span class="sugg-badge sugg-shop">শপিং মল</span>';
+        } else if (item.type === 'airport') {
+          iconClass = 'fa-plane-departure';
+          typeBadge = '<span class="sugg-badge sugg-trans">বিমানবন্দর</span>';
+        } else if (item.type === 'station') {
+          iconClass = 'fa-train-subway';
+          typeBadge = '<span class="sugg-badge sugg-trans">স্টেশন</span>';
+        } else if (item.type === 'place_of_worship') {
+          iconClass = 'fa-mosque';
+          typeBadge = '<span class="sugg-badge sugg-worship">উপাসনালয়</span>';
+        } else if (item.type === 'park' || item.type === 'zoo' || item.type === 'beach') {
+          iconClass = 'fa-tree';
+          typeBadge = '<span class="sugg-badge sugg-park">বিনোদন</span>';
+        } else if (item.type === 'stadium') {
+          iconClass = 'fa-futbol';
+          typeBadge = '<span class="sugg-badge sugg-sport">স্টেডিয়াম</span>';
+        } else if (item.type === 'bridge' || item.type === 'tunnel') {
+          iconClass = 'fa-bridge';
+          typeBadge = '<span class="sugg-badge sugg-land">সেতু</span>';
+        } else if (item.type === 'city' || item.type === 'administrative') {
+          iconClass = 'fa-city';
+          typeBadge = '<span class="sugg-badge sugg-city">শহর</span>';
+        }
 
         const subTitle = [item.subdistrict, item.district, item.country].filter(Boolean).join(', ') || item.display_name;
 
         row.innerHTML = `
-          <i class="fa-solid ${iconClass} suggestion-icon"></i>
+          <div class="sugg-icon-box"><i class="fa-solid ${iconClass}"></i></div>
           <div style="flex: 1; min-width: 0;">
-            <div class="suggestion-title">${item.name}</div>
+            <div class="suggestion-title-wrap">
+              <span class="suggestion-title">${item.name}</span>
+              ${typeBadge}
+            </div>
             <div class="suggestion-sub">${subTitle}</div>
           </div>
         `;

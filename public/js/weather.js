@@ -606,9 +606,6 @@ const WeatherApp = {
         window.WeatherScenes.currentLocationScene.setScene(condition.scene);
       }
 
-      // Update Live Interactive Simulation Frame with Windy.com identical specs (Default: rain)
-      this.updateSimulationFrame(lat, lon, this.activeRadarLayer || 'rain');
-
       // Render Next 24-Hour Hourly Forecast strictly starting from CURRENT hour
       this.renderHourlyForecast(hourly, current.time);
 
@@ -617,51 +614,36 @@ const WeatherApp = {
     }
   },
 
-  // Update Simulation Iframe & Direct Links (never resets automatically if user is interacting/viewing elsewhere)
+  // Update Direct Links for external viewing (Zoom Earth / Windy external tabs)
   updateSimulationFrame(lat, lon, layerType, force = false) {
-    // If user has navigated or zoomed to explore other locations, DO NOT auto-reset unless forced
-    if (this.isRadarMapUserInteracted && !force) {
-      return;
-    }
-
-    const iframe = document.getElementById('liveWeatherFrame');
     const zoomEarthLink = document.getElementById('zoomEarthLink');
     const windyDirectLink = document.getElementById('windyDirectLink');
 
-    let overlay = 'wind';
-    let product = 'ecmwf';
     let windyDirectPath = 'wind';
-
     if (layerType === 'satellite') {
-      overlay = 'satellite';
-      product = 'satellite';
       windyDirectPath = '-Satellite-satellite?satellite';
     } else if (layerType === 'radar') {
-      overlay = 'radar';
-      product = 'radar';
       windyDirectPath = '-Weather-radar-radar?radar';
     } else if (layerType === 'temp') {
-      overlay = 'temp';
-      product = 'ecmwf';
       windyDirectPath = '-Temperature-temp?temp';
     } else if (layerType === 'rain') {
-      overlay = 'rain';
-      product = 'ecmwf';
       windyDirectPath = '-Rain-thunder-rain?rain';
     } else {
-      overlay = 'wind';
-      product = 'ecmwf';
       windyDirectPath = '-Wind-wind?wind';
-    }
-
-    if (iframe) {
-      // Official Windy embed URL format that renders radar & satellite identically to www.windy.com
-      iframe.src = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=6&overlay=${overlay}&product=${product}&level=surface&lat=${lat}&lon=${lon}&message=true&marker=true`;
     }
 
     if (windyDirectLink) {
       windyDirectLink.href = `https://www.windy.com/${windyDirectPath},${lat},${lon},6`;
     }
+
+    if (zoomEarthLink) {
+      const zoomPath = layerType === 'satellite' ? 'satellite' :
+                       layerType === 'wind' ? 'wind-speed' :
+                       layerType === 'temp' ? 'temperature' :
+                       layerType === 'rain' ? 'precipitation' : 'radar';
+      zoomEarthLink.href = `https://zoom.earth/maps/${zoomPath}/#view=${lat},${lon},6z/model=icon`;
+    }
+  },
 
     if (zoomEarthLink) {
       const zoomPath = layerType === 'satellite' ? 'satellite' :
@@ -964,40 +946,43 @@ const WeatherApp = {
     this.activeRadarLayer = layerType;
     const statusText = document.getElementById('radarStatusText');
 
-    // Apply layers to MapLibre instance without resetting map center
+    // 1. Apply visual layer filters/tiles without modifying map center or zoom
     this.applyRadarMapLayers(layerType);
 
-    // Check if user has dragged/panned to a new location on the map
-    let targetLat = this.viewLat || 23.8;
-    let targetLon = this.viewLon || 90.4;
+    // 2. Read exact CURRENT map center directly from active MapLibre instance
+    let targetLat = this.viewLat || 23.8103;
+    let targetLon = this.viewLon || 90.4125;
 
-    if (this.isRadarMapUserInteracted && this.draggedLat && this.draggedLon) {
-      targetLat = this.draggedLat;
-      targetLon = this.draggedLon;
-
-      // Show toast acknowledging location weather inspection
-      if (window.showToast) {
-        window.showToast('📍 মানচিত্রের নতুন টেনে আনা স্থানের আবহাওয়া ও অবস্থা প্রদর্শিত হচ্ছে');
-      }
-
-      // Fetch and display weather for dragged location without resetting map or page
-      await this.fetchWeather(targetLat, targetLon, null, false);
+    if (this.radarMap) {
+      const center = this.radarMap.getCenter();
+      targetLat = center.lat;
+      targetLon = center.lng;
+      this.draggedLat = targetLat;
+      this.draggedLon = targetLon;
     }
 
+    // 3. Update external deep-links for current location
+    this.updateSimulationFrame(targetLat, targetLon, layerType);
+
+    // 4. Fetch and display weather for current dragged map center without resetting map position
+    await this.fetchWeather(targetLat, targetLon, null, false);
+
+    const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
+
     if (layerType === 'satellite') {
-      if (statusText) statusText.innerText = '🛰️ লাইভ স্যাটেলাইট ভিউ: মহাকাশ থেকে সরাসরি পৃথিবীর মেঘমালা ও আবহাওয়ার দৃশ্য';
+      if (statusText) statusText.innerHTML = `🛰️ <b>স্যাটেলাইট ভিউ:</b> মহাকাশ থেকে সরাসরি পৃথিবীর মেঘমালা ও আবহাওয়ার দৃশ্য (${toBengaliDigits(targetLat.toFixed(2))}°N, ${toBengaliDigits(targetLon.toFixed(2))}°E)`;
       if (window.showToast) window.showToast('🛰️ লাইভ স্যাটেলাইট দৃশ্য সক্রিয়');
     } else if (layerType === 'radar') {
-      if (statusText) statusText.innerText = '📡 ডপলার আবহাওয়া রাডার: সরাসরি বৃষ্টিপাত ও মেঘের ঘূর্ণি পরিস্থিতি';
+      if (statusText) statusText.innerHTML = `📡 <b>ডপলার রাডার:</b> সরাসরি বৃষ্টিপাত ও মেঘের ঘূর্ণি পরিস্থিতি (${toBengaliDigits(targetLat.toFixed(2))}°N, ${toBengaliDigits(targetLon.toFixed(2))}°E)`;
       if (window.showToast) window.showToast('📡 লাইভ ডপলার রাডার সক্রিয়');
     } else if (layerType === 'wind') {
-      if (statusText) statusText.innerText = '💨 বাতাসের গতি: বাতাস কোন দিক থেকে কোন দিকে প্রবাহিত হচ্ছে তার লাইভ দিকপ্রবাহ';
+      if (statusText) statusText.innerHTML = `💨 <b>বাতাসের গতি:</b> বর্তমান স্থানের বাতাসের তীব্রতা ও দিকপ্রবাহ (${toBengaliDigits(targetLat.toFixed(2))}°N, ${toBengaliDigits(targetLon.toFixed(2))}°E)`;
       if (window.showToast) window.showToast('💨 বাতাসের গতি ও দিকপ্রবাহ সক্রিয়');
     } else if (layerType === 'temp') {
-      if (statusText) statusText.innerText = '🌡️ তাপমাত্রা মানচিত্র: বিভিন্ন অঞ্চলের সেলসিয়াস তাপমাত্রা (°C) ও উত্তাপ পরিস্থিতি';
+      if (statusText) statusText.innerHTML = `🌡️ <b>তাপমাত্রা পরিস্থিতি:</b> বর্তমান অঞ্চলের সেলসিয়াস তাপমাত্রা (°C) ও উত্তাপ (${toBengaliDigits(targetLat.toFixed(2))}°N, ${toBengaliDigits(targetLon.toFixed(2))}°E)`;
       if (window.showToast) window.showToast('🌡️ তাপমাত্রা পরিস্থিতি সক্রিয়');
     } else if (layerType === 'rain') {
-      if (statusText) statusText.innerText = '🌧️ বৃষ্টিপাত পরিস্থিতি: বর্তমান বৃষ্টি ও মেঘের ঘনত্ব ও বৃষ্টিপাতের পূর্বাভাস';
+      if (statusText) statusText.innerHTML = `🌧️ <b>বৃষ্টিপাত পরিস্থিতি:</b> বর্তমান বৃষ্টি, আর্দ্রতা ও মেঘের ঘনত্ব (${toBengaliDigits(targetLat.toFixed(2))}°N, ${toBengaliDigits(targetLon.toFixed(2))}°E)`;
       if (window.showToast) window.showToast('🌧️ বৃষ্টিপাত পরিস্থিতি সক্রিয়');
     }
   }
