@@ -3344,6 +3344,14 @@ body {
    FULLSCREEN MAP MODE (ম্যাপ ফুল করলে নিচের অপশন দেখা যাবে না,
    শুধু ম্যাপ ছোট করুন, স্যাটেলাইট ভিউ ও স্ট্রিট ভিউ ডান পাশে থাকবে)
    ========================================================== */
+html.in-fullmap-mode,
+body.in-fullmap-mode {
+  overflow: hidden !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+}
+
 body.in-fullmap-mode .map-bottom-controls-hub,
 body.in-fullmap-mode .map-bottom-dock-bar,
 body.in-fullmap-mode .route-summary-banner,
@@ -3355,7 +3363,9 @@ body.in-fullmap-mode .map-click-hint-badge {
   display: none !important;
 }
 
-/* Full Map Container: 100% Fullscreen */
+/* Full Map Container: 100% True Fullscreen with Highest Priority */
+body.in-fullmap-mode .map-view-wrapper,
+body.in-fullmap-mode .map-view-wrapper.fullscreen-map-mode,
 .map-view-wrapper.fullscreen-map-mode {
   position: fixed !important;
   top: 0 !important;
@@ -3364,17 +3374,42 @@ body.in-fullmap-mode .map-click-hint-badge {
   bottom: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
+  height: 100dvh !important;
+  min-width: 100vw !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
   max-width: 100vw !important;
   max-height: 100vh !important;
-  z-index: 99999999 !important;
+  max-height: 100dvh !important;
+  z-index: 2147483647 !important;
   border-radius: 0 !important;
+  border: none !important;
   margin: 0 !important;
   padding: 0 !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
+  background: #0b1329 !important;
 }
 
+body.in-fullmap-mode .map-view-wrapper .map-canvas,
+body.in-fullmap-mode #map,
+.map-view-wrapper.fullscreen-map-mode #map,
 .map-view-wrapper.fullscreen-map-mode .map-canvas {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  z-index: 1 !important;
+}
+
+body.in-fullmap-mode .maplibregl-canvas {
   width: 100% !important;
   height: 100% !important;
 }
@@ -3385,7 +3420,7 @@ body.in-fullmap-mode .map-corner-tools,
   position: fixed !important;
   top: 14px !important;
   right: 12px !important;
-  z-index: 100000000 !important;
+  z-index: 2147483647 !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 7px !important;
@@ -3503,27 +3538,30 @@ body.in-fullmap-mode {
   left: 0 !important;
 }
 
-/* DOCK BAR: ALWAYS PINNED EXACTLY AT THE BOTTOM OF MAP */
-.map-bottom-dock-bar {
-  position: absolute !important;
-  bottom: 12px !important;
-  left: 12px !important;
-  right: 12px !important;
-  margin: 0 auto !important;
-  max-width: 620px !important;
-  z-index: 100 !important;
+/* DOCK BAR INSIDE CONTROLS HUB (NORMAL MODE) */
+.map-bottom-dock-bar,
+.map-bottom-controls-hub .map-bottom-dock-bar {
+  position: static !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 4px 6px !important;
+  background: rgba(15, 23, 42, 0.82) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 10px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
   gap: 6px !important;
-  padding: 8px 10px !important;
-  background: rgba(13, 20, 34, 0.94) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border-radius: var(--radius-md) !important;
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65) !important;
   box-sizing: border-box !important;
+}
+
+/* HIDDEN COMPLETELY IN FULLSCREEN MODE */
+body.in-fullmap-mode .map-bottom-dock-bar,
+.map-view-wrapper.fullscreen-map-mode .map-bottom-dock-bar {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
 }
 
 /* Dock buttons */
@@ -4870,16 +4908,13 @@ body.in-fullmap-mode .corner-tool-btn {
   transform: translateY(-1px);
 }
 
-/* Fullscreen Map Dock Bar Fix */
-.map-view-wrapper.fullscreen-map-mode .map-bottom-dock-bar {
-  position: fixed !important;
-  bottom: 12px !important;
-  left: 10px !important;
-  right: 10px !important;
-  max-width: 620px !important;
-  margin: 0 auto !important;
-  z-index: 9999999 !important;
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+/* Fullscreen Map: Absolutely NO bottom dock bar, search or strips appear */
+body.in-fullmap-mode .map-bottom-dock-bar,
+.map-view-wrapper.fullscreen-map-mode .map-bottom-dock-bar,
+body.in-fullmap-mode .map-bottom-controls-hub,
+.map-view-wrapper.fullscreen-map-mode .map-bottom-controls-hub {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }

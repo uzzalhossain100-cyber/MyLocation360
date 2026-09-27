@@ -421,27 +421,42 @@ const MapModule = {
     const toggleFullMap = (enable) => {
       this.isFullMapMode = enable !== undefined ? enable : !this.isFullMapMode;
       if (this.isFullMapMode) {
+        wrapper.classList.remove('clean-map-view');
         wrapper.classList.add('fullscreen-map-mode');
         document.body.classList.add('in-fullmap-mode');
+        document.documentElement.classList.add('in-fullmap-mode');
         if (fullMapIcon) fullMapIcon.className = 'fa-solid fa-compress text-danger';
         if (fullMapText) fullMapText.innerText = 'ম্যাপ ছোট';
         if (btnFloatingClose) btnFloatingClose.style.display = 'inline-flex';
         if (window.showToast) window.showToast('ফুল ম্যাপ মোড চালু হয়েছে');
       } else {
         wrapper.classList.remove('fullscreen-map-mode');
+        wrapper.classList.add('clean-map-view');
         document.body.classList.remove('in-fullmap-mode');
+        document.documentElement.classList.remove('in-fullmap-mode');
         if (fullMapIcon) fullMapIcon.className = 'fa-solid fa-expand text-info';
         if (fullMapText) fullMapText.innerText = 'ফুল ম্যাপ';
         if (btnFloatingClose) btnFloatingClose.style.display = 'none';
       }
       
-      this.map.resize();
-      this.recenter();
+      requestAnimationFrame(() => {
+        if (this.map) this.map.resize();
+      });
       setTimeout(() => {
-        this.map.resize();
-        this.recenter();
-      }, 80);
-      setTimeout(() => this.map.resize(), 240);
+        if (this.map) {
+          this.map.resize();
+          this.recenter();
+        }
+      }, 50);
+      setTimeout(() => {
+        if (this.map) {
+          this.map.resize();
+          this.recenter();
+        }
+      }, 150);
+      setTimeout(() => {
+        if (this.map) this.map.resize();
+      }, 350);
     };
 
     if (btnFullMap) {
