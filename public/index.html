@@ -20,7 +20,7 @@
   <!-- Immediate Self-Purge Cache Buster for Stale Mobile Browsers -->
   <script>
     (function() {
-      var BUILD_VERSION = '20260928_v9_fullhud';
+      var BUILD_VERSION = '20260928_v10_cardinal';
       try {
         var lastVer = localStorage.getItem('mylocation360_active_version');
         if (lastVer !== BUILD_VERSION) {
@@ -56,7 +56,7 @@
   <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 
   <!-- App Stylesheet with Live Cache-Busting Version -->
-  <link rel="stylesheet" href="/css/style.css?v=20260928_v9_fullhud">
+  <link rel="stylesheet" href="/css/style.css?v=20260928_v10_cardinal">
 </head>
 <body class="theme-dark">
 
@@ -295,21 +295,21 @@
         <!-- Clean, Beautiful & Dominant Map Viewport Wrapper (বেশির ভাগ জায়গায় ম্যাপ ভিউ) -->
         <div class="map-view-wrapper clean-map-view" id="mapViewWrapper">
           
-          <!-- Minimal Cardinal Indicators (খুব ছোট ও মার্জিত সাংকেতিক দিক চিহ্ন) -->
-          <div class="cardinal-mini mini-north" title="উত্তর দিক">
+          <!-- Dynamic Rotating Cardinal Direction Indicators (ম্যাপের সাথে সাথে অটোমেটিক ঘুরে সঠিক দিক নির্দেশ করে) -->
+          <div class="cardinal-mini mini-north" id="cardinalNorth" title="উত্তর দিক (ক্লিক করলে ম্যাপ সোজা হবে)">
             <span class="mini-arrow">▲</span>
             <span class="mini-label">উ (N)</span>
             <span class="mini-deg" id="northBearingText">০°</span>
           </div>
-          <div class="cardinal-mini mini-south" title="দক্ষিণ দিক">
+          <div class="cardinal-mini mini-south" id="cardinalSouth" title="দক্ষিণ দিক">
             <span class="mini-arrow">▼</span>
             <span class="mini-label">দ (S)</span>
           </div>
-          <div class="cardinal-mini mini-west" title="পশ্চিম দিক">
+          <div class="cardinal-mini mini-west" id="cardinalWest" title="পশ্চিম দিক">
             <span class="mini-arrow">◀</span>
             <span class="mini-label">প (W)</span>
           </div>
-          <div class="cardinal-mini mini-east" title="পূর্ব দিক">
+          <div class="cardinal-mini mini-east" id="cardinalEast" title="পূর্ব দিক">
             <span class="mini-arrow">▶</span>
             <span class="mini-label">পূ (E)</span>
           </div>
@@ -992,9 +992,9 @@
   </div>
 
   <!-- JavaScript Modules with Live Cache-Busting Version -->
-  <script src="/js/animation.js?v=20260928_v9_fullhud"></script>
-  <script src="/js/weather.js?v=20260928_v9_fullhud"></script>
-  <script src="/js/map.js?v=20260928_v9_fullhud"></script>
-  <script src="/js/app.js?v=20260928_v9_fullhud"></script>
+  <script src="/js/animation.js?v=20260928_v10_cardinal"></script>
+  <script src="/js/weather.js?v=20260928_v10_cardinal"></script>
+  <script src="/js/map.js?v=20260928_v10_cardinal"></script>
+  <script src="/js/app.js?v=20260928_v10_cardinal"></script>
 </body>
 </html>

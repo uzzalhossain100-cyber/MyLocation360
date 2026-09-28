@@ -155,7 +155,10 @@ const MapModule = {
       this.createUserMarker();
       this.updateLocationInfo(this.currentLat, this.currentLon);
       this.map.resize();
-      setTimeout(() => this.map.resize(), 150);
+      setTimeout(() => {
+        this.map.resize();
+        this.updateRotatingCardinalIndicators(this.map.getBearing());
+      }, 150);
     });
 
     // Pause auto-follow when user drags manually
@@ -416,6 +419,7 @@ const MapModule = {
   },
 
   handleMapRotationChange() {
+    if (!this.map) return;
     const bearing = this.map.getBearing();
     this.currentBearing = bearing;
     
@@ -427,6 +431,55 @@ const MapModule = {
     if (northBearingText) {
       northBearingText.innerText = `${toBengaliDigits(roundedDeg)}°`;
     }
+
+    this.updateRotatingCardinalIndicators(bearing);
+  },
+
+  updateRotatingCardinalIndicators(bearing = 0) {
+    const wrapper = document.getElementById('mapViewWrapper');
+    if (!wrapper) return;
+    const w = wrapper.clientWidth;
+    const h = wrapper.clientHeight;
+    if (!w || !h) return;
+
+    const cx = w / 2;
+    const cy = h / 2;
+
+    // Radius from center towards screen borders
+    const marginX = Math.min(50, Math.round(w * 0.12));
+    const marginY = Math.min(35, Math.round(h * 0.1));
+    const rx = Math.max(80, (w / 2) - marginX);
+    const ry = Math.max(60, (h / 2) - marginY);
+
+    // North (0°), East (90°), South (180°), West (270°)
+    const cardinals = [
+      { id: 'cardinalNorth', deg: 0 },
+      { id: 'cardinalEast', deg: 90 },
+      { id: 'cardinalSouth', deg: 180 },
+      { id: 'cardinalWest', deg: 270 }
+    ];
+
+    cardinals.forEach(c => {
+      const el = document.getElementById(c.id);
+      if (!el) return;
+
+      // Position rotates counter to map bearing so it always points in true geographical direction!
+      const angleOnScreen = (c.deg - bearing);
+      const rad = (angleOnScreen - 90) * (Math.PI / 180);
+
+      const posX = cx + rx * Math.cos(rad);
+      const posY = cy + ry * Math.sin(rad);
+
+      el.style.left = `${posX}px`;
+      el.style.top = `${posY}px`;
+      el.style.transform = `translate(-50%, -50%)`;
+
+      // Arrow rotates to point outward along the geographical vector
+      const arrow = el.querySelector('.mini-arrow');
+      if (arrow) {
+        arrow.style.transform = `rotate(${angleOnScreen}deg)`;
+      }
+    });
   },
 
   setupEventListeners() {
@@ -434,6 +487,17 @@ const MapModule = {
     if (btnAutoAlign) {
       btnAutoAlign.addEventListener('click', () => this.resetToNorth());
     }
+
+    const cardinalNorth = document.getElementById('cardinalNorth');
+    if (cardinalNorth) {
+      cardinalNorth.addEventListener('click', () => this.resetToNorth());
+    }
+
+    window.addEventListener('resize', () => {
+      if (this.map) {
+        this.updateRotatingCardinalIndicators(this.map.getBearing());
+      }
+    });
 
     const btnRecenter = document.getElementById('btnRecenterLocation');
     if (btnRecenter) {

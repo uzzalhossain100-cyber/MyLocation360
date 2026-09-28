@@ -3262,14 +3262,14 @@ body {
   transition: all 0.3s ease;
 }
 
-/* MINIMAL CARDINAL DIRECTION INDICATORS (খুব ছোট সাংকেতিক চিহ্ন) */
+/* MINIMAL CARDINAL DIRECTION INDICATORS (ম্যাপের সাথে সাথে রিয়েল-টাইমে রোটেট হবে) */
 .cardinal-mini {
   position: absolute;
   z-index: 20;
-  background: rgba(13, 20, 34, 0.75);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(13, 20, 34, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #e2e8f0;
   padding: 3px 8px;
   border-radius: var(--radius-pill);
@@ -3278,46 +3278,58 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  pointer-events: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: left 0.1s linear, top 0.1s linear;
+  user-select: none;
+}
+
+.cardinal-mini:hover {
+  transform: translate(-50%, -50%) scale(1.08) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
 }
 
 .mini-north {
-  top: 8px;
+  top: 18px;
   left: 50%;
-  transform: translateX(-50%);
-  background: rgba(239, 68, 68, 0.85);
-  border-color: rgba(248, 113, 113, 0.4);
+  transform: translate(-50%, -50%);
+  background: rgba(239, 68, 68, 0.9);
+  border-color: rgba(248, 113, 113, 0.5);
   color: #ffffff;
 }
 
 .mini-north .mini-deg {
   font-size: 0.65rem;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.35);
   padding: 1px 4px;
   border-radius: 3px;
 }
 
 .mini-south {
-  bottom: 8px;
+  bottom: 18px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
 }
 
 .mini-west {
   top: 50%;
-  left: 8px;
-  transform: translateY(-50%);
+  left: 36px;
+  transform: translate(-50%, -50%);
 }
 
 .mini-east {
   top: 50%;
-  right: 8px;
-  transform: translateY(-50%);
+  right: 36px;
+  transform: translate(-50%, -50%);
 }
 
 .mini-arrow {
-  font-size: 0.6rem;
+  font-size: 0.65rem;
+  line-height: 1;
+  display: inline-block;
+  transition: transform 0.1s linear;
+}
   line-height: 1;
 }
 
