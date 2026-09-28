@@ -30,11 +30,27 @@ window.addEventListener('beforeinstallprompt', (e) => {
   }
 });
 
-// Register Service Worker for PWA Widgets & Background Sync
+// Register Service Worker for PWA Widgets & Force Clean Purge of Stale Cache
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((reg) => console.log('[ServiceWorker] registered successfully:', reg.scope))
+    // Purge any stale cache storage immediately
+    if ('caches' in window) {
+      caches.keys().then((cacheNames) => {
+        cacheNames.forEach((name) => {
+          if (!name.includes('v5-live')) {
+            console.log('[App] Purging stale client cache:', name);
+            caches.delete(name);
+          }
+        });
+      });
+    }
+
+    navigator.serviceWorker.register('/sw.js?v=20260928_v5_live')
+      .then((reg) => {
+        console.log('[ServiceWorker] registered successfully:', reg.scope);
+        // Force check for updates
+        reg.update();
+      })
       .catch((err) => console.warn('[ServiceWorker] registration failed:', err));
   });
 }

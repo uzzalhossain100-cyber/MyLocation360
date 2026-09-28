@@ -7,7 +7,17 @@ const PORT = process.env.PORT || 3000;
 
 app.use(compression());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve static assets with strict no-cache headers for instant updates
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.css') || filePath.endsWith('sw.js') || filePath.endsWith('manifest.json')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }
+}));
 
 // Geocoding Proxy (Nominatim / OSM) to avoid CORS or header restrictions
 app.get('/api/geocode/reverse', async (req, res) => {
