@@ -432,6 +432,12 @@ const MapModule = {
       northBearingText.innerText = `${toBengaliDigits(roundedDeg)}°`;
     }
 
+    // Rotate red compass button dial to point towards true North
+    const compassRedDial = document.getElementById('compassRedDial');
+    if (compassRedDial) {
+      compassRedDial.style.transform = `rotate(${-bearing}deg)`;
+    }
+
     this.updateRotatingCardinalIndicators(bearing);
   },
 
@@ -493,6 +499,12 @@ const MapModule = {
     const cardinalNorth = document.getElementById('cardinalNorth');
     if (cardinalNorth) {
       cardinalNorth.addEventListener('click', () => this.resetToNorth());
+    }
+
+    // ম্যাপের ডান সাইডের ছোট গোল লাল দিক নির্দেশক বাটন
+    const btnCompassReset = document.getElementById('btnCompassResetNorth');
+    if (btnCompassReset) {
+      btnCompassReset.addEventListener('click', () => this.resetToNorth());
     }
 
     window.addEventListener('resize', () => {
@@ -805,6 +817,14 @@ const MapModule = {
   },
 
   resetToNorth() {
+    const btnCompassReset = document.getElementById('btnCompassResetNorth');
+    if (btnCompassReset) {
+      btnCompassReset.style.transform = 'scale(0.85)';
+      setTimeout(() => {
+        btnCompassReset.style.transform = '';
+      }, 200);
+    }
+
     this.map.easeTo({
       bearing: 0,
       pitch: 0,

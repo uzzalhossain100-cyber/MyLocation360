@@ -3375,6 +3375,76 @@ body {
   color: #f59e0b;
 }
 
+/* ম্যাপের ডান সাইডে ছোট গোল লাল দিক নির্দেশক বাটন */
+.map-compass-red-btn {
+  position: absolute;
+  right: 12px;
+  top: 130px;
+  z-index: 25;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.55), 0 2px 6px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s ease;
+}
+
+.map-compass-red-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.7), 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.map-compass-red-btn:active {
+  transform: scale(0.92);
+}
+
+/* ফুল ম্যাপ মোডেও ডান সাইডে সুন্দর দৃশ্যমান থাকবে */
+body.in-fullmap-mode .map-compass-red-btn,
+.map-view-wrapper.fullscreen-map-mode .map-compass-red-btn {
+  position: fixed !important;
+  right: 14px !important;
+  top: 145px !important;
+  z-index: 2147483647 !important;
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.compass-red-dial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  transition: transform 0.1s linear;
+}
+
+.compass-needle-svg {
+  display: block;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+.compass-red-text {
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
+  position: absolute;
+  bottom: 2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
 /* Map Click Hint Badge */
 .map-click-hint-badge {
   position: absolute;
