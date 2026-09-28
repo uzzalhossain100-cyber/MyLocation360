@@ -157,7 +157,9 @@ const MapModule = {
       this.map.resize();
       setTimeout(() => {
         this.map.resize();
-        this.updateRotatingCardinalIndicators(this.map.getBearing());
+        const bearing = this.map.getBearing();
+        this.updateRotatingCardinalIndicators(bearing);
+        this.updateCompassRedButton(bearing);
       }, 150);
     });
 
@@ -433,12 +435,17 @@ const MapModule = {
     }
 
     // Rotate red compass button dial to point towards true North
-    const compassRedDial = document.getElementById('compassRedDial');
-    if (compassRedDial) {
-      compassRedDial.style.transform = `rotate(${-bearing}deg)`;
-    }
+    this.updateCompassRedButton(bearing);
 
     this.updateRotatingCardinalIndicators(bearing);
+  },
+
+  updateCompassRedButton(bearing = 0) {
+    const compassRedDial = document.getElementById('compassRedDial');
+    if (compassRedDial) {
+      // Points precisely towards geographic true North on the screen
+      compassRedDial.style.transform = `rotate(${-bearing}deg)`;
+    }
   },
 
   updateRotatingCardinalIndicators(bearing = 0) {
@@ -684,21 +691,27 @@ const MapModule = {
       
       requestAnimationFrame(() => {
         if (this.map) {
+          const bearing = this.map.getBearing();
           this.map.resize();
-          this.updateRotatingCardinalIndicators(this.map.getBearing());
+          this.updateRotatingCardinalIndicators(bearing);
+          this.updateCompassRedButton(bearing);
         }
       });
       setTimeout(() => {
         if (this.map) {
+          const bearing = this.map.getBearing();
           this.map.resize();
-          this.updateRotatingCardinalIndicators(this.map.getBearing());
+          this.updateRotatingCardinalIndicators(bearing);
+          this.updateCompassRedButton(bearing);
           this.recenter();
         }
       }, 50);
       setTimeout(() => {
         if (this.map) {
+          const bearing = this.map.getBearing();
           this.map.resize();
-          this.updateRotatingCardinalIndicators(this.map.getBearing());
+          this.updateRotatingCardinalIndicators(bearing);
+          this.updateCompassRedButton(bearing);
           this.recenter();
         }
       }, 150);
@@ -817,21 +830,34 @@ const MapModule = {
   },
 
   resetToNorth() {
+    this.alignToExactNorthAndPosition();
+  },
+
+  alignToExactNorthAndPosition() {
+    if (!this.map) return;
+
     const btnCompassReset = document.getElementById('btnCompassResetNorth');
     if (btnCompassReset) {
-      btnCompassReset.style.transform = 'scale(0.85)';
-      setTimeout(() => {
-        btnCompassReset.style.transform = '';
-      }, 200);
+      btnCompassReset.classList.add('compass-btn-active-pulse');
+      setTimeout(() => btnCompassReset.classList.remove('compass-btn-active-pulse'), 400);
     }
 
-    this.map.easeTo({
+    this.isAutoFollow = true;
+
+    // ম্যাপটি ঘুরে এক্সাক্ট উত্তর দিক (০°) এবং ইউজারের সঠিক এক্সাক্ট অবস্থানে সোজা হবে
+    const targetZoom = Math.max(this.map.getZoom(), 16.5);
+    this.map.flyTo({
+      center: [this.currentLon, this.currentLat],
       bearing: 0,
       pitch: 0,
-      duration: 800,
-      easing: (t) => t * (2 - t)
+      zoom: targetZoom,
+      duration: 850,
+      essential: true
     });
-    if (window.showToast) window.showToast('🧭 ম্যাপ সঠিক দিক (উত্তর ০°) এ সামঞ্জস্য করা হয়েছে');
+
+    if (window.showToast) {
+      window.showToast('🧭 ম্যাপ ঘুরে সঠিক উত্তর দিক ও আপনার এক্সাক্ট অবস্থানে সোজা হয়েছে');
+    }
   },
 
   recenter() {

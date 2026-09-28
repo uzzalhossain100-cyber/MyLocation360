@@ -3381,14 +3381,13 @@ body {
   right: 12px;
   top: 130px;
   z-index: 25;
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-  border: 2px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.55), 0 2px 6px rgba(0, 0, 0, 0.5);
+  background: radial-gradient(circle at 35% 35%, #f87171 0%, #dc2626 50%, #991b1b 100%);
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.6), 0 2px 6px rgba(0, 0, 0, 0.5);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -3400,11 +3399,13 @@ body {
 
 .map-compass-red-btn:hover {
   transform: scale(1.08);
-  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.7), 0 2px 8px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.75), 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
-.map-compass-red-btn:active {
-  transform: scale(0.92);
+.map-compass-red-btn:active,
+.map-compass-red-btn.compass-btn-active-pulse {
+  transform: scale(0.9);
+  box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.4), 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 /* ফুল ম্যাপ মোডেও ডান সাইডে সুন্দর দৃশ্যমান থাকবে */
@@ -3424,25 +3425,16 @@ body.in-fullmap-mode .map-compass-red-btn,
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 30px;
+  height: 30px;
+  transform-origin: center center;
   transition: transform 0.1s linear;
 }
 
 .compass-needle-svg {
   display: block;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
-}
-
-.compass-red-text {
-  font-size: 0.55rem;
-  font-weight: 800;
-  color: #ffffff;
-  line-height: 1;
-  position: absolute;
-  bottom: 2px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  pointer-events: none;
+  transform-origin: 16px 16px;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
 }
 
 /* Map Click Hint Badge */
