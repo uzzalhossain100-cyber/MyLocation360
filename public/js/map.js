@@ -472,6 +472,8 @@ const MapModule = {
 
       el.style.left = `${posX}px`;
       el.style.top = `${posY}px`;
+      el.style.right = 'auto';
+      el.style.bottom = 'auto';
       el.style.transform = `translate(-50%, -50%)`;
 
       // Arrow rotates to point outward along the geographical vector
@@ -669,17 +671,22 @@ const MapModule = {
       }
       
       requestAnimationFrame(() => {
-        if (this.map) this.map.resize();
+        if (this.map) {
+          this.map.resize();
+          this.updateRotatingCardinalIndicators(this.map.getBearing());
+        }
       });
       setTimeout(() => {
         if (this.map) {
           this.map.resize();
+          this.updateRotatingCardinalIndicators(this.map.getBearing());
           this.recenter();
         }
       }, 50);
       setTimeout(() => {
         if (this.map) {
           this.map.resize();
+          this.updateRotatingCardinalIndicators(this.map.getBearing());
           this.recenter();
         }
       }, 150);

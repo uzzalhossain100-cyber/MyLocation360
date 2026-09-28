@@ -3262,75 +3262,74 @@ body {
   transition: all 0.3s ease;
 }
 
-/* MINIMAL CARDINAL DIRECTION INDICATORS (ম্যাপের সাথে সাথে রিয়েল-টাইমে রোটেট হবে) */
+/* MINIMAL CARDINAL DIRECTION INDICATORS (সব সময় ছোট, মার্জিত ও ম্যাপের সাথে অটো রোটেট হবে) */
 .cardinal-mini {
   position: absolute;
   z-index: 20;
-  background: rgba(13, 20, 34, 0.85);
+  background: rgba(13, 20, 34, 0.88);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #e2e8f0;
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: var(--radius-pill);
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 3px;
   pointer-events: auto;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   transition: left 0.1s linear, top 0.1s linear;
   user-select: none;
+  white-space: nowrap;
+  width: auto;
+  height: 22px;
+  max-height: 22px;
+  line-height: 1;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  right: auto !important;
+  bottom: auto !important;
 }
 
-.cardinal-mini:hover {
-  transform: translate(-50%, -50%) scale(1.08) !important;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
+.cardinal-mini:active {
+  transform: translate(-50%, -50%) scale(0.96) !important;
 }
 
 .mini-north {
-  top: 18px;
-  left: 50%;
-  transform: translate(-50%, -50%);
   background: rgba(239, 68, 68, 0.9);
   border-color: rgba(248, 113, 113, 0.5);
   color: #ffffff;
 }
 
 .mini-north .mini-deg {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   background: rgba(0, 0, 0, 0.35);
-  padding: 1px 4px;
+  padding: 1px 3px;
   border-radius: 3px;
+  line-height: 1;
 }
 
 .mini-south {
-  bottom: 18px;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  background: rgba(13, 20, 34, 0.88);
 }
 
 .mini-west {
-  top: 50%;
-  left: 36px;
-  transform: translate(-50%, -50%);
+  background: rgba(13, 20, 34, 0.88);
 }
 
 .mini-east {
-  top: 50%;
-  right: 36px;
-  transform: translate(-50%, -50%);
+  background: rgba(13, 20, 34, 0.88);
 }
 
 .mini-arrow {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   line-height: 1;
   display: inline-block;
   transition: transform 0.1s linear;
-}
-  line-height: 1;
 }
 
 /* Top Right Essential Map Tools */
