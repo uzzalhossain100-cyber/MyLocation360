@@ -20,7 +20,7 @@
   <!-- Immediate Self-Purge Cache Buster for Stale Mobile Browsers -->
   <script>
     (function() {
-      var BUILD_VERSION = '20260928_v8_clean';
+      var BUILD_VERSION = '20260928_v9_fullhud';
       try {
         var lastVer = localStorage.getItem('mylocation360_active_version');
         if (lastVer !== BUILD_VERSION) {
@@ -56,7 +56,7 @@
   <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 
   <!-- App Stylesheet with Live Cache-Busting Version -->
-  <link rel="stylesheet" href="/css/style.css?v=20260928_v8_clean">
+  <link rel="stylesheet" href="/css/style.css?v=20260928_v9_fullhud">
 </head>
 <body class="theme-dark">
 
@@ -355,6 +355,28 @@
           <!-- Click on Map Hint Badge -->
           <div class="map-click-hint-badge" id="mapClickHintBadge">
             <i class="fa-solid fa-hand-pointer"></i> ম্যাপে ক্লিক করে যেকোনো স্থান নির্বাচন ও রুট দেখুন
+          </div>
+
+          <!-- ফুল ম্যাপ মোডে একদম নিচে চলার গতি ও কোন দিকে চলছেন HUD বার -->
+          <div class="fullmap-bottom-hud-bar" id="fullMapBottomHudBar">
+            <div class="fm-hud-speed-col">
+              <i class="fa-solid fa-gauge-high text-sky"></i>
+              <div class="fm-hud-speed-val-wrap">
+                <span class="fm-hud-speed-num" id="fmHudSpeedValue">০</span>
+                <span class="fm-hud-speed-unit">কিমি/ঘ.</span>
+              </div>
+              <span class="fm-hud-state-pill" id="fmHudSpeedState">স্থির</span>
+            </div>
+            
+            <div class="fm-hud-divider"></div>
+
+            <div class="fm-hud-direction-col">
+              <div class="fm-hud-dir-header">
+                <i class="fa-solid fa-compass text-danger" id="fmHudCompassIcon"></i>
+                <span class="fm-hud-dir-label">কোন দিকে চলছেন:</span>
+              </div>
+              <div class="fm-hud-dir-text" id="fmHudTravelDirText">বর্তমানে আপনি স্থির অবস্থানে আছেন</div>
+            </div>
           </div>
 
         </div>
@@ -970,9 +992,9 @@
   </div>
 
   <!-- JavaScript Modules with Live Cache-Busting Version -->
-  <script src="/js/animation.js?v=20260928_v8_clean"></script>
-  <script src="/js/weather.js?v=20260928_v8_clean"></script>
-  <script src="/js/map.js?v=20260928_v8_clean"></script>
-  <script src="/js/app.js?v=20260928_v8_clean"></script>
+  <script src="/js/animation.js?v=20260928_v9_fullhud"></script>
+  <script src="/js/weather.js?v=20260928_v9_fullhud"></script>
+  <script src="/js/map.js?v=20260928_v9_fullhud"></script>
+  <script src="/js/app.js?v=20260928_v9_fullhud"></script>
 </body>
 </html>

@@ -6496,7 +6496,121 @@ body.in-fullmap-mode .map-bottom-controls-hub,
   transition: all 0.2s;
 }
 
-.btn-action-install-pwa:hover {
-  background: #059669;
-  transform: translateY(-1px);
+/* ==========================================================
+   FULL MAP BOTTOM SPEEDOMETER & DIRECTION HUD BAR
+   (ম্যাপ ফুল করলেও একদম নিচে চলার গতি ও কোন দিকে চলছেন দেখাবে)
+   ========================================================== */
+.fullmap-bottom-hud-bar {
+  display: none;
+}
+
+body.in-fullmap-mode .fullmap-bottom-hud-bar,
+.map-view-wrapper.fullscreen-map-mode .fullmap-bottom-hud-bar {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  position: fixed !important;
+  bottom: max(14px, env(safe-area-inset-bottom, 14px)) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: calc(100% - 24px) !important;
+  max-width: 460px !important;
+  z-index: 2147483647 !important;
+  background: rgba(13, 20, 34, 0.94) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border: 1.5px solid rgba(56, 189, 248, 0.5) !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85), 0 0 25px rgba(56, 189, 248, 0.25) !important;
+  padding: 6px 14px !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  box-sizing: border-box !important;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.fm-hud-speed-col {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.fm-hud-speed-col i {
+  font-size: 1.1rem;
+}
+
+.fm-hud-speed-val-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.fm-hud-speed-num {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1;
+  font-family: monospace, sans-serif;
+}
+
+.fm-hud-speed-unit {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.fm-hud-state-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #a7f3d0;
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.fm-hud-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+
+.fm-hud-direction-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  flex: 1;
+}
+
+.fm-hud-dir-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.fm-hud-dir-header i {
+  font-size: 0.85rem;
+  transition: transform 0.3s ease;
+}
+
+.fm-hud-dir-label {
+  font-size: 0.62rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.fm-hud-dir-text {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #38bdf8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }

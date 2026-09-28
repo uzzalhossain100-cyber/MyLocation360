@@ -307,6 +307,14 @@ const MapModule = {
 
     if (homeSpeedEl) homeSpeedEl.innerText = toBengaliDigits(speed);
 
+    // Fullscreen Map Bottom Floating HUD elements
+    const fmHudSpeed = document.getElementById('fmHudSpeedValue');
+    const fmHudState = document.getElementById('fmHudSpeedState');
+    const fmHudDirText = document.getElementById('fmHudTravelDirText');
+    const fmHudCompassIcon = document.getElementById('fmHudCompassIcon');
+
+    if (fmHudSpeed) fmHudSpeed.innerText = toBengaliDigits(speed);
+
     if (speed === 0) {
       if (statusEl) {
         statusEl.innerText = 'স্থির অবস্থায় আছেন';
@@ -317,6 +325,15 @@ const MapModule = {
         dirIndicatorText.style.color = '#94a3b8';
       }
       if (dockSubDir) dockSubDir.innerText = 'স্থির';
+
+      if (fmHudState) {
+        fmHudState.innerText = 'স্থির';
+        fmHudState.style.color = '#94a3b8';
+      }
+      if (fmHudDirText) {
+        fmHudDirText.innerText = 'বর্তমানে স্থির অবস্থানে আছেন';
+        fmHudDirText.style.color = '#94a3b8';
+      }
 
       if (homeStatusEl) {
         homeStatusEl.innerText = 'স্থির অবস্থায় আছেন';
@@ -333,6 +350,28 @@ const MapModule = {
         dirIndicatorText.style.color = '#38bdf8';
       }
       if (dockSubDir) dockSubDir.innerText = dirInfo.short;
+
+      if (fmHudDirText) {
+        fmHudDirText.innerText = dirInfo.text.replace('আপনি ', '');
+        fmHudDirText.style.color = '#38bdf8';
+      }
+
+      if (fmHudCompassIcon && heading !== null && !isNaN(heading)) {
+        fmHudCompassIcon.style.transform = `rotate(${heading}deg)`;
+      }
+
+      if (fmHudState) {
+        if (speed < 7) {
+          fmHudState.innerText = 'হাঁটা';
+          fmHudState.style.color = '#38bdf8';
+        } else if (speed < 25) {
+          fmHudState.innerText = 'যানবাহন';
+          fmHudState.style.color = '#34d399';
+        } else {
+          fmHudState.innerText = 'দ্রুত গতি';
+          fmHudState.style.color = '#f59e0b';
+        }
+      }
 
       if (homeDirEl) {
         homeDirEl.innerText = dirInfo.text.replace('আপনি ', '').replace(' চলছেন', 'ে চলছেন');
@@ -744,6 +783,10 @@ const MapModule = {
     }
     if (animIcon) {
       animIcon.style.transform = `rotate(${normalized - 45}deg)`;
+    }
+    const fmHudCompassIcon = document.getElementById('fmHudCompassIcon');
+    if (fmHudCompassIcon) {
+      fmHudCompassIcon.style.transform = `rotate(${normalized}deg)`;
     }
     if (badge) {
       let dirName = 'উত্তর (N)';
