@@ -20,7 +20,7 @@
   <!-- Immediate Self-Purge Cache Buster for Stale Mobile Browsers -->
   <script>
     (function() {
-      var BUILD_VERSION = '20260928_v7_final';
+      var BUILD_VERSION = '20260928_v8_clean';
       try {
         var lastVer = localStorage.getItem('mylocation360_active_version');
         if (lastVer !== BUILD_VERSION) {
@@ -56,7 +56,7 @@
   <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 
   <!-- App Stylesheet with Live Cache-Busting Version -->
-  <link rel="stylesheet" href="/css/style.css?v=20260928_v7_final">
+  <link rel="stylesheet" href="/css/style.css?v=20260928_v8_clean">
 </head>
 <body class="theme-dark">
 
@@ -256,199 +256,11 @@
         <span class="c-dot" data-index="1" title="মাই লোকেশন"></span>
       </div>
 
-      <!-- Mobile Lockscreen, Wallpaper & Widgets Set Bar -->
-      <div class="home-mobile-set-bar">
-        <button type="button" class="btn-set-mobile btn-set-widget" id="btnSetHomeWidget" title="মোবাইলে উইজেট লিস্টে যোগ করুন">
-          <i class="fa-solid fa-puzzle-piece"></i>
-          <span>উইজেট লিস্টে যোগ করুন</span>
-        </button>
-        <button type="button" class="btn-set-mobile btn-set-lockscreen" id="btnSetHomeLockscreen" title="লকস্ক্রিনে সেট করুন">
-          <i class="fa-solid fa-mobile-screen-button"></i>
-          <span>লকস্ক্রিনে সেট করুন</span>
-        </button>
-        <button type="button" class="btn-set-mobile btn-set-wallpaper" id="btnSetHomeWallpaper" title="ওয়ালপেপার সেট করুন">
-          <i class="fa-solid fa-image"></i>
-          <span>ওয়ালপেপার সেট করুন</span>
-        </button>
-      </div>
-
       <!-- Footer Info Bar -->
       <div class="home-portal-footer">
         <span>স্মার্ট অবস্থান ট্র্যাকিং • বাস্তব সময়ের আবহাওয়া • ডপলার রাডার ও ৩৬০° ভিউ</span>
       </div>
 
-    </div>
-  </div>
-
-  <!-- Mobile Lockscreen / Wallpaper Interactive Setup & Live Preview Modal -->
-  <div class="mobile-set-modal-backdrop" id="mobileSetModalBackdrop" style="display: none;">
-    <div class="mobile-set-modal-box">
-      <div class="modal-set-header">
-        <div class="modal-set-title-wrap">
-          <i class="fa-solid fa-mobile-screen text-sky" id="modalSetIcon"></i>
-          <h3 class="modal-set-title" id="modalSetTitle">মোবাইলে সেট করুন</h3>
-        </div>
-        <button type="button" class="btn-modal-close" id="btnCloseMobileSetModal">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <div class="modal-set-body">
-        <p class="modal-set-desc" id="modalSetDesc">আপনার বর্তমান অবস্থান ও লাইভ আবহাওয়ার দৃশ্য সমন্বিত স্ক্রিন প্রস্তুত করা হয়েছে:</p>
-        
-        <!-- Live Generated Wallpaper Preview Card -->
-        <div class="wallpaper-preview-phone" id="wallpaperPreviewPhone">
-          <div class="phone-notch"></div>
-          <div class="phone-screen-content" id="phoneScreenContent">
-            <div class="phone-time-wrap">
-              <span class="phone-clock" id="phoneLiveClock">১২:৪৫</span>
-              <span class="phone-date" id="phoneLiveDate">রবিবার, ২৭ সেপ্টেম্বর</span>
-            </div>
-            <div class="phone-widgets">
-              <!-- Location Widget -->
-              <div class="phone-widget-card">
-                <i class="fa-solid fa-location-dot text-primary"></i>
-                <div class="widget-text">
-                  <span class="w-label">আমার লোকেশন</span>
-                  <span class="w-val" id="phonePreviewAddress">ধানমন্ডি, ঢাকা</span>
-                </div>
-              </div>
-              <!-- Weather & Speed Widget -->
-              <div class="phone-widget-grid">
-                <div class="phone-widget-card mini">
-                  <i class="fa-solid fa-temperature-half text-amber"></i>
-                  <div>
-                    <span class="w-val" id="phonePreviewTemp">৩১° সে.</span>
-                    <span class="w-label" id="phonePreviewCond">রোদ্রোজ্জ্বল</span>
-                  </div>
-                </div>
-                <div class="phone-widget-card mini">
-                  <i class="fa-solid fa-gauge-high text-sky"></i>
-                  <div>
-                    <span class="w-val" id="phonePreviewSpeed">০ কিমি/ঘ.</span>
-                    <span class="w-label" id="phonePreviewDir">উত্তর দিক</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="phone-footer-brand">MyLocation360 Live</div>
-          </div>
-        </div>
-
-        <!-- Action Instructions -->
-        <div class="modal-set-instructions" id="modalSetInstructions">
-          <div class="inst-step">
-            <span class="step-num">১</span>
-            <span>নিচের <strong>"সেভ করে সেট করুন"</strong> চাপলে হাই-রেজ্যোলিউশন ইমেজ সেভ হবে।</span>
-          </div>
-          <div class="inst-step">
-            <span class="step-num">২</span>
-            <span>মোবাইলের গ্যালারি বা সেটিংস ওপেন করে <strong>"Use as Wallpaper / Lockscreen"</strong> সিলেক্ট করুন।</span>
-          </div>
-          <div class="inst-step">
-            <span class="step-num">৩</span>
-            <span>অথবা সরাসরি মোবাইলে <strong>"লাইভ ফুলস্ক্রিন ডিসপ্লে"</strong> চালু রাখতে পারেন।</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-set-actions">
-        <button type="button" class="btn-action-save" id="btnDownloadWallpaper">
-          <i class="fa-solid fa-download"></i>
-          <span id="btnDownloadWallpaperLabel">সেভ করে সেট করুন</span>
-        </button>
-        <button type="button" class="btn-action-live" id="btnLaunchLiveDisplay">
-          <i class="fa-solid fa-expand"></i>
-          <span>লাইভ ফুলস্ক্রিন ডিসপ্লে</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Mobile Widget Setup & Add Widgets Guide Modal -->
-  <div class="mobile-set-modal-backdrop" id="widgetGuideModalBackdrop" style="display: none;">
-    <div class="mobile-set-modal-box">
-      <div class="modal-set-header">
-        <div class="modal-set-title-wrap">
-          <i class="fa-solid fa-puzzle-piece text-amber"></i>
-          <h3 class="modal-set-title">মোবাইল উইজেট (Add Widgets)</h3>
-        </div>
-        <button type="button" class="btn-modal-close" id="btnCloseWidgetGuideModal">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <div class="modal-set-body">
-        <p class="modal-set-desc">আপনার মোবাইলের <strong>Add widgets</strong> তালিকায় এই অ্যাপের <strong>'মাই লোকেশন'</strong> ও <strong>'লাইভ আবহাওয়া'</strong> ফিচার সক্রিয় করার নিয়ম:</p>
-        
-        <!-- Interactive Widget Cards Display -->
-        <div class="widget-showcase-grid">
-          
-          <!-- Widget 1: My Location & Speedometer -->
-          <div class="widget-preview-item item-loc">
-            <div class="w-item-header">
-              <span class="w-badge-pill"><i class="fa-solid fa-location-crosshairs"></i> উইজেট ১</span>
-              <span class="w-status-live">লাইভ আপডেট</span>
-            </div>
-            <h4 class="w-item-title">মাই লোকেশন ও স্পিডোমিটার</h4>
-            <p class="w-item-desc">হোমস্ক্রিনে লাইভ জিপিএস অবস্থান, রিয়েল-টাইম গতি ও দিক নির্দেশক কম্পাস</p>
-            <div class="w-preview-mock">
-              <i class="fa-solid fa-map-pin text-sky"></i>
-              <span>বর্তমান এলাকা • ০ কিমি/ঘ. • উত্তর দিক</span>
-            </div>
-          </div>
-
-          <!-- Widget 2: Live Weather & Radar -->
-          <div class="widget-preview-item item-weather">
-            <div class="w-item-header">
-              <span class="w-badge-pill pill-amber"><i class="fa-solid fa-cloud-sun"></i> উইজেট ২</span>
-              <span class="w-status-live">রিয়েল-টাইম</span>
-            </div>
-            <h4 class="w-item-title">লাইভ আবহাওয়া ড্যাশবোর্ড</h4>
-            <p class="w-item-desc">বর্তমান তাপমাত্রা, আকাশ দৃশ্য ও ডপলার রাডার লাইভ আপডেট</p>
-            <div class="w-preview-mock">
-              <i class="fa-solid fa-sun text-amber"></i>
-              <span>৩১° সে. • রোদ ঝলমলে আকাশ • ঢাকা</span>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Step by Step Android / iOS Instructions -->
-        <div class="modal-set-instructions">
-          <div class="inst-step">
-            <span class="step-num">১</span>
-            <span>প্রথমে নিচে থাকা <strong>"উইজেট সক্রিয় করুন (Install / Add)"</strong> বাটনে চাপ দিন।</span>
-          </div>
-          <div class="inst-step">
-            <span class="step-num">২</span>
-            <span>ইনস্টল সম্পন্ন হলে মোবাইলের হোমস্ক্রিনের যেকোনো ফাঁকা জায়গায় <strong>২ সেকেন্ড চেপে ধরে রাখুন (Long Press)</strong>।</span>
-          </div>
-          <div class="inst-step">
-            <span class="step-num">৩</span>
-            <span>নিচে আসা <strong>Widgets (উইজেট)</strong> অপশনে ট্যাপ করে <strong>MyLocation360</strong> সিলেক্ট করুন।</span>
-          </div>
-          <div class="inst-step">
-            <span class="step-num">৪</span>
-            <span>সেখানে <strong>'মাই লোকেশন'</strong> ও <strong>'লাইভ আবহাওয়া'</strong> উইজেট পেয়ে যাবেন — ড্র্যাগ করে স্ক্রিনে বসিয়ে নিন!</span>
-          </div>
-          <div class="inst-step">
-            <span class="step-num">💡</span>
-            <span><strong>সহজ শর্টকাট:</strong> মোবাইলে এই অ্যাপ আইকনের ওপর ২ সেকেন্ড আঙুল দিয়ে চেপে ধরলেই সরাসরি 'মাই লোকেশন' ও 'লাইভ আবহাওয়া' উইজেট চালু হয়ে যাবে!</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-set-actions">
-        <button type="button" class="btn-action-install-pwa" id="btnInstallPwaWidget">
-          <i class="fa-solid fa-circle-down"></i>
-          <span>উইজেট সক্রিয় করুন</span>
-        </button>
-        <button type="button" class="btn-action-save" id="btnGotWidgetGuide">
-          <i class="fa-solid fa-check"></i>
-          <span>ঠিক আছে, বুঝেছি</span>
-        </button>
-      </div>
     </div>
   </div>
 
@@ -1158,9 +970,9 @@
   </div>
 
   <!-- JavaScript Modules with Live Cache-Busting Version -->
-  <script src="/js/animation.js?v=20260928_v7_final"></script>
-  <script src="/js/weather.js?v=20260928_v7_final"></script>
-  <script src="/js/map.js?v=20260928_v7_final"></script>
-  <script src="/js/app.js?v=20260928_v7_final"></script>
+  <script src="/js/animation.js?v=20260928_v8_clean"></script>
+  <script src="/js/weather.js?v=20260928_v8_clean"></script>
+  <script src="/js/map.js?v=20260928_v8_clean"></script>
+  <script src="/js/app.js?v=20260928_v8_clean"></script>
 </body>
 </html>
