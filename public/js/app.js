@@ -70,10 +70,98 @@ function handleUrlWidgetParams() {
 /* ================= HOME WELCOME PORTAL WORKFLOW ================= */
 function setupHomePortalWorkflow() {
   const portalOverlay = document.getElementById('homePortalOverlay');
-  const btnLocation = document.getElementById('portalBtnLocation');
-  const btnWeather = document.getElementById('portalBtnWeather');
+  const btnOnlyGoToLocation = document.getElementById('btnOnlyGoToLocation');
+  const btnOnlyGoToWeather = document.getElementById('btnOnlyGoToWeather');
   const btnOpenPortal = document.getElementById('btnOpenHomePortal');
   const btnBottomHome = document.getElementById('bottomNavBtnHome');
+
+  // Carousel elements
+  const carouselTrack = document.getElementById('homeCarouselTrack');
+  const btnSlideWeather = document.getElementById('btnSlideWeather');
+  const btnSlideLocation = document.getElementById('btnSlideLocation');
+  const carouselDots = document.querySelectorAll('.home-carousel-dots .c-dot');
+  const swipeContainer = document.getElementById('homeSwipeCarousel');
+
+  let currentSlideIndex = 0; // 0 = Weather, 1 = Location
+
+  function goToSlide(index) {
+    currentSlideIndex = index;
+    if (carouselTrack) {
+      carouselTrack.style.transform = `translateX(-${index * 50}%)`;
+    }
+
+    if (btnSlideWeather && btnSlideLocation) {
+      if (index === 0) {
+        btnSlideWeather.classList.add('active');
+        btnSlideLocation.classList.remove('active');
+      } else {
+        btnSlideLocation.classList.add('active');
+        btnSlideWeather.classList.remove('active');
+      }
+    }
+
+    carouselDots.forEach((dot, dIdx) => {
+      dot.classList.toggle('active', dIdx === index);
+    });
+  }
+
+  // Tab Pill Clicks
+  if (btnSlideWeather) {
+    btnSlideWeather.addEventListener('click', (e) => {
+      e.stopPropagation();
+      goToSlide(0);
+    });
+  }
+  if (btnSlideLocation) {
+    btnSlideLocation.addEventListener('click', (e) => {
+      e.stopPropagation();
+      goToSlide(1);
+    });
+  }
+
+  // Dot Clicks
+  carouselDots.forEach((dot) => {
+    dot.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(dot.getAttribute('data-index') || '0', 10);
+      goToSlide(idx);
+    });
+  });
+
+  // Touch Swipe Gesture Detection for Mobile
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchEndX = 0;
+  let touchEndY = 0;
+
+  if (swipeContainer) {
+    swipeContainer.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    swipeContainer.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      touchEndY = e.changedTouches[0].screenY;
+      handleSwipeGesture();
+    }, { passive: true });
+  }
+
+  function handleSwipeGesture() {
+    const diffX = touchEndX - touchStartX;
+    const diffY = touchEndY - touchStartY;
+
+    // Only trigger horizontal swipe if movement is primarily horizontal (> 40px)
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 40) {
+      if (diffX < 0) {
+        // Swiped Left -> Move to Slide 1 (Location)
+        goToSlide(1);
+      } else {
+        // Swiped Right -> Move to Slide 0 (Weather)
+        goToSlide(0);
+      }
+    }
+  }
 
   // Immediately render current Bengali Date & Day
   const hDateEl = document.getElementById('homeCurrentDate');
@@ -106,17 +194,22 @@ function setupHomePortalWorkflow() {
     if (portalOverlay) {
       portalOverlay.classList.remove('portal-closing');
       portalOverlay.style.display = 'flex';
+      // Reset to slide 0 (Weather first as requested)
+      goToSlide(0);
     }
   }
 
-  if (btnLocation) {
-    btnLocation.addEventListener('click', () => {
+  // STRICT REQUIREMENT: Only view details button triggers navigation!
+  if (btnOnlyGoToLocation) {
+    btnOnlyGoToLocation.addEventListener('click', (e) => {
+      e.stopPropagation();
       openFeature('location-tab');
     });
   }
 
-  if (btnWeather) {
-    btnWeather.addEventListener('click', () => {
+  if (btnOnlyGoToWeather) {
+    btnOnlyGoToWeather.addEventListener('click', (e) => {
+      e.stopPropagation();
       openFeature('weather-tab');
     });
   }
@@ -131,7 +224,7 @@ function setupHomePortalWorkflow() {
 
   window.returnToHomePortal = returnToHome;
 
-  // Initialize Lockscreen & Wallpaper Workflow
+  // Initialize Lockscreen, Wallpaper & Widget Workflow
   setupMobileLockscreenAndWallpaperWorkflow();
 }
 

@@ -186,8 +186,10 @@ const MapModule = {
       .addTo(this.map);
   },
 
-  setUserPosition(lat, lon, speedMps = 0, altitude = null, heading = null) {
-    // Calculate distance from last recorded point to eliminate GPS jitter/drift
+  setUserPosition(lat, lon, speedMps = null, altitude = null, heading = null) {
+    const now = Date.now();
+
+    // Calculate distance moved from last recorded point
     let distMovedMeters = 0;
     if (this.currentLat && this.currentLon) {
       const dLat = (lat - this.currentLat) * 111320;
@@ -195,12 +197,31 @@ const MapModule = {
       distMovedMeters = Math.sqrt(dLat * dLat + dLon * dLon);
     }
 
-    // Determine accurate movement heading
+    // Determine accurate movement heading from GPS delta or Device Orientation Compass
     let moveHeading = heading;
-    if ((moveHeading === null || isNaN(moveHeading)) && distMovedMeters >= 3 && this.currentLat && this.currentLon) {
+    if ((moveHeading === null || isNaN(moveHeading)) && distMovedMeters >= 1.2 && this.currentLat && this.currentLon) {
       moveHeading = this.calculateBearing(this.currentLat, this.currentLon, lat, lon);
+    } else if ((moveHeading === null || isNaN(moveHeading)) && this.deviceHeading !== null && !isNaN(this.deviceHeading)) {
+      moveHeading = this.deviceHeading;
     }
 
+    // Accurate Walking & Vehicle Speed calculation (حالত ও হাঁটার গতি নিশ্চিতকরণ)
+    let speedKmh = 0;
+    if (speedMps !== null && !isNaN(speedMps) && speedMps > 0.25) {
+      speedKmh = Math.round(speedMps * 3.6);
+    } else if (this.lastGpsTimestamp && this.currentLat && this.currentLon) {
+      const timeDiffSec = (now - this.lastGpsTimestamp) / 1000;
+      // If time delta is reasonable (0.8s to 12s)
+      if (timeDiffSec >= 0.8 && timeDiffSec <= 12) {
+        const calculatedMps = distMovedMeters / timeDiffSec;
+        // Even small walking steps (e.g. 0.35 m/s ~ 1.3 km/h) are immediately detected!
+        if (calculatedMps >= 0.32 && distMovedMeters >= 1.0) {
+          speedKmh = Math.round(calculatedMps * 3.6);
+        }
+      }
+    }
+
+    this.lastGpsTimestamp = now;
     this.currentLat = lat;
     this.currentLon = lon;
 
@@ -208,24 +229,21 @@ const MapModule = {
       this.userMarker.setLngLat([lon, lat]);
     }
 
-    // Strict GPS Drift & Noise Filter:
-    // If speed is below 0.65 m/s (~2.3 km/h) or movement is under 3 meters, force strict 0 km/h
-    let speedKmh = 0;
-    if (speedMps && speedMps >= 0.65 && distMovedMeters >= 2.5) {
-      speedKmh = Math.round(speedMps * 3.6);
-    }
-
     this.updateSpeedometer(speedKmh, moveHeading);
 
-    // LIVE NAVIGATION AUTO-FOLLOW: Map smoothly moves and tracks user as they walk or drive!
+    // Update Home Compass
+    if (moveHeading !== null && !isNaN(moveHeading)) {
+      this.updateHomeCompass(moveHeading);
+    }
+
+    // LIVE NAVIGATION AUTO-FOLLOW
     if (this.isAutoFollow && this.map) {
       const easeOptions = {
         center: [lon, lat],
         duration: 900,
         essential: true
       };
-      // Rotate map along user heading if moving (> 2.5 km/h)
-      if (moveHeading !== null && !isNaN(moveHeading) && speedKmh >= 2.5) {
+      if (moveHeading !== null && !isNaN(moveHeading) && speedKmh >= 2) {
         easeOptions.bearing = moveHeading;
       }
       this.map.easeTo(easeOptions);

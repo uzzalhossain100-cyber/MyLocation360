@@ -1148,10 +1148,14 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 16px;
+  padding: 16px 12px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  transform: translateZ(0);
   animation: fadeIn 0.3s ease-out;
 }
 
@@ -1171,22 +1175,23 @@ body {
 
 .home-portal-card {
   width: 100%;
-  max-width: 900px;
-  background: linear-gradient(145deg, rgba(23, 37, 68, 0.95), rgba(15, 23, 42, 0.98));
+  max-width: 580px;
+  background: linear-gradient(145deg, rgba(23, 37, 68, 0.96), rgba(15, 23, 42, 0.98));
   border: 1.5px solid rgba(56, 189, 248, 0.35);
   border-radius: 28px;
-  padding: 24px 20px;
+  padding: 20px 16px;
   box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.9), 0 0 40px rgba(56, 189, 248, 0.15);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
   margin: auto;
+  box-sizing: border-box;
 }
 
 @media (min-width: 640px) {
   .home-portal-card {
-    padding: 32px 32px;
-    gap: 24px;
+    padding: 28px 24px;
+    gap: 18px;
   }
 }
 
@@ -1229,34 +1234,112 @@ body {
   margin: 0;
 }
 
-/* DUAL SPLIT GRID (দু ভাগে বিভক্ত হোম ড্যাশবোর্ড) */
-.home-dual-split-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
+/* ==========================================================
+   INTERACTIVE SWIPE CAROUSEL (শুরুতে আবহাওয়া, ডানে সুইপ করলে মাই লোকেশন)
+   ========================================================== */
+.home-swipe-tab-bar {
+  display: flex;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  padding: 4px;
+  gap: 6px;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
-@media (min-width: 768px) {
-  .home-dual-split-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
+.home-tab-pill {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.home-tab-pill.active {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+}
+
+.home-tab-pill:hover:not(.active) {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* CAROUSEL WRAPPER & SLIDES (100% stable, jitter-free) */
+.home-swipe-carousel {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  touch-action: pan-y pinch-zoom;
+  border-radius: 24px;
+}
+
+.home-carousel-track {
+  display: flex;
+  width: 200%;
+  transition: transform 0.38s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: transform;
+}
+
+.home-carousel-slide {
+  width: 50%;
+  flex-shrink: 0;
+  padding: 2px 4px;
+  box-sizing: border-box;
 }
 
 .home-split-card {
   background: rgba(30, 41, 59, 0.6);
   border: 1.5px solid rgba(255, 255, 255, 0.1);
   border-radius: 22px;
-  padding: 20px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 16px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 14px;
+  cursor: default; /* কার্ডে কোনো ক্লিক নেই */
   position: relative;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
+}
+
+/* Carousel Dots Indicator */
+.home-carousel-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: -6px;
+}
+
+.c-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.c-dot.active {
+  width: 24px;
+  border-radius: 9999px;
+  background: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
 }
 
 .home-split-card:hover {

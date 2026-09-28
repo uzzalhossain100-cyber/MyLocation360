@@ -42,163 +42,187 @@
         <p class="home-portal-subtitle">স্মার্ট জিপিএস অবস্থান ও লাইভ আবহাওয়া ড্যাশবোর্ড</p>
       </div>
 
-      <!-- Quick Dual Split Section (দু ভাগে বিভক্ত হোম ড্যাশবোর্ড) -->
-      <div class="home-dual-split-grid">
-        
-        <!-- PART 1 (LEFT / SIDE 1): MY LOCATION (আমার বর্তমান লোকেশন) -->
-        <div class="home-split-card card-my-location" id="portalBtnLocation" role="button" tabindex="0">
-          <div class="split-card-header">
-            <div class="split-icon-badge badge-loc">
-              <i class="fa-solid fa-location-crosshairs"></i>
-            </div>
-            <div class="split-header-text">
-              <h3 class="split-title">মাই লোকেশন</h3>
-              <span class="split-subtitle">আমার বর্তমান অবস্থান ও স্পিড মিটার</span>
-            </div>
-            <span class="live-pulse-pill"><span class="pulse-dot"></span> লাইভ জিপিএস</span>
-          </div>
+      <!-- Interactive Feature Switcher Tabs (ট্যাব বা ডানে-বামে সুইপ কন্ট্রোল) -->
+      <div class="home-swipe-tab-bar">
+        <button type="button" class="home-tab-pill active" id="btnSlideWeather">
+          <i class="fa-solid fa-cloud-sun"></i>
+          <span>১. লাইভ আবহাওয়া</span>
+        </button>
+        <button type="button" class="home-tab-pill" id="btnSlideLocation">
+          <i class="fa-solid fa-location-crosshairs"></i>
+          <span>২. মাই লোকেশন (ডানে সুইপ করুন ➡️)</span>
+        </button>
+      </div>
 
-          <div class="split-card-body">
-            <!-- বর্তমান ঠিকানা -->
-            <div class="home-info-row">
-              <i class="fa-solid fa-map-location-dot text-primary"></i>
-              <div class="info-content">
-                <span class="info-label">বর্তমান ঠিকানা:</span>
-                <span class="info-val-strong" id="homeCurrentAddress">ধানমন্ডি, ঢাকা, বাংলাদেশ</span>
-              </div>
-            </div>
-
-            <!-- স্পিড মিটার ও দিক নির্দেশক কম্পাস ডুয়াল গ্রিড (Speedometer & Directional Compass) -->
-            <div class="home-sensors-grid">
-              
-              <!-- স্পিড মিটার (Speedometer) -->
-              <div class="home-speedometer-box">
-                <div class="sensor-card-title">
-                  <i class="fa-solid fa-gauge-high text-sky"></i>
-                  <span>চলার গতি (Speed)</span>
+      <!-- Swipeable / Slide Carousel Track -->
+      <div class="home-swipe-carousel" id="homeSwipeCarousel">
+        <div class="home-carousel-track" id="homeCarouselTrack">
+          
+          <!-- SLIDE 1 (FIRST / শুরুতে থাকবে): LIVE WEATHER (লাইভ আবহাওয়া হোম ফিচার) -->
+          <div class="home-carousel-slide active-slide" id="slideWeather">
+            <div class="home-split-card card-live-weather">
+              <div class="split-card-header">
+                <div class="split-icon-badge badge-weather">
+                  <i class="fa-solid fa-cloud-sun"></i>
                 </div>
-                <div class="speed-dial-wrap">
-                  <div class="speed-values">
-                    <div class="speed-val-row">
-                      <span class="speed-num" id="homeCurrentSpeed">০</span>
-                      <span class="speed-unit">কিমি/ঘণ্টা</span>
+                <div class="split-header-text">
+                  <h3 class="split-title">লাইভ আবহাওয়া</h3>
+                  <span class="split-subtitle">আমার লোকেশনের রিয়েল-টাইম আবহাওয়া</span>
+                </div>
+                <span class="live-pulse-pill pill-sky"><span class="pulse-dot dot-sky"></span> লাইভ</span>
+              </div>
+
+              <div class="split-card-body">
+                <!-- বার ও তারিখ এবং বর্তমান লোকেশন নাম -->
+                <div class="home-meta-bar">
+                  <div class="home-date-chip">
+                    <i class="fa-regular fa-calendar-days text-amber"></i>
+                    <span id="homeCurrentDate">তারিখ লোড হচ্ছে...</span>
+                  </div>
+                  <div class="home-loc-chip">
+                    <i class="fa-solid fa-location-dot text-sky"></i>
+                    <span id="homeWeatherAreaName">ঢাকা, বাংলাদেশ</span>
+                  </div>
+                </div>
+
+                <!-- তাপমাত্রা ও কন্ডিশন -->
+                <div class="home-weather-temp-row">
+                  <div class="h-temp-display">
+                    <span class="h-temp-num" id="homeCurrentTemp">৩১°</span>
+                    <span class="h-temp-unit">C</span>
+                  </div>
+                  <div class="h-cond-badge" id="homeCurrentConditionBadge">
+                    <span class="h-cond-icon" id="homeCurrentConditionIcon">☀️</span>
+                    <span class="h-cond-text" id="homeCurrentConditionText">পরিষ্কার আকাশ</span>
+                  </div>
+                </div>
+
+                <!-- বর্তমান এলাকার জীবন্ত দৃশ্য (স্থির ও সিল্কি-স্মুথ মিনি ক্যানভাস) -->
+                <div class="home-mini-scene-card" id="homeMiniSceneContainer">
+                  <div class="home-mini-scene-header">
+                    <span class="h-mini-badge"><i class="fa-solid fa-wand-magic-sparkles text-amber"></i> বর্তমান এলাকার জীবন্ত দৃশ্য</span>
+                    <span class="h-mini-status" id="homeMiniAnimBadge">রোদ্রোজ্জ্বল দৃশ্য</span>
+                  </div>
+                  <div class="animation-stage-container home-mini-stage" id="homeMiniAnimationStage">
+                    <canvas id="homeMiniAnimCanvas" class="weather-canvas mini-canvas"></canvas>
+                    <div class="scene-overlay home-mini-overlay" id="homeMiniSceneOverlay">
+                      <div class="sun-glow" id="homeMiniSunGlow"></div>
+                      <div class="cloud-layer layer-1" id="homeMiniCloudLayer1"></div>
+                      <div class="cloud-layer layer-2" id="homeMiniCloudLayer2"></div>
+                      <div class="rain-layer" id="homeMiniRainLayer"></div>
+                      <div class="lightning-flash" id="homeMiniLightning"></div>
                     </div>
                   </div>
                 </div>
-                <div class="speed-state-tag" id="homeSpeedStatus">স্থির অবস্থায় আছেন</div>
               </div>
 
-              <!-- দিক নির্দেশক কম্পাস (Directional Compass) -->
-              <div class="home-compass-box" id="homeCompassContainer">
-                <div class="sensor-card-title">
-                  <i class="fa-solid fa-compass text-danger"></i>
-                  <span>দিক নির্দেশক কম্পাস</span>
+              <!-- Click Action Trigger: শুধুমাত্র বিস্তারিত দেখুন বাটনে চাপলেই ঢুকবে -->
+              <div class="split-card-action">
+                <button type="button" class="btn-portal-action action-weather" id="btnOnlyGoToWeather">
+                  <span>বিস্তারিত দেখুন</span>
+                  <i class="fa-solid fa-arrow-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- SLIDE 2 (SECOND / ডানে সুইপ করলে আসবে): MY LOCATION (মাই লোকেশন হোম ফিচার) -->
+          <div class="home-carousel-slide" id="slideLocation">
+            <div class="home-split-card card-my-location">
+              <div class="split-card-header">
+                <div class="split-icon-badge badge-loc">
+                  <i class="fa-solid fa-location-crosshairs"></i>
                 </div>
-                <div class="compass-dial-wrap">
-                  <div class="compass-dial-plate" id="homeCompassDialPlate">
-                    <!-- Cardinal Points -->
-                    <span class="c-point point-n">উ (N)</span>
-                    <span class="c-point point-e">পূ (E)</span>
-                    <span class="c-point point-s">দ (S)</span>
-                    <span class="c-point point-w">প (W)</span>
-                    <!-- Dynamic Rotating Needle -->
-                    <div class="compass-needle-arrow" id="homeCompassNeedle">
-                      <div class="needle-north"></div>
-                      <div class="needle-center-pivot"></div>
-                      <div class="needle-south"></div>
-                    </div>
+                <div class="split-header-text">
+                  <h3 class="split-title">মাই লোকেশন</h3>
+                  <span class="split-subtitle">আমার বর্তমান অবস্থান ও স্পিড মিটার</span>
+                </div>
+                <span class="live-pulse-pill"><span class="pulse-dot"></span> লাইভ জিপিএস</span>
+              </div>
+
+              <div class="split-card-body">
+                <!-- বর্তমান ঠিকানা -->
+                <div class="home-info-row">
+                  <i class="fa-solid fa-map-location-dot text-primary"></i>
+                  <div class="info-content">
+                    <span class="info-label">বর্তমান ঠিকানা:</span>
+                    <span class="info-val-strong" id="homeCurrentAddress">ধানমন্ডি, ঢাকা, বাংলাদেশ</span>
                   </div>
                 </div>
-                <div class="compass-heading-badge" id="homeCompassHeadingBadge">০° উত্তর (N)</div>
-              </div>
 
-            </div>
+                <!-- স্পিড মিটার ও দিক নির্দেশক কম্পাস ডুয়াল গ্রিড (Speedometer & Directional Compass) -->
+                <div class="home-sensors-grid">
+                  
+                  <!-- স্পিড মিটার (Speedometer) -->
+                  <div class="home-speedometer-box">
+                    <div class="sensor-card-title">
+                      <i class="fa-solid fa-gauge-high text-sky"></i>
+                      <span>চলার গতি (Speed)</span>
+                    </div>
+                    <div class="speed-dial-wrap">
+                      <div class="speed-values">
+                        <div class="speed-val-row">
+                          <span class="speed-num" id="homeCurrentSpeed">০</span>
+                          <span class="speed-unit">কিমি/ঘণ্টা</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="speed-state-tag" id="homeSpeedStatus">স্থির অবস্থায় আছেন</div>
+                  </div>
 
-            <!-- তার নিচে কোন দিকে যাচ্ছেন তা দেখাবে -->
-            <div class="home-direction-box">
-              <div class="h-dir-header">
-                <i class="fa-solid fa-location-arrow" id="homeCompassAnimIcon"></i>
-                <span class="h-dir-label">কোন দিকে যাচ্ছেন:</span>
-              </div>
-              <div class="h-dir-value" id="homeCurrentHeadingText">স্থির (উত্তর দিক)</div>
-            </div>
-          </div>
+                  <!-- দিক নির্দেশক কম্পাস (Directional Compass) -->
+                  <div class="home-compass-box" id="homeCompassContainer">
+                    <div class="sensor-card-title">
+                      <i class="fa-solid fa-compass text-danger"></i>
+                      <span>দিক নির্দেশক কম্পাস</span>
+                    </div>
+                    <div class="compass-dial-wrap">
+                      <div class="compass-dial-plate" id="homeCompassDialPlate">
+                        <!-- Cardinal Points -->
+                        <span class="c-point point-n">উ (N)</span>
+                        <span class="c-point point-e">পূ (E)</span>
+                        <span class="c-point point-s">দ (S)</span>
+                        <span class="c-point point-w">প (W)</span>
+                        <!-- Dynamic Rotating Needle -->
+                        <div class="compass-needle-arrow" id="homeCompassNeedle">
+                          <div class="needle-north"></div>
+                          <div class="needle-center-pivot"></div>
+                          <div class="needle-south"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="compass-heading-badge" id="homeCompassHeadingBadge">০° উত্তর (N)</div>
+                  </div>
 
-          <!-- Click Action Trigger -->
-          <div class="split-card-action">
-            <button type="button" class="btn-portal-action action-loc">
-              <span>বিস্তারিত দেখতে ক্লিক করুন</span>
-              <i class="fa-solid fa-arrow-right"></i>
-            </button>
-          </div>
-        </div>
+                </div>
 
-        <!-- PART 2 (RIGHT / SIDE 2): LIVE WEATHER (আমার লোকেশনের সংক্ষিপ্ত আবহাওয়া) -->
-        <div class="home-split-card card-live-weather" id="portalBtnWeather" role="button" tabindex="0">
-          <div class="split-card-header">
-            <div class="split-icon-badge badge-weather">
-              <i class="fa-solid fa-cloud-sun"></i>
-            </div>
-            <div class="split-header-text">
-              <h3 class="split-title">লাইভ আবহাওয়া</h3>
-              <span class="split-subtitle">আমার লোকেশনের সংক্ষিপ্ত আবহাওয়া</span>
-            </div>
-            <span class="live-pulse-pill pill-sky"><span class="pulse-dot dot-sky"></span> রিয়েল-টাইম</span>
-          </div>
-
-          <div class="split-card-body">
-            <!-- বার ও তারিখ এবং বর্তমান লোকেশন নাম -->
-            <div class="home-meta-bar">
-              <div class="home-date-chip">
-                <i class="fa-regular fa-calendar-days text-amber"></i>
-                <span id="homeCurrentDate">তারিখ লোড হচ্ছে...</span>
-              </div>
-              <div class="home-loc-chip">
-                <i class="fa-solid fa-location-dot text-sky"></i>
-                <span id="homeWeatherAreaName">ঢাকা, বাংলাদেশ</span>
-              </div>
-            </div>
-
-            <!-- তাপমাত্রা -->
-            <div class="home-weather-temp-row">
-              <div class="h-temp-display">
-                <span class="h-temp-num" id="homeCurrentTemp">৩১°</span>
-                <span class="h-temp-unit">C</span>
-              </div>
-              <div class="h-cond-badge" id="homeCurrentConditionBadge">
-                <span class="h-cond-icon" id="homeCurrentConditionIcon">☀️</span>
-                <span class="h-cond-text" id="homeCurrentConditionText">পরিষ্কার আকাশ</span>
-              </div>
-            </div>
-
-            <!-- বর্তমান লোকেশনের জীবন্ত দৃশ্য (ভেতরের নির্বাচিত এলাকার মতই ছোট আকারে ক্যানভাস দৃশ্য) -->
-            <div class="home-mini-scene-card" id="homeMiniSceneContainer">
-              <div class="home-mini-scene-header">
-                <span class="h-mini-badge"><i class="fa-solid fa-wand-magic-sparkles text-amber"></i> বর্তমান লোকেশনের জীবন্ত দৃশ্য</span>
-                <span class="h-mini-status" id="homeMiniAnimBadge">রোদ্রোজ্জ্বল দৃশ্য</span>
-              </div>
-              <div class="animation-stage-container home-mini-stage" id="homeMiniAnimationStage">
-                <canvas id="homeMiniAnimCanvas" class="weather-canvas mini-canvas"></canvas>
-                <div class="scene-overlay home-mini-overlay" id="homeMiniSceneOverlay">
-                  <div class="sun-glow" id="homeMiniSunGlow"></div>
-                  <div class="cloud-layer layer-1" id="homeMiniCloudLayer1"></div>
-                  <div class="cloud-layer layer-2" id="homeMiniCloudLayer2"></div>
-                  <div class="rain-layer" id="homeMiniRainLayer"></div>
-                  <div class="lightning-flash" id="homeMiniLightning"></div>
+                <!-- তার নিচে কোন দিকে যাচ্ছেন তা দেখাবে -->
+                <div class="home-direction-box">
+                  <div class="h-dir-header">
+                    <i class="fa-solid fa-location-arrow" id="homeCompassAnimIcon"></i>
+                    <span class="h-dir-label">কোন দিকে যাচ্ছেন:</span>
+                  </div>
+                  <div class="h-dir-value" id="homeCurrentHeadingText">স্থির (উত্তর দিক)</div>
                 </div>
               </div>
+
+              <!-- Click Action Trigger: শুধুমাত্র বিস্তারিত দেখুন বাটনে চাপলেই ঢুকবে -->
+              <div class="split-card-action">
+                <button type="button" class="btn-portal-action action-loc" id="btnOnlyGoToLocation">
+                  <span>বিস্তারিত দেখুন</span>
+                  <i class="fa-solid fa-arrow-right"></i>
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- Click Action Trigger -->
-          <div class="split-card-action">
-            <button type="button" class="btn-portal-action action-weather">
-              <span>বিস্তারিত দেখতে ক্লিক করুন</span>
-              <i class="fa-solid fa-arrow-right"></i>
-            </button>
-          </div>
         </div>
+      </div>
 
+      <!-- Swipe Pagination Dots -->
+      <div class="home-carousel-dots" id="homeCarouselDots">
+        <span class="c-dot active" data-index="0" title="লাইভ আবহাওয়া"></span>
+        <span class="c-dot" data-index="1" title="মাই লোকেশন"></span>
       </div>
 
       <!-- Mobile Lockscreen, Wallpaper & Widgets Set Bar -->
