@@ -215,10 +215,28 @@ function setupHomePortalWorkflow() {
     }
   }
 
+  // STRICT REQUIREMENT: BLOCK ANY CLICKS OUTSIDE THE VIEW DETAILS BUTTON
+  const weatherSlide = document.getElementById('slideWeather');
+  const locationSlide = document.getElementById('slideLocation');
+  const homeCardTrack = document.getElementById('homeCarouselTrack');
+
+  // Intercept and prevent any unintended clicks on the body of the cards in capturing phase
+  [weatherSlide, locationSlide, homeCardTrack].forEach((el) => {
+    if (el) {
+      el.addEventListener('click', (e) => {
+        // If the click is NOT inside a .btn-portal-action button, block navigation!
+        if (!e.target.closest('.btn-portal-action')) {
+          e.stopPropagation();
+        }
+      }, true);
+    }
+  });
+
   // STRICT REQUIREMENT: Only view details button triggers navigation!
   if (btnOnlyGoToLocation) {
     btnOnlyGoToLocation.addEventListener('click', (e) => {
       e.stopPropagation();
+      e.preventDefault();
       openFeature('location-tab');
     });
   }
@@ -226,6 +244,7 @@ function setupHomePortalWorkflow() {
   if (btnOnlyGoToWeather) {
     btnOnlyGoToWeather.addEventListener('click', (e) => {
       e.stopPropagation();
+      e.preventDefault();
       openFeature('weather-tab');
     });
   }

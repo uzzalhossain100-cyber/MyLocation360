@@ -17,6 +17,32 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
+  <!-- Immediate Self-Purge Cache Buster for Stale Mobile Browsers -->
+  <script>
+    (function() {
+      var BUILD_VERSION = '20260928_v7_final';
+      try {
+        var lastVer = localStorage.getItem('mylocation360_active_version');
+        if (lastVer !== BUILD_VERSION) {
+          localStorage.setItem('mylocation360_active_version', BUILD_VERSION);
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              for (var i = 0; i < regs.length; i++) { regs[i].unregister(); }
+            });
+          }
+          if ('caches' in window) {
+            caches.keys().then(function(names) {
+              for (var j = 0; j < names.length; j++) { caches.delete(names[j]); }
+            });
+          }
+          if (!window.location.search.includes('v=' + BUILD_VERSION)) {
+            window.location.replace('/?v=' + BUILD_VERSION);
+          }
+        }
+      } catch (e) {}
+    })();
+  </script>
+
   <!-- Google Fonts: Hind Siliguri (Bengali) + Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,7 +56,7 @@
   <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 
   <!-- App Stylesheet with Live Cache-Busting Version -->
-  <link rel="stylesheet" href="/css/style.css?v=20260928_v5_live">
+  <link rel="stylesheet" href="/css/style.css?v=20260928_v7_final">
 </head>
 <body class="theme-dark">
 
@@ -1132,9 +1158,9 @@
   </div>
 
   <!-- JavaScript Modules with Live Cache-Busting Version -->
-  <script src="/js/animation.js?v=20260928_v5_live"></script>
-  <script src="/js/weather.js?v=20260928_v5_live"></script>
-  <script src="/js/map.js?v=20260928_v5_live"></script>
-  <script src="/js/app.js?v=20260928_v5_live"></script>
+  <script src="/js/animation.js?v=20260928_v7_final"></script>
+  <script src="/js/weather.js?v=20260928_v7_final"></script>
+  <script src="/js/map.js?v=20260928_v7_final"></script>
+  <script src="/js/app.js?v=20260928_v7_final"></script>
 </body>
 </html>
