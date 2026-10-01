@@ -1600,7 +1600,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+  transform-origin: 50% 50%;
+  transition: transform 0.08s linear;
+  will-change: transform;
 }
 
 .c-point {
@@ -1641,8 +1643,9 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  transition: transform 0.25s cubic-bezier(0.1, 0, 0.2, 1);
-  transform-origin: center center;
+  transition: transform 0.08s linear;
+  transform-origin: 50% 50%;
+  will-change: transform;
 }
 
 .needle-north {

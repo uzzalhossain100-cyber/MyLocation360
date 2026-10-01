@@ -443,8 +443,10 @@ const MapModule = {
   updateCompassRedButton(bearing = 0) {
     const compassRedDial = document.getElementById('compassRedDial');
     if (compassRedDial) {
-      // Points precisely towards geographic true North on the screen
-      compassRedDial.style.transform = `rotate(${-bearing}deg)`;
+      // Combines map bearing and real device orientation so needle always points towards true Earth North
+      const devHeading = (typeof this.deviceHeading === 'number' && !isNaN(this.deviceHeading)) ? this.deviceHeading : 0;
+      const totalOffset = (bearing + devHeading) % 360;
+      compassRedDial.style.transform = `rotate(${-totalOffset}deg)`;
     }
   },
 
@@ -871,51 +873,129 @@ const MapModule = {
   },
 
   initDeviceOrientation() {
+    this.deviceHeading = 0;
+
+    const onOrientation = (e) => {
+      let rawHeading = null;
+
+      // 1. iOS Safari webkitCompassHeading (0-360 True Magnetic Compass)
+      if (typeof e.webkitCompassHeading !== 'undefined' && e.webkitCompassHeading !== null) {
+        rawHeading = e.webkitCompassHeading;
+      }
+      // 2. Android absolute orientation (Chrome / Firefox)
+      else if (e.absolute === true || e.type === 'deviceorientationabsolute') {
+        if (e.alpha !== null && !isNaN(e.alpha)) {
+          rawHeading = (360 - e.alpha) % 360;
+        }
+      }
+      // 3. Standard fallback
+      else if (e.alpha !== null && !isNaN(e.alpha)) {
+        rawHeading = (360 - e.alpha) % 360;
+      }
+
+      if (rawHeading !== null && !isNaN(rawHeading)) {
+        // Adjust for device screen rotation angle (portrait 0, landscape 90/270)
+        let screenAngle = 0;
+        try {
+          screenAngle = (window.screen && window.screen.orientation && window.screen.orientation.angle) || window.orientation || 0;
+        } catch (_) {}
+
+        const finalHeading = (rawHeading + screenAngle + 360) % 360;
+        this.deviceHeading = Math.round(finalHeading);
+
+        // Update home compass and map red compass in real-time
+        this.updateHomeCompass(finalHeading);
+        this.updateCompassRedButton(this.map ? this.map.getBearing() : 0);
+      }
+    };
+
+    // Listen to absolute orientation first (Android Chrome standard)
+    if ('ondeviceorientationabsolute' in window) {
+      window.addEventListener('deviceorientationabsolute', onOrientation, true);
+    }
+    // Standard device orientation
     if (window.DeviceOrientationEvent) {
-      window.addEventListener('deviceorientation', (e) => {
-        let heading = null;
-        if (e.webkitCompassHeading) {
-          heading = e.webkitCompassHeading;
-        } else if (e.alpha !== null) {
-          heading = 360 - e.alpha;
-        }
-        if (heading !== null) {
-          this.deviceHeading = Math.round(heading);
-          this.updateHomeCompass(this.deviceHeading);
-        }
-      }, true);
+      window.addEventListener('deviceorientation', onOrientation, true);
+
+      // iOS 13+ permission trigger on first user gesture anywhere
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        const reqPerm = () => {
+          DeviceOrientationEvent.requestPermission()
+            .then(res => {
+              if (res === 'granted') {
+                window.addEventListener('deviceorientation', onOrientation, true);
+              }
+            })
+            .catch(() => {});
+          window.removeEventListener('click', reqPerm);
+          window.removeEventListener('touchstart', reqPerm);
+        };
+        window.addEventListener('click', reqPerm, { once: true, passive: true });
+        window.addEventListener('touchstart', reqPerm, { once: true, passive: true });
+      }
     }
   },
 
   updateHomeCompass(heading) {
     if (heading === null || isNaN(heading)) return;
+    const dialPlate = document.getElementById('homeCompassDialPlate');
     const needle = document.getElementById('homeCompassNeedle');
     const badge = document.getElementById('homeCompassHeadingBadge');
     const animIcon = document.getElementById('homeCompassAnimIcon');
+    const headingText = document.getElementById('homeCurrentHeadingText');
+    const fmHudCompassIcon = document.getElementById('fmHudCompassIcon');
     const toBengaliDigits = (n) => n.toString().replace(/[0-9]/g, d => "০১২৩৪৫৬৭৮৯"[d]);
 
     const normalized = (Math.round(heading) % 360 + 360) % 360;
-    if (needle) {
-      needle.style.transform = `rotate(${normalized}deg)`;
+
+    // Rotate entire dial plate and needle counter to phone rotation:
+    // This ensures 'উ (N)' always points to true geographic North,
+    // 'পূ (E)' to true East, 'দ (S)' to true South, and 'প (W)' to true West!
+    if (dialPlate) {
+      dialPlate.style.transform = `rotate(${-normalized}deg)`;
     }
+    if (needle) {
+      needle.style.transform = `rotate(${-normalized}deg)`;
+    }
+
+    // Arrow icon points in the moving/facing direction
     if (animIcon) {
       animIcon.style.transform = `rotate(${normalized - 45}deg)`;
     }
-    const fmHudCompassIcon = document.getElementById('fmHudCompassIcon');
     if (fmHudCompassIcon) {
-      fmHudCompassIcon.style.transform = `rotate(${normalized}deg)`;
+      fmHudCompassIcon.style.transform = `rotate(${-normalized}deg)`;
     }
-    if (badge) {
-      let dirName = 'উত্তর (N)';
-      if (normalized >= 22.5 && normalized < 67.5) dirName = 'উত্তর-পূর্ব (NE)';
-      else if (normalized >= 67.5 && normalized < 112.5) dirName = 'পূর্ব (E)';
-      else if (normalized >= 112.5 && normalized < 157.5) dirName = 'দক্ষিণ-পূর্ব (SE)';
-      else if (normalized >= 157.5 && normalized < 202.5) dirName = 'দক্ষিণ (S)';
-      else if (normalized >= 202.5 && normalized < 247.5) dirName = 'দক্ষিণ-পশ্চিম (SW)';
-      else if (normalized >= 247.5 && normalized < 292.5) dirName = 'পশ্চিম (W)';
-      else if (normalized >= 292.5 && normalized < 337.5) dirName = 'উত্তর-পশ্চিম (NW)';
 
+    let dirName = 'উত্তর (N)';
+    let dirFullDesc = 'উত্তর দিক';
+    if (normalized >= 22.5 && normalized < 67.5) {
+      dirName = 'উত্তর-পূর্ব (NE)';
+      dirFullDesc = 'উত্তর-পূর্ব দিক';
+    } else if (normalized >= 67.5 && normalized < 112.5) {
+      dirName = 'পূর্ব (E)';
+      dirFullDesc = 'পূর্ব দিক';
+    } else if (normalized >= 112.5 && normalized < 157.5) {
+      dirName = 'দক্ষিণ-পূর্ব (SE)';
+      dirFullDesc = 'দক্ষিণ-পূর্ব দিক';
+    } else if (normalized >= 157.5 && normalized < 202.5) {
+      dirName = 'দক্ষিণ (S)';
+      dirFullDesc = 'দক্ষিণ দিক';
+    } else if (normalized >= 202.5 && normalized < 247.5) {
+      dirName = 'দক্ষিণ-পশ্চিম (SW)';
+      dirFullDesc = 'দক্ষিণ-পশ্চিম দিক';
+    } else if (normalized >= 247.5 && normalized < 292.5) {
+      dirName = 'পশ্চিম (W)';
+      dirFullDesc = 'পশ্চিম দিক';
+    } else if (normalized >= 292.5 && normalized < 337.5) {
+      dirName = 'উত্তর-পশ্চিম (NW)';
+      dirFullDesc = 'উত্তর-পশ্চিম দিক';
+    }
+
+    if (badge) {
       badge.innerText = `${toBengaliDigits(normalized)}° ${dirName}`;
+    }
+    if (headingText) {
+      headingText.innerText = `${dirFullDesc}ে মুখ করে আছেন`;
     }
   },
 
