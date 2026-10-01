@@ -443,9 +443,10 @@ const MapModule = {
   updateCompassRedButton(bearing = 0) {
     const compassRedDial = document.getElementById('compassRedDial');
     if (compassRedDial) {
-      // Combines map bearing and real device orientation so needle always points towards true Earth North
+      // Rotating dial disc: 'উ' points to true North, 'দ' to South, 'পূ' to East, 'প' to West
+      const normBearing = (bearing % 360 + 360) % 360;
       const devHeading = (typeof this.deviceHeading === 'number' && !isNaN(this.deviceHeading)) ? this.deviceHeading : 0;
-      const totalOffset = (bearing + devHeading) % 360;
+      const totalOffset = (normBearing + devHeading) % 360;
       compassRedDial.style.transform = `rotate(${-totalOffset}deg)`;
     }
   },
@@ -513,7 +514,15 @@ const MapModule = {
     // ম্যাপের ডান সাইডের ছোট গোল লাল দিক নির্দেশক বাটন
     const btnCompassReset = document.getElementById('btnCompassResetNorth');
     if (btnCompassReset) {
-      btnCompassReset.addEventListener('click', () => this.resetToNorth());
+      const handleCompassClick = (e) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        this.resetToNorth();
+      };
+      btnCompassReset.addEventListener('click', handleCompassClick);
+      btnCompassReset.addEventListener('touchend', handleCompassClick, { passive: false });
     }
 
     window.addEventListener('resize', () => {
@@ -846,19 +855,39 @@ const MapModule = {
 
     this.isAutoFollow = true;
 
-    // ম্যাপটি ঘুরে এক্সাক্ট উত্তর দিক (০°) এবং ইউজারের সঠিক এক্সাক্ট অবস্থানে সোজা হবে
-    const targetZoom = Math.max(this.map.getZoom(), 16.5);
-    this.map.flyTo({
-      center: [this.currentLon, this.currentLat],
+    // Immediately align red compass dial and cardinal markers to 0° North
+    this.updateCompassRedButton(0);
+    this.updateRotatingCardinalIndicators(0);
+
+    const centerLon = (typeof this.currentLon === 'number' && !isNaN(this.currentLon)) ? this.currentLon : 90.4125;
+    const centerLat = (typeof this.currentLat === 'number' && !isNaN(this.currentLat)) ? this.currentLat : 23.8103;
+    const currentZoom = this.map.getZoom ? this.map.getZoom() : 16;
+    const targetZoom = Math.max(currentZoom, 16);
+
+    // 1. Guaranteed smooth rotation to true North (0°)
+    this.map.easeTo({
       bearing: 0,
       pitch: 0,
-      zoom: targetZoom,
-      duration: 850,
-      essential: true
+      duration: 650,
+      easing: (t) => t * (2 - t)
     });
 
+    // 2. Center on user exact coordinates
+    setTimeout(() => {
+      if (this.map) {
+        this.map.flyTo({
+          center: [centerLon, centerLat],
+          bearing: 0,
+          pitch: 0,
+          zoom: targetZoom,
+          duration: 750,
+          essential: true
+        });
+      }
+    }, 60);
+
     if (window.showToast) {
-      window.showToast('🧭 ম্যাপ ঘুরে সঠিক উত্তর দিক ও আপনার এক্সাক্ট অবস্থানে সোজা হয়েছে');
+      window.showToast('🧭 ম্যাপ ঘুরে সঠিক উত্তর দিকে ও আপনার অবস্থানে সোজা হয়েছে');
     }
   },
 

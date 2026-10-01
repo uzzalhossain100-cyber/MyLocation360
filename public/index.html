@@ -20,7 +20,7 @@
   <!-- Immediate Self-Purge Cache Buster for Stale Mobile Browsers -->
   <script>
     (function() {
-      var BUILD_VERSION = '20260928_v14_real_compass';
+      var BUILD_VERSION = '20260928_v15_redcompass_full';
       try {
         var lastVer = localStorage.getItem('mylocation360_active_version');
         if (lastVer !== BUILD_VERSION) {
@@ -56,7 +56,7 @@
   <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 
   <!-- App Stylesheet with Live Cache-Busting Version -->
-  <link rel="stylesheet" href="/css/style.css?v=20260928_v14_real_compass">
+  <link rel="stylesheet" href="/css/style.css?v=20260928_v15_redcompass_full">
 </head>
 <body class="theme-dark">
 
@@ -336,23 +336,35 @@
             </button>
           </div>
 
-          <!-- ম্যাপের ডান সাইডে ছোট গোল লাল দিক নির্দেশক বাটন (সব সময় সঠিক উত্তর নির্দেশ করবে, ক্লিক করলে ম্যাপ ঘুরে সঠিক পজিশনে সোজা হবে) -->
-          <button class="map-compass-red-btn" id="btnCompassResetNorth" title="ক্লিক করলে ম্যাপ ঘুরে সঠিক উত্তর দিক ও আপনার বর্তমান অবস্থানে সোজা হবে">
+          <!-- ম্যাপের ডান সাইডে গোল লাল দিক নির্দেশক কম্পাস বাটন (উ, দ, পূ, প সংকেত থাকবে, সব সময় সঠিক দিকে থাকবে এবং ক্লিকে ম্যাপ সঠিক দিকে সোজা হবে) -->
+          <button type="button" class="map-compass-red-btn" id="btnCompassResetNorth" title="ক্লিক করলে ম্যাপ ঘুরে সঠিক উত্তর দিক ও আপনার বর্তমান অবস্থানে সোজা হবে">
             <div class="compass-red-dial" id="compassRedDial">
-              <!-- Precision Compass Needle: North is bright white with 'উ', South is dark crimson -->
-              <svg class="compass-needle-svg" width="30" height="30" viewBox="0 0 32 32">
-                <!-- North Needle (Bright White & Red with 'উ') -->
-                <polygon points="16,3 20.5,16 16,13" fill="#ffffff" />
-                <polygon points="16,3 11.5,16 16,13" fill="#fecaca" />
-                <text x="16" y="11.5" text-anchor="middle" font-size="6.5" font-weight="900" fill="#dc2626" font-family="'Hind Siliguri', sans-serif">উ</text>
+              <!-- Precision Compass Dial: উ (North), দ (South), পূ (East), প (West) and Dual-tip Needle -->
+              <svg class="compass-needle-svg" width="38" height="38" viewBox="0 0 44 44">
+                <!-- Outer Compass Ring Subtle Border -->
+                <circle cx="22" cy="22" r="20" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
                 
-                <!-- South Needle (Darker Tone) -->
-                <polygon points="16,29 20.5,16 16,13" fill="#7f1d1d" />
-                <polygon points="16,29 11.5,16 16,13" fill="#991b1b" />
+                <!-- 4 Cardinal Direction Text Labels: উ (North), দ (South), পূ (East), প (West) -->
+                <!-- North Label: উ -->
+                <text x="22" y="8" text-anchor="middle" font-size="7.5" font-weight="900" fill="#ffffff" font-family="'Hind Siliguri', sans-serif">উ</text>
+                <!-- South Label: দ -->
+                <text x="22" y="40.5" text-anchor="middle" font-size="6.5" font-weight="800" fill="#fecaca" font-family="'Hind Siliguri', sans-serif">দ</text>
+                <!-- East Label: পূ -->
+                <text x="39" y="24" text-anchor="middle" font-size="6.2" font-weight="800" fill="#fecaca" font-family="'Hind Siliguri', sans-serif">পূ</text>
+                <!-- West Label: প -->
+                <text x="5" y="24" text-anchor="middle" font-size="6.2" font-weight="800" fill="#fecaca" font-family="'Hind Siliguri', sans-serif">প</text>
+
+                <!-- North Needle (Bright White & Red Arrow Tip) -->
+                <polygon points="22,9.5 25,22 22,20" fill="#ffffff" />
+                <polygon points="22,9.5 19,22 22,20" fill="#fecaca" />
                 
-                <!-- Center Pivot Brass Pin -->
-                <circle cx="16" cy="16" r="2.8" fill="#ffffff" stroke="#b91c1c" stroke-width="1.2" />
-                <circle cx="16" cy="16" r="1.2" fill="#dc2626" />
+                <!-- South Needle (Dark Maroon Arrow Tip) -->
+                <polygon points="22,34.5 25,22 22,20" fill="#7f1d1d" />
+                <polygon points="22,34.5 19,22 22,20" fill="#991b1b" />
+                
+                <!-- Center Pivot Pin -->
+                <circle cx="22" cy="22" r="3" fill="#ffffff" stroke="#991b1b" stroke-width="1.5" />
+                <circle cx="22" cy="22" r="1.3" fill="#dc2626" />
               </svg>
             </div>
           </button>
@@ -1013,9 +1025,9 @@
   </div>
 
   <!-- JavaScript Modules with Live Cache-Busting Version -->
-  <script src="/js/animation.js?v=20260928_v14_real_compass"></script>
-  <script src="/js/weather.js?v=20260928_v14_real_compass"></script>
-  <script src="/js/map.js?v=20260928_v14_real_compass"></script>
-  <script src="/js/app.js?v=20260928_v14_real_compass"></script>
+  <script src="/js/animation.js?v=20260928_v15_redcompass_full"></script>
+  <script src="/js/weather.js?v=20260928_v15_redcompass_full"></script>
+  <script src="/js/map.js?v=20260928_v15_redcompass_full"></script>
+  <script src="/js/app.js?v=20260928_v15_redcompass_full"></script>
 </body>
 </html>
